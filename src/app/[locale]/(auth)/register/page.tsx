@@ -1,10 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useTranslations } from "next-intl";
-import { UserPlus, Loader2, Compass, CheckCircle2 } from "lucide-react";
+import { UserPlus, Loader2, Compass, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
 
 import { Link, useRouter } from "@/i18n/navigation";
@@ -19,7 +20,9 @@ export default function RegisterPage() {
     const t = useTranslations("Auth");
     const { register: registerUser } = useAuth();
     const router = useRouter();
+
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     // Schéma Zod localisé
@@ -45,7 +48,10 @@ export default function RegisterPage() {
         setIsSubmitting(true);
         setError(null);
         try {
-            const profile = await registerUser({ ...values, phone: values.phone || undefined });
+            const profile = await registerUser({
+                ...values,
+                phone: values.phone || undefined,
+            });
             router.push(profile.role === "ADMIN" ? "/admin" : "/dashboard");
         } catch (err) {
             setError(normalizeApiError(err).message);
@@ -56,23 +62,30 @@ export default function RegisterPage() {
 
     return (
         <div className="min-h-[calc(100dvh-4rem)] grid grid-cols-1 lg:grid-cols-12 w-full">
-
             {/* COLONNE GAUCHE : VISUEL IMMERSIF (Masqué sur mobile) */}
-            <div
-                className="relative hidden lg:flex lg:col-span-5 xl:col-span-6 flex-col justify-between p-12 text-white overflow-hidden bg-gradient-to-br from-[#7bcd4f] to-[#15a4e6]"
-
-            >
+            <div className="relative hidden lg:flex lg:col-span-5 xl:col-span-6 flex-col justify-between p-12 text-white overflow-hidden bg-gradient-to-br from-[#7bcd4f] to-[#15a4e6]">
                 {/* Texture fine de grille en arrière-plan */}
                 <div className="absolute inset-0 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:20px_20px] opacity-10 pointer-events-none" />
                 <div className="absolute top-1/4 -right-20 size-72 rounded-full bg-white/10 blur-3xl pointer-events-none" />
                 <div className="absolute bottom-10 -left-10 size-64 rounded-full bg-black/20 blur-2xl pointer-events-none" />
 
-                {/* LOGO OU BRANDING */}
-                <div className="relative z-10 flex items-center gap-2">
-                    <div className="p-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/10 shadow-xs">
-                        <Compass className="size-5 text-white animate-pulse duration-3000" />
+                {/* LOGO ET BRANDING */}
+                <div className="relative z-10 flex items-center gap-3">
+                    <div className="relative size-10 overflow-hidden rounded-xl bg-white/10 backdrop-blur-md border border-white/20 p-1.5 shadow-sm">
+                        <Link href='/' >
+
+
+                        <Image
+                            src="/logo.png"
+                            alt="Guen's Travel"
+                            fill
+                            className="object-contain p-1"
+                            priority
+                        />   </Link>
                     </div>
-                    <span className="font-black text-sm tracking-widest uppercase">Guen's Travel</span>
+                    <span className="font-black text-sm tracking-widest uppercase text-white">
+            Guen&apos;s Travel
+          </span>
                 </div>
 
                 {/* CONTENU TEXTUEL CENTRAL */}
@@ -111,8 +124,7 @@ export default function RegisterPage() {
             {/* COLONNE DROITE : FORMULAIRE D'INSCRIPTION */}
             <div className="lg:col-span-7 xl:col-span-6 flex items-center justify-center p-6 sm:p-12 md:p-16 bg-background">
                 <div className="w-full max-w-[390px] space-y-8">
-
-                    {/* EN-TÊTE ÉPURÉ */}
+                    {/* EN-TÊTE */}
                     <div className="space-y-2">
                         <div className="lg:hidden flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary mb-4">
                             <Compass className="size-5" />
@@ -135,7 +147,6 @@ export default function RegisterPage() {
 
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-
                             {/* CHAMP : NOM COMPLET */}
                             <FormField
                                 control={form.control}
@@ -147,6 +158,7 @@ export default function RegisterPage() {
                                         </FormLabel>
                                         <FormControl>
                                             <Input
+                                                disabled={isSubmitting}
                                                 placeholder={t("fullNamePlaceholder")}
                                                 autoComplete="name"
                                                 className="rounded-xl border-border/70 h-10 text-sm font-medium focus-visible:ring-primary/20 placeholder:text-muted-foreground/45 transition-all"
@@ -169,6 +181,7 @@ export default function RegisterPage() {
                                         </FormLabel>
                                         <FormControl>
                                             <Input
+                                                disabled={isSubmitting}
                                                 type="email"
                                                 autoComplete="email"
                                                 placeholder={t("emailPlaceholder")}
@@ -189,12 +202,13 @@ export default function RegisterPage() {
                                     <FormItem className="space-y-1.5">
                                         <FormLabel className="text-xs font-bold text-muted-foreground/90 tracking-wide uppercase">
                                             {t("phone")}{" "}
-                                            <span className="text-[10px] text-muted-foreground/60">
+                                            <span className="text-[10px] text-muted-foreground/60 font-normal normal-case">
                         {t("phoneOptional")}
                       </span>
                                         </FormLabel>
                                         <FormControl>
                                             <Input
+                                                disabled={isSubmitting}
                                                 type="tel"
                                                 autoComplete="tel"
                                                 placeholder={t("phonePlaceholder")}
@@ -217,13 +231,28 @@ export default function RegisterPage() {
                                             {t("password")}
                                         </FormLabel>
                                         <FormControl>
-                                            <Input
-                                                type="password"
-                                                autoComplete="new-password"
-                                                placeholder={t("passwordPlaceholder")}
-                                                className="rounded-xl border-border/70 h-10 text-sm font-medium focus-visible:ring-primary/20 placeholder:text-muted-foreground/45 transition-all"
-                                                {...field}
-                                            />
+                                            <div className="relative">
+                                                <Input
+                                                    disabled={isSubmitting}
+                                                    type={showPassword ? "text" : "password"}
+                                                    autoComplete="new-password"
+                                                    placeholder={t("passwordPlaceholder")}
+                                                    className="rounded-xl border-border/70 h-10 text-sm font-medium focus-visible:ring-primary/20 placeholder:text-muted-foreground/45 transition-all pr-10"
+                                                    {...field}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowPassword((prev) => !prev)}
+                                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground transition-colors"
+                                                    tabIndex={-1}
+                                                >
+                                                    {showPassword ? (
+                                                        <EyeOff className="size-4" />
+                                                    ) : (
+                                                        <Eye className="size-4" />
+                                                    )}
+                                                </button>
+                                            </div>
                                         </FormControl>
                                         <FormMessage className="text-[11px] font-bold text-destructive" />
                                     </FormItem>
@@ -234,7 +263,7 @@ export default function RegisterPage() {
                             <Button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="w-full rounded-xl font-bold text-xs gap-1.5 h-10.5 py-4 shadow-2xs transition-all active:scale-98 mt-4"
+                                className="w-full rounded-xl font-bold text-xs gap-1.5 h-11 py-3 shadow-xs transition-all active:scale-[0.98] mt-4"
                             >
                                 {isSubmitting ? (
                                     <>
@@ -261,7 +290,6 @@ export default function RegisterPage() {
                             {t("switchToLogin")}
                         </Link>
                     </div>
-
                 </div>
             </div>
         </div>

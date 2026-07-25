@@ -1,21 +1,23 @@
 {
   "Metadata": {
-    "title": "GuenTours — Travel Agency | Book Flights & Hotels at the Best Price",
-    "description": "Book your flight tickets and hotel rooms easily at the best rates. Enjoy exclusive deals and plan your trip seamlessly with GuenTours."
+    "title": "Guen's travel — Travel Agency | Book Flights & Hotels at the Best Price",
+    "description": "Book your flight tickets and hotel rooms easily at the best rates. Enjoy exclusive deals and plan your trip seamlessly with Guen's travel."
   },
   "Nav": {
-    "brand": "GuenTours",
+    "brand": "Guen's travel",
     "flights": "Flights",
     "hotels": "Hotels",
     "myBooking": "My booking",
     "dashboard": "Dashboard",
     "admin": "Admin",
     "login": "Sign in",
+    "account": "My Account",
     "register": "Create account",
     "logout": "Sign out",
     "language": "Language",
     "greeting": "Hello, {name}",
-    "becomeHost": "Become a host"
+    "becomeHost": "Become a host",
+    "home": "Home"
   },
  "Home": {
    "badgeFlights": "Best Rate Flight Booking",
@@ -339,7 +341,7 @@
     "commissions": "My Commissions",
     "wallet": "Wallet & Balance",
     "customers": "My Customers",
-    "welcomeBadge": "GuenTours Customer Area",
+    "welcomeBadge": "Guen's travel Customer Area",
     "subtitle": "Manage your flight and hotel bookings, access your e-tickets, and plan your next trips.",
     "newBookingBtn": "Book a Trip",
     "myBookingsDesc": "History and details of all your flights and accommodations",
@@ -435,18 +437,18 @@
     "backHome": "Back to home",
     "termsTitle": "Terms of service",
     "termsUpdated": "Last updated: {date}",
-    "termsIntro": "These terms govern the use of the GuenTours platform to search for and book flights and hotels with our partner providers (Travelopro, Sabre, Travelport).",
+    "termsIntro": "These terms govern the use of the Guen's travel platform to search for and book flights and hotels with our partner providers (Travelopro, Sabre, Travelport).",
     "termsSection1Title": "1. Bookings",
     "termsSection1Body": "Each booking is subject to the pricing and availability conditions of the provider selected at search time. The displayed price is guaranteed until payment.",
     "termsSection2Title": "2. Payment",
     "termsSection2Body": "Payments are processed securely and encrypted. No card data is ever stored on our servers. A non-refundable deposit may be required for some installment offers.",
     "termsSection3Title": "3. Cancellation and changes",
-    "termsSection3Body": "Cancellation terms depend on the selected fare and are shown before the booking is confirmed. GuenTours cannot be held responsible for its providers' fare policies.",
+    "termsSection3Body": "Cancellation terms depend on the selected fare and are shown before the booking is confirmed. Guen's travel cannot be held responsible for its providers' fare policies.",
     "termsSection4Title": "4. Liability",
-    "termsSection4Body": "GuenTours acts as an intermediary between the traveler and the transport/accommodation providers, who remain solely responsible for the service provided.",
+    "termsSection4Body": "Guen's travel acts as an intermediary between the traveler and the transport/accommodation providers, who remain solely responsible for the service provided.",
     "privacyTitle": "Privacy policy",
     "privacyUpdated": "Last updated: {date}",
-    "privacyIntro": "GuenTours takes the protection of your personal data seriously. This policy describes the information we collect and how we use it.",
+    "privacyIntro": "Guen's travel takes the protection of your personal data seriously. This policy describes the information we collect and how we use it.",
     "privacySection1Title": "1. Data collected",
     "privacySection1Body": "We collect the information needed to process bookings (identity, contact details, travelers) as well as sign-in data for your personal account.",
     "privacySection2Title": "2. Use of data",
@@ -458,7 +460,7 @@
   },
   "AppPromo": {
     "badge": "Mobile Application",
-    "title": "Take GuenTours wherever you go",
+    "title": "Take Guen's travel wherever you go",
     "description": "Book your flights and hotel rooms directly from your smartphone. Access exclusive deals and real-time updates.",
     "appStoreSub": "Download on the",
     "googlePlaySub": "Get it on",

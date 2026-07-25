@@ -1,10 +1,10 @@
 {
   "Metadata": {
     "title": "Guen's travel — Agence de Voyage | Réservation Vols & Hôtels au Meilleur Prix",
-    "description": "Réservez facilement vos billets d'avion et vos hôtels au meilleur tarif. Profitez d'offres exclusives et planifiez votre voyage en toute simplicité avec GuenTours."
+    "description": "Réservez facilement vos billets d'avion et vos hôtels au meilleur tarif. Profitez d'offres exclusives et planifiez votre voyage en toute simplicité avec Guen's travel."
   },
   "Nav": {
-    "brand": "GuenTours",
+    "brand": "Guen's travel",
     "flights": "Vols",
     "hotels": "Hôtels",
     "myBooking": "Mon dossier",
@@ -15,7 +15,9 @@
     "logout": "Se déconnecter",
     "language": "Langue",
     "greeting": "Bonjour, {name}",
-    "becomeHost": "Devenir hôte"
+    "account": "Mon Compte",
+    "becomeHost": "Devenir hôte",
+    "home": "Accueil"
 
   },
 "Home": {
@@ -339,7 +341,7 @@
     "commissions": "Mes Commissions",
     "wallet": "Portefeuille & Solde",
     "customers": "Mes Clients",
-    "welcomeBadge": "Espace Client GuenTours",
+    "welcomeBadge": "Espace Client Guen's travel",
     "subtitle": "Gérez vos réservations de vols et d'hôtels, consultez vos billets et préparez vos prochains voyages.",
     "newBookingBtn": "Réserver un voyage",
     "myBookingsDesc": "Historique et détail de tous vos trajets et hébergements",
@@ -434,18 +436,18 @@
     "backHome": "Retour à l'accueil",
     "termsTitle": "Conditions générales d'utilisation",
     "termsUpdated": "Dernière mise à jour : {date}",
-    "termsIntro": "Les présentes conditions régissent l'utilisation de la plateforme GuenTours pour la recherche et la réservation de vols et d'hôtels auprès de nos fournisseurs partenaires (Travelopro, Sabre, Travelport).",
+    "termsIntro": "Les présentes conditions régissent l'utilisation de la plateforme Guen's travel pour la recherche et la réservation de vols et d'hôtels auprès de nos fournisseurs partenaires (Travelopro, Sabre, Travelport).",
     "termsSection1Title": "1. Réservations",
     "termsSection1Body": "Chaque réservation est soumise aux conditions tarifaires et de disponibilité du fournisseur sélectionné au moment de la recherche. Le prix affiché est garanti jusqu'au paiement.",
     "termsSection2Title": "2. Paiement",
     "termsSection2Body": "Les paiements sont traités de façon chiffrée. Aucune donnée de carte bancaire n'est stockée sur nos serveurs. Un acompte non remboursable peut être demandé pour certaines offres payables en plusieurs fois.",
     "termsSection3Title": "3. Annulation et modification",
-    "termsSection3Body": "Les conditions d'annulation dépendent du tarif choisi et sont indiquées avant la confirmation de la réservation. Guentours ne peut être tenu responsable des politiques tarifaires de ses fournisseurs.",
+    "termsSection3Body": "Les conditions d'annulation dépendent du tarif choisi et sont indiquées avant la confirmation de la réservation. Guen's travel ne peut être tenu responsable des politiques tarifaires de ses fournisseurs.",
     "termsSection4Title": "4. Responsabilité",
-    "termsSection4Body": "GuenTours agit en tant qu'intermédiaire entre le voyageur et les fournisseurs de services de transport et d'hébergement, qui restent seuls responsables de la prestation fournie.",
+    "termsSection4Body": "Guen's travel agit en tant qu'intermédiaire entre le voyageur et les fournisseurs de services de transport et d'hébergement, qui restent seuls responsables de la prestation fournie.",
     "privacyTitle": "Politique de confidentialité",
     "privacyUpdated": "Dernière mise à jour : {date}",
-    "privacyIntro": "GuenTours attache une grande importance à la protection de vos données personnelles. Cette politique décrit les informations que nous collectons et la façon dont nous les utilisons.",
+    "privacyIntro": "Guen's travel attache une grande importance à la protection de vos données personnelles. Cette politique décrit les informations que nous collectons et la façon dont nous les utilisons.",
     "privacySection1Title": "1. Données collectées",
     "privacySection1Body": "Nous collectons les informations nécessaires à la réservation (identité, contact, voyageurs) ainsi que les données de connexion à votre espace personnel.",
     "privacySection2Title": "2. Utilisation des données",
@@ -457,7 +459,7 @@
   },
   "AppPromo": {
     "badge": "Application Mobile",
-    "title": "Emportez GuenTours partout avec vous",
+    "title": "Emportez Guen's travel partout avec vous",
     "description": "Réservez vos billets d'avion et vos hôtels directement depuis votre téléphone. Profitez d'offres exlusives et de notifications en temps réel.",
     "appStoreSub": "Télécharger dans l'",
     "googlePlaySub": "Disponible sur",
