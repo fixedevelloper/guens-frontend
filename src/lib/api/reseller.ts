@@ -9,7 +9,6 @@ export async function createReseller(
   console.log(payload)
   // 1. DTO envoyé sous forme de Blob application/json pour @RequestPart("request")
   const requestDto = {
-    userId: payload.userId,
     companyName: payload.companyName,
     registrationNumber: payload.registrationNumber,
     contactName: payload.contactName,

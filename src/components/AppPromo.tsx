@@ -4,18 +4,14 @@ import React, {useEffect, useState} from "react";
 import { useTranslations } from "next-intl";
 import { Smartphone, Apple } from "lucide-react";
 import { motion } from "framer-motion";
-import QRCode from "qrcode";
+import {useQRCode} from "next-qrcode";
+
 
 export function AppPromo() {
     const t = useTranslations("AppPromo");
-    const [qr, setQr] = useState("");
+  
 
-    useEffect(() => {
-        QRCode.toDataURL("https://travel.guens.org/fr")
-            .then(setQr)
-            .catch(console.error);
-    }, []);
-
+const { Image } = useQRCode()
     return (
         <motion.section
             initial={{ opacity: 0, y: 20 }}
@@ -73,8 +69,23 @@ export function AppPromo() {
                 <div className="flex justify-center md:justify-end mt-4 md:mt-0">
                     <div className="bg-white p-3 sm:p-4 rounded-2xl shadow-xl transform rotate-0 sm:rotate-3 hover:rotate-0 transition-transform duration-500">
                         <div className="w-28 h-28 sm:w-36 sm:h-36 bg-zinc-900 flex items-center justify-center rounded-lg">
-                            {qr ? (
-                                <img src={qr} alt="QR Code" className="w-24 h-24 sm:w-32 sm:h-32 rounded-lg" />
+                            {Image ? (
+                               /*  <img src={qr} alt="QR Code" className="w-24 h-24 sm:w-32 sm:h-32 rounded-lg" /> */
+                                <Image
+      text={'https://github.com/bunlong/next-qrcode'}
+      options={{
+        type: 'image/jpeg',
+        quality: 0.3,
+        errorCorrectionLevel: 'M',
+        margin: 3,
+        scale: 4,
+        width: 200,
+        color: {
+          dark: '#010599FF',
+          light: '#FFBF60FF',
+        },
+      }}
+    />
                             ) : (
                                 <div className="w-24 h-24 sm:w-32 sm:h-32 bg-zinc-200 flex items-center justify-center rounded-lg">
                                     <span className="text-zinc-500 text-xs sm:text-sm">Loading...</span>
@@ -87,3 +98,4 @@ export function AppPromo() {
         </motion.section>
     );
 }
+

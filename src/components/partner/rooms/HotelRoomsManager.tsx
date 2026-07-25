@@ -41,12 +41,12 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "@/i18n/navigation";
 
-import { RoomTypeResponse } from "@/lib/api/partner";
 import {
     useDeleteRoomMutation,
     useHotelRoomsQuery,
     useToggleRoomStatusMutation
 } from "../../../hooks/use-partner-queries";
+import { RoomTypeResponse } from "@/lib/api/types";
 
 interface HotelRoomsManagerProps {
     partnerId: string;
@@ -70,10 +70,10 @@ export function HotelRoomsManager({ partnerId, hotelId, hotelName = "Hôtel" }: 
     );
 
     // Calculs KPI
-    const totalCapacity = rooms.reduce((sum, r) => sum + (r.maxOccupancy || 0) * (r.quantity || 0), 0);
-    const totalInventory = rooms.reduce((sum, r) => sum + (r.quantity || 0), 0);
+    const totalCapacity = rooms.reduce((sum, r) => sum + (r.maxAdults+ r.maxChildren|| 0) * (r.totalRooms || 0), 0);
+    const totalInventory = rooms.reduce((sum, r) => sum + (r.totalRooms || 0), 0);
     const avgPrice = rooms.length
-        ? Math.round(rooms.reduce((sum, r) => sum + (r.pricePerNight || 0), 0) / rooms.length)
+        ? Math.round(rooms.reduce((sum, r) => sum + (r.basePrice || 0), 0) / rooms.length)
         : 0;
 
     // Handlers
@@ -298,7 +298,7 @@ export function HotelRoomsManager({ partnerId, hotelId, hotelName = "Hôtel" }: 
 
                                     <TableCell>
                                         <div className="flex flex-wrap gap-1 max-w-[180px]">
-                                            {room.amenities?.slice(0, 3).map((amenity, idx) => (
+                                            {room.amenities?.slice(0, 3).map((amenity:any, idx:number) => (
                                                 <Badge
                                                     key={idx}
                                                     variant="secondary"

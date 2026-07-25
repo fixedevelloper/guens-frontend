@@ -3,8 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as partnerApi from "@/lib/api/partner";
 import {HotelFormData} from "../types/hotel-form";
 import {createFlight, createHotel} from "../lib/api/partner";
-import {RoomFormData} from "../components/partner/rooms/RoomForm";
-import {AvailabilityFormData, FlightFormData, RoomAvailabilityFormData} from "../lib/api/types";
+import {RoomTypeRequestPayload} from "../components/partner/rooms/RoomForm";
+import {AvailabilityFormData, FareFormData, FlightFormData, PropertyFormData, RoomAvailabilityFormData} from "../lib/api/types";
 // --- Flights ---
 export function useCreateFlightMutation(partnerId: string) {
     const queryClient = useQueryClient();
@@ -220,7 +220,7 @@ export function useCreateRoomTypeMutation(partnerId: string, hotelId: string) {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: (data: RoomFormData) =>
+        mutationFn: (data: RoomTypeRequestPayload) =>
             partnerApi.createRoomType(partnerId, hotelId, data),
         onSuccess: () => {
             // Invalide le cache pour rafraîchir la liste des chambres
@@ -244,7 +244,7 @@ export function useUpdateRoomTypeMutation(partnerId: string, hotelId: string, ro
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: (data: RoomFormData) =>
+        mutationFn: (data: RoomTypeRequestPayload) =>
             partnerApi.updateRoomType(partnerId, roomTypeId, data),
         onSuccess: () => {
             // Invalidation des caches correspondants

@@ -50,7 +50,7 @@ export default function FlightDetailPage() {
     const partnerId = user?.partnerId;
     const flightId = params.id as string;
 
-    const { data: flight, isLoading, isError } = useFlightDetailsQuery(partnerId, flightId);
+    const { data: flight, isLoading, isError } = useFlightDetailsQuery(String(partnerId), flightId);
 
     const suspendMutation = useSuspendFlightMutation(partnerId ?? "");
     const activateMutation = useActivateFlightMutation(partnerId ?? "");

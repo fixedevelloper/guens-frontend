@@ -10,11 +10,11 @@ import type {
     HotelResponse,
     PageResponse, PropertyFormData,
     PropertyResponse, RoomAvailabilityFormData, RoomAvailabilityResponse,
+    RoomTypeResponse,
     VehicleResponse,
 } from "./types";
 import { BookingResponse } from "./types";
-import { RoomType } from "../../components/partner/rooms/HotelRoomsManager";
-import { RoomFormData } from "../../components/partner/rooms/RoomForm";
+import { RoomTypeRequestPayload } from "../../components/partner/rooms/RoomForm";
 
 // --- Flights ---
 
@@ -194,24 +194,8 @@ export async function getPartner(partnerId: string) {
     return data;
 }
 
-// --- Types ---
-export interface RoomResponse {
-    data: RoomType[];
-}
 
 // --- Hotel Rooms ---
-export interface RoomTypeResponse {
-    id: string;
-    name: string;
-    description?: string;
-    pricePerNight: number;
-    maxOccupancy: number;
-    bedType: string;
-    quantity: number;
-    coverImageUrl?: string;
-    amenities: string[];
-    status: "ACTIVE" | "SUSPENDED";
-}
 
 // --- Hotel Room Types Endpoints ---
 
@@ -272,7 +256,7 @@ export async function addRoomTypeImage(
 export async function createRoomType(
     partnerId: string,
     hotelId: string,
-    data: RoomFormData
+    data: RoomTypeRequestPayload
 ) {
     const { data: response } = await apiClient.post<RoomTypeResponse>(
         `/api/partners/${partnerId}/hotels/${hotelId}/room-types`,
@@ -302,7 +286,7 @@ export async function getRoomTypeById(
 export async function updateRoomType(
     partnerId: string,
     roomTypeId: string,
-    data: RoomFormData
+    data: RoomTypeRequestPayload
 ): Promise<RoomTypeResponse> {
     const { data: response } = await apiClient.put<RoomTypeResponse>(
         `/api/partners/${partnerId}/hotels/room-types/${roomTypeId}`,

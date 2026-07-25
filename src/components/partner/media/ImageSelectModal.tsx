@@ -23,7 +23,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { UserImage } from "@/types/media";
+import { UserImage } from "@/types/hotel-form";
 
 // Mock des images existantes de l'utilisateur (à remplacer par votre appel API)
 const INITIAL_IMAGES: UserImage[] = [

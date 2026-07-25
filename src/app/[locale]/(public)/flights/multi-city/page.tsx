@@ -16,7 +16,7 @@ import { MultiCityItineraryCard } from "@/components/search/multi-city-itinerary
 import { useMultiCityFlightSearch } from "@/hooks/use-search";
 import { flightSearchParamsToQuery, multiCitySearchParamsToQuery, parseMultiCitySearchParams } from "@/lib/search-params";
 import type { FlightSearchParams, MultiCityFlightSearchParams } from "@/lib/api/types";
-
+export const dynamic = "force-dynamic";
 export default function MultiCityFlightsPage() {
   return (
     <Suspense fallback={

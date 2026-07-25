@@ -15,9 +15,9 @@ import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
     { href: "/partner", key: "dashboard", icon: LayoutDashboard, exact: true },
-    { href: "/partner/listings", key: "listings", icon: ListChecks },
-    { href: "/partner/bookings", key: "bookings", icon: CalendarCheck },
-    { href: "/partner/settings", key: "settings", icon: Settings },
+    { href: "/partner/listings", key: "listings", icon: ListChecks,exact: false },
+    { href: "/partner/bookings", key: "bookings", icon: CalendarCheck,exact: false  },
+    { href: "/partner/settings", key: "settings", icon: Settings,exact: false  },
 ] as const;
 
 export function PartnerSidebar() {

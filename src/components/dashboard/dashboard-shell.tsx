@@ -62,7 +62,7 @@ export function DashboardShell({
 
   // Détection des rôles
   const isReseller = Boolean(
-    user?.isReseller || user?.role === "RESELLER" || user?.role === "AGENT"
+    user?.role === "RESELLER"
   );
   
   // Seuls les utilisateurs avec le rôle CLIENT (CUSTOMER) peuvent devenir revendeur

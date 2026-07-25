@@ -41,6 +41,7 @@ import { useCreatePropertyMutation } from "@/hooks/use-partner-queries";
 import { cn } from "@/lib/utils";
 import { PROPERTY_AMENITIES, PropertyFormData, PropertyType } from "../../../../../../../lib/api/types";
 import {ImageSelectModal} from "../../../../../../../components/partner/media/ImageSelectModal";
+import { UserImage } from "@/types/hotel-form";
 
 // Interface locale pour gérer la valeur de saisie du prix et l'image de couverture
 interface LocalPropertyFormState extends Omit<PropertyFormData, "pricePerNight"> {
@@ -111,10 +112,10 @@ export default function NewPropertyPage() {
     }
 
     // Callback déclenché lors de la sélection de l'image depuis la modale
-    function handleSelectImage(imageUrl: string) {
+    function handleSelectImage(imageUrl: UserImage) {
         setForm((prev) => ({
             ...prev,
-            coverImage: imageUrl,
+            coverImage: imageUrl.url,
         }));
         setIsModalOpen(false);
         toast.success("Photo de couverture mise à jour !");
@@ -292,7 +293,7 @@ export default function NewPropertyPage() {
                                         maxLength={2000}
                                     />
                                     <p className="text-[10px] text-muted-foreground text-right">
-                                        {form.description.length}/2000 caractères
+                                        {form.description?.length}/2000 caractères
                                     </p>
                                 </div>
                             </div>

@@ -6,19 +6,19 @@ import { VehicleListings } from "@/components/partner/listings/vehicle-listings"
 import { PropertyListings } from "@/components/partner/listings/property-listings";
 import React from "react";
 import {HotelListings} from "../../../../../components/partner/listings/hotel-listings";
-
+export const dynamic = "force-dynamic";
 export default function PartnerListingsPage() {
     const { user } = useAuth();
 
     switch (user?.role) {
         case "PARTNER_AIRLINE":
-            return <FlightListings partnerId={user.partnerId} />;
+            return <FlightListings partnerId={String(user.partnerId)} />;
         case "PARTNER_HOTEL":
-            return <HotelListings partnerId={user.partnerId} />;
+            return <HotelListings partnerId={String(user.partnerId)} />;
         case "PARTNER_CAR_RENTAL":
-            return <VehicleListings partnerId={user.partnerId} />;
+            return <VehicleListings partnerId={String(user.partnerId)} />;
         case "PARTNER_FURNISHED_RENTAL":
-            return <PropertyListings partnerId={user.partnerId} />;
+            return <PropertyListings partnerId={String(user.partnerId)} />;
         default:
             return null;
     }

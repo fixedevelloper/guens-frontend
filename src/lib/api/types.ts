@@ -69,6 +69,7 @@ export interface FlightLeg {
   origin: string;
   destination: string;
   departureDate: string; // ISO date (yyyy-MM-dd)
+  passengers?:number
 }
 
 export interface MultiCityFlightSearchParams {
@@ -341,6 +342,8 @@ export interface FlightResponse {
   arrivalTime: string;
   operatingDays: number[];
   status: FlightStatus;
+  durationMinutes:number;
+  aircraftType:string
 }
 // ---------- Partner: Hotels ----------
 
@@ -379,7 +382,6 @@ export interface PropertyResponse {
   city: string;
   pricePerNight: number;
   currency: string;
-  status: "ACTIVE" | "SUSPENDED";
 }
 
 
@@ -447,11 +449,11 @@ export const PROPERTY_AMENITIES: AmenityOption[] = [
  */
 export const propertyFormSchema = z.object({
   title: z
-      .string()
-      .min(3, "Le titre doit contenir au moins 3 caractères")
-      .max(120, "Le titre ne doit pas dépasser 120 caractères"),
+    .string()
+    .min(3, "Le titre doit contenir au moins 3 caractères")
+    .max(120, "Le titre ne doit pas dépasser 120 caractères"),
   propertyType: z.enum(["APARTMENT", "HOUSE", "VILLA", "STUDIO"] as const, {
-    required_error: "Veuillez sélectionner un type d'hébergement",
+    message: "Veuillez sélectionner un type d'hébergement", // 👈 Utiliser 'message' à la place de 'required_error'
   }),
   address: z.string().min(3, "L'adresse est requise"),
   city: z.string().min(2, "La ville est requise"),
@@ -545,11 +547,17 @@ export interface RoomTypeResponse {
   name: string;
   maxAdults: number;
   maxChildren: number;
-  bedType: string | null;
-  sizeSqm: number | null;
+  bedType: string ;
+  sizeSqm: number;
   basePrice: number;
   currency: string;
   totalRooms: number;
+      description?: string;
+    pricePerNight: number;
+    maxOccupancy: number;
+    quantity: number;
+    coverImageUrl?: string;
+    amenities: string[];
   status: "ACTIVE" | "SUSPENDED";
 }
 export interface RoomAvailabilityResponse {
@@ -606,7 +614,6 @@ export interface RoomOffer {
   facilities: string[];
 }
 export interface ResellerFormData {
-  userId:String;
   companyName: string;
   registrationNumber: string;
   contactName: string;
@@ -630,6 +637,11 @@ export interface Reseller {
   description?: string | null;
   logoUrl?: string | null;
   status: ResellerStatus;
+   promoCode: string;
+   commissionRate: number; // ex: 0.10 pour 10%
+  walletBalance: number;
+  totalSales: number;
+  totalBookingsCount?: number;
   subscriptionStatus: "active" | "inactive" | "pending_payment";
   createdAt: string; // Format ISO string (ex: "2026-07-25T04:20:00Z")
   updatedAt: string;

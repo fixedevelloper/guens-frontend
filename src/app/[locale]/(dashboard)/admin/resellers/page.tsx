@@ -51,7 +51,7 @@ import {
   useRejectResellerMutation,
   useSuspendResellerMutation,
 } from "@/hooks/use-admin";
-import { ResellerResponse, ResellerStatus } from "@/lib/api/types";
+import { Reseller, ResellerResponse, ResellerStatus } from "@/lib/api/types";
 import { ApproveResellerModal } from "@/components/dashboard/ApproveResellerModal";
 
 
@@ -94,14 +94,14 @@ export default function ResellersListPage() {
   // ÉTATS MODALES & ACTIONS
   const [approveModalState, setApproveModalState] = useState<{
     isOpen: boolean;
-    resellerId: string;
+    resellerId: string|number;
     resellerName: string;
   }>({ isOpen: false, resellerId: "", resellerName: "" });
 
   const [confirmDialogState, setConfirmDialogState] = useState<{
     isOpen: boolean;
     type: "REJECT" | "SUSPEND" | null;
-    reseller: ResellerResponse | null;
+    reseller: Reseller | null;
   }>({ isOpen: false, type: null, reseller: null });
 
   // MUTATIONS & QUERIES
@@ -136,9 +136,9 @@ export default function ResellersListPage() {
 
     try {
       if (confirmDialogState.type === "REJECT") {
-        await rejectMutation.mutateAsync(confirmDialogState.reseller.id);
+        await rejectMutation.mutateAsync(String(confirmDialogState?.reseller?.id));
       } else if (confirmDialogState.type === "SUSPEND") {
-        await suspendMutation.mutateAsync(confirmDialogState.reseller.id);
+        await suspendMutation.mutateAsync(String(confirmDialogState?.reseller.id));
       }
       setConfirmDialogState({ isOpen: false, type: null, reseller: null });
     } catch (err) {
@@ -424,7 +424,7 @@ export default function ResellersListPage() {
         {data && data.totalPages > 1 && (
           <div className="p-4 border-t border-border/40 flex items-center justify-between bg-muted/20">
             <p className="text-xs text-muted-foreground font-medium">
-              Page <span className="font-bold text-foreground">{data.pageNumber + 1}</span> sur{" "}
+              Page <span className="font-bold text-foreground">{data.number + 1}</span> sur{" "}
               <span className="font-bold text-foreground">{data.totalPages}</span> ({data.totalElements} revendeurs)
             </p>
 
@@ -432,7 +432,7 @@ export default function ResellersListPage() {
               <Button
                 variant="outline"
                 size="sm"
-                disabled={data.pageNumber === 0 || isFetching}
+                disabled={data.number === 0 || isFetching}
                 onClick={() => setPage((prev) => Math.max(0, prev - 1))}
                 className="rounded-xl font-bold text-xs gap-1 h-8"
               >
@@ -443,7 +443,7 @@ export default function ResellersListPage() {
               <Button
                 variant="outline"
                 size="sm"
-                disabled={data.pageNumber + 1 >= data.totalPages || isFetching}
+                disabled={data.number + 1 >= data.totalPages || isFetching}
                 onClick={() => setPage((prev) => prev + 1)}
                 className="rounded-xl font-bold text-xs gap-1 h-8"
               >
@@ -462,7 +462,7 @@ export default function ResellersListPage() {
           onClose={() =>
             setApproveModalState({ isOpen: false, resellerId: "", resellerName: "" })
           }
-          resellerId={approveModalState.resellerId}
+          resellerId={String(approveModalState.resellerId)}
           resellerName={approveModalState.resellerName}
           onSuccess={() => {
             refetch();

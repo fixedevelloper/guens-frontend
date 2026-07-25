@@ -30,7 +30,7 @@ export interface RoomImageItem {
 interface PageProps {
     params: Promise<{
         locale: string;
-        hotelId: string;
+        id: string;
         roomId: string;
     }>;
 }

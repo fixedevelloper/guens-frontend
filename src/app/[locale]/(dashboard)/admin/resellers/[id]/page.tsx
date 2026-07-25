@@ -53,8 +53,8 @@ import {
   useUpdateCommissionMutation,
   useSuspendResellerMutation,
 } from "@/hooks/use-admin"; // Ajustez selon votre structure
+import { ResellerStatus } from "@/lib/api/types";
 
-export type ResellerStatus = "PENDING_REVIEW" | "APPROVED" | "SUSPENDED" | "REJECTED";
 
 const STATUS_CONFIG: Record<
   ResellerStatus,

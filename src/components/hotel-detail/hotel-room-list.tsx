@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatMoney } from "@/lib/format";
-import type { RoomOffer } from "@/hooks/use-hotel-rooms";
+import { RoomOffer } from "@/lib/api/types";
 
 interface HotelRoomListProps {
   roomOffers?: RoomOffer[];
@@ -96,7 +96,7 @@ function RoomCard({ room, nights }: { room: RoomOffer; nights: number }) {
 
           {room.facilities && room.facilities.length > 0 && (
             <div className="flex flex-wrap gap-x-4 gap-y-1 pt-1">
-              {room.facilities.slice(0, 4).map((facility, idx) => (
+              {room.facilities.slice(0, 4).map((facility:any, idx:number) => (
                 <span key={idx} className="inline-flex items-center gap-1 text-xs text-muted-foreground/80 font-medium">
                   <Check className="size-3 text-emerald-500 shrink-0" />
                   {facility}

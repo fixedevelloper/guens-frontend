@@ -4,7 +4,7 @@ import { use } from "react";
 import { toast } from "sonner";
 import { useRouter } from "@/i18n/navigation"; // ou "next/navigation"
 
-import { RoomForm, RoomFormData } from "@/components/partner/rooms/RoomForm";
+import { RoomForm, RoomTypeRequestPayload } from "@/components/partner/rooms/RoomForm";
 import {useAuth} from "../../../../../../../../../context/auth-context";
 import {useCreateRoomTypeMutation} from "../../../../../../../../../hooks/use-partner-queries";
 
@@ -19,10 +19,10 @@ export default function NewRoomPage({ params }: NewRoomPageProps) {
 
     // Récupération du partnerId (depuis la route ou le contexte utilisateur/session)
 
-    const createRoomMutation = useCreateRoomTypeMutation(user.partnerId, hotelId);
+    const createRoomMutation = useCreateRoomTypeMutation(String(user?.partnerId), hotelId);
 
-    const handleCreateRoom = async (data: RoomFormData) => {
-        if (!user.partnerId) {
+    const handleCreateRoom = async (data: RoomTypeRequestPayload) => {
+        if (!user?.partnerId) {
             toast.error("Identifiant partenaire introuvable.");
             return;
         }

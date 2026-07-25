@@ -113,8 +113,9 @@ function FlightsPageContent() {
                   <div className="hidden h-4 w-px bg-border/80 sm:block" />
                   <div className="flex items-center gap-2 rounded-xl bg-muted/40 px-3 py-1 text-xs font-medium text-muted-foreground">
                     <Users className="size-3.5 text-primary" />
-                    <span>{params.passengers ?? 1} {t("passenger", { count: params.passengers ?? 1 })}</span>
-                  </div>
+<span>
+  {((params.adults ?? 1) + (params.children ?? 0))} {t("passenger", { count: (params.adults ?? 1) + (params.children ?? 0) })}
+</span>                  </div>
                 </div>
                 )}
                 <Button

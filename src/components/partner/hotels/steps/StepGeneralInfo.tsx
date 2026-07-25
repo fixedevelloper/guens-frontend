@@ -7,9 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { HotelFormData } from "@/types/hotel-form";
+import { HotelFormData, UserImage } from "@/types/hotel-form";
 import { ImageSelectModal } from "@/components/partner/media/ImageSelectModal";
-import { UserImage } from "@/types/media";
+
 
 interface StepGeneralInfoProps {
     form: HotelFormData;

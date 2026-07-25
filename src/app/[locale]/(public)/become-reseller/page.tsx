@@ -54,12 +54,11 @@ export default function BecomeResellerPage() {
 const { user } = useAuth();
 
 const [formData, setFormData] = useState<ResellerFormData>({
-  userId: user?.id ?? "",
   companyName: "",
   registrationNumber: "",
-  contactName: user?.name ?? "", // Pré-remplissage UX ergonomique
+  contactName: user?.fullName ?? "", // Pré-remplissage UX ergonomique
   email: user?.email ?? "",       // Pré-remplissage UX
-  phone: user?.phone ?? "",
+  phone: "",
   city: "",
   country: "",
   description: "",
@@ -68,11 +67,10 @@ const [formData, setFormData] = useState<ResellerFormData>({
 
 // Synchronisation si 'user' est chargé de manière asynchrone après le premier rendu
 useEffect(() => {
-  if (user?.id) {
+  if (user) {
     setFormData((prev) => ({
       ...prev,
-      userId: user.id,
-      contactName: prev.contactName || user.name || "",
+      contactName: prev.contactName || user.fullName || "",
       email: prev.email || user.email || "",
     }));
   }

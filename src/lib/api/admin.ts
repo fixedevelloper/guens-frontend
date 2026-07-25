@@ -6,8 +6,10 @@ import type {
   PageResponse,
   PartnerResponse,
   PartnerStatus,
+  Reseller,
   ResellerApprovalRequest,
   ResellerBooking,
+  ResellerDetail,
   ResellerResponse,
   ResellerStatus,
   ResellerWithdrawal,
@@ -64,21 +66,21 @@ export async function getAdminResellers(
   page: number,
   size = 20
 ) {
-  const { data } = await apiClient.get<PageResponse<ResellerResponse>>("/api/resellers", {
+  const { data } = await apiClient.get<PageResponse<Reseller>>("/api/resellers", {
     params: { status, page, size },
   });
   return data;
 }
 
 // Détail d'un revendeur
-export async function getResellerDetail(resellerId: string): Promise<ResellerResponse> {
-  const { data } = await apiClient.get<ResellerResponse>(`/api/resellers/${resellerId}`);
+export async function getResellerDetail(resellerId: string | number): Promise<ResellerDetail> {
+  const { data } = await apiClient.get<ResellerDetail>(`/api/resellers/${resellerId}`);
   return data;
 }
 
 // Réservations générées par le code promo du revendeur
 export async function getResellerBookings(
-  resellerId: string,
+ resellerId: string | number,
   page = 0,
   size = 10
 ): Promise<PageResponse<ResellerBooking>> {
@@ -91,7 +93,7 @@ export async function getResellerBookings(
 
 // Historique des demandes de retraits/wallet
 export async function getResellerWithdrawals(
-  resellerId: string,
+  resellerId: string | number,
   page = 0,
   size = 10
 ): Promise<PageResponse<ResellerWithdrawal>> {
@@ -104,7 +106,7 @@ export async function getResellerWithdrawals(
 
 // Approbation avec fixation du taux
 export async function approveReseller(
-  resellerId: string,
+  resellerId: string | number,
   payload: ResellerApprovalRequest
 ): Promise<ResellerResponse> {
   const { data } = await apiClient.patch<ResellerResponse>(
@@ -115,7 +117,7 @@ export async function approveReseller(
 }
 
 // Rejet
-export async function rejectReseller(resellerId: string): Promise<ResellerResponse> {
+export async function rejectReseller(resellerId: string | number): Promise<ResellerResponse> {
   const { data } = await apiClient.patch<ResellerResponse>(
     `/api/resellers/${resellerId}/reject`
   );
@@ -124,7 +126,7 @@ export async function rejectReseller(resellerId: string): Promise<ResellerRespon
 
 // Mise à jour de la commission
 export async function updateResellerCommission(
-  resellerId: string,
+ resellerId: string | number,
   payload: ResellerApprovalRequest
 ): Promise<ResellerResponse> {
   const { data } = await apiClient.patch<ResellerResponse>(
@@ -135,7 +137,7 @@ export async function updateResellerCommission(
 }
 
 // Suspension
-export async function suspendReseller(resellerId: string): Promise<ResellerResponse> {
+export async function suspendReseller(resellerId: string | number): Promise<ResellerResponse> {
   const { data } = await apiClient.patch<ResellerResponse>(
     `/api/resellers/${resellerId}/suspend`
   );

@@ -35,6 +35,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useCreateFlightMutation } from "@/hooks/use-partner-queries";
 import {useAuth} from "../../../../../../../context/auth-context";
+import { FlightFormData } from "@/lib/api/types";
 
 // Jours de la semaine (1 = Lundi, 7 = Dimanche) alignés sur Java DayOfWeek
 const DAYS_OF_WEEK = [
@@ -62,8 +63,8 @@ export default function NewFlightPage() {
     const router = useRouter();
     const { user } = useAuth();
     // Id du partenaire (à adapter selon votre contexte global ou session)
-    const partnerId = user.partnerId;
-    const createFlightMutation = useCreateFlightMutation(partnerId);
+    const partnerId = user?.partnerId;
+    const createFlightMutation = useCreateFlightMutation(String(partnerId));
 
     // Champs du formulaire
     const [flightNumber, setFlightNumber] = useState("");
@@ -151,7 +152,7 @@ export default function NewFlightPage() {
         };
 
         try {
-            await createFlightMutation.mutateAsync(payload);
+            await createFlightMutation.mutateAsync(payload as FlightFormData);
             toast.success(`Vol ${cleanFlightNumber} créé avec succès !`);
             router.push("/partner/listings");
         } catch (error: any) {

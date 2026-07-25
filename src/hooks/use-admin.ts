@@ -125,7 +125,7 @@ export function useApproveResellerMutation() {
       payload: ResellerApprovalRequest;
     }) => adminApi.approveReseller(resellerId, payload),
     onSuccess: (reseller) => {
-      queryClient.invalidateQueries({ queryKey: resellerKeys.detail(reseller.id) });
+      queryClient.invalidateQueries({ queryKey: resellerKeys.detail(String(reseller.data.id)) });
       queryClient.invalidateQueries({ queryKey: resellerKeys.lists() });
     },
   });
@@ -138,7 +138,7 @@ export function useRejectResellerMutation() {
   return useMutation({
     mutationFn: (resellerId: string) => adminApi.rejectReseller(resellerId),
     onSuccess: (reseller) => {
-      queryClient.invalidateQueries({ queryKey: resellerKeys.detail(reseller.id) });
+      queryClient.invalidateQueries({ queryKey: resellerKeys.detail(String(reseller.data.id)) });
       queryClient.invalidateQueries({ queryKey: resellerKeys.lists() });
     },
   });
@@ -157,7 +157,7 @@ export function useUpdateCommissionMutation() {
       payload: ResellerApprovalRequest;
     }) => adminApi.updateResellerCommission(resellerId, payload),
     onSuccess: (reseller) => {
-      queryClient.invalidateQueries({ queryKey: resellerKeys.detail(reseller.id) });
+      queryClient.invalidateQueries({ queryKey: resellerKeys.detail(String(reseller.data.id)) });
     },
   });
 }
@@ -169,7 +169,7 @@ export function useSuspendResellerMutation() {
   return useMutation({
     mutationFn: (resellerId: string) => adminApi.suspendReseller(resellerId),
     onSuccess: (reseller) => {
-      queryClient.invalidateQueries({ queryKey: resellerKeys.detail(reseller.id) });
+      queryClient.invalidateQueries({ queryKey: resellerKeys.detail(String(reseller.data.id)) });
       queryClient.invalidateQueries({ queryKey: resellerKeys.lists() });
     },
   });

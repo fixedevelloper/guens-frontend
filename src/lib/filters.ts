@@ -6,12 +6,14 @@ export interface FlightFilterState {
   maxPrice: number | null;
   providers: ProviderType[];
   airlines: string[];
+  stops: string;
 }
 
 export const DEFAULT_FLIGHT_FILTERS: FlightFilterState = {
   maxPrice: null,
   providers: [],
   airlines: [],
+  stops: "ALL",
 };
 
 export interface FlightFilterOptions {

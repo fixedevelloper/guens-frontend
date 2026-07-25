@@ -25,20 +25,8 @@ export interface RoomTypeRequestPayload {
     currency: string;
     totalRooms: number;
     coverImageUrl?: string | null;
-}
-
-export interface RoomFormData {
-    name: string;
-    description: string;
-    basePrice: number;
-    currency: string;
-    totalRooms: number;
-    bedType: string;
-    maxAdults: number;
-    maxChildren: number;
-    sizeSqm?: number;
-    coverImageUrl: string;
-    amenities: string[];
+       amenities: string[];
+        description: string;
 }
 
 const COMMON_AMENITIES = [
@@ -56,17 +44,18 @@ const COMMON_AMENITIES = [
 
 interface RoomFormProps {
     hotelId: string;
-    initialData?: Partial<RoomFormData>;
+    initialData?: Partial<RoomTypeRequestPayload>;
     isEditing?: boolean;
+    isLoading?: boolean;
     onSubmit: (payload: RoomTypeRequestPayload) => Promise<void>;
 }
 
-export function RoomForm({ hotelId, initialData, isEditing = false, onSubmit }: RoomFormProps) {
+export function RoomForm({ hotelId, initialData, isEditing = false,isLoading=false, onSubmit }: RoomFormProps) {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    const [form, setForm] = useState<RoomFormData>({
+    const [form, setForm] = useState<RoomTypeRequestPayload>({
         name: initialData?.name ?? "",
         description: initialData?.description ?? "",
         basePrice: initialData?.basePrice ?? 25000,
@@ -119,7 +108,9 @@ export function RoomForm({ hotelId, initialData, isEditing = false, onSubmit }: 
             basePrice: Number(form.basePrice),
             currency: form.currency || "XAF",
             totalRooms: Number(form.totalRooms),
-            coverImageUrl: form.coverImageUrl.trim() ? form.coverImageUrl.trim() : null,
+            coverImageUrl: form.coverImageUrl?.trim() ? form.coverImageUrl.trim() : null,
+            amenities:form.amenities,
+            description:form.description
         };
 
         try {
@@ -338,7 +329,7 @@ export function RoomForm({ hotelId, initialData, isEditing = false, onSubmit }: 
                                         id="coverImageUrl"
                                         name="coverImageUrl"
                                         placeholder="https://domaine.com/images/chambre.jpg"
-                                        value={form.coverImageUrl}
+                                        value={form.coverImageUrl || '' }
                                         onChange={handleChange}
                                         className="flex-1 rounded-xl"
                                     />

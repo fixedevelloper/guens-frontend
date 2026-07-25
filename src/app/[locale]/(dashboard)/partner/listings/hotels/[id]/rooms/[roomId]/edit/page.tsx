@@ -4,7 +4,7 @@ import { use } from "react";
 import { toast } from "sonner";
 import { AlertCircle, Loader2 } from "lucide-react";
 
-import { RoomForm, RoomFormData } from "@/components/partner/rooms/RoomForm";
+import { RoomForm, RoomTypeRequestPayload } from "@/components/partner/rooms/RoomForm";
 import { useRouter } from "@/i18n/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import {useRoomTypeQuery, useUpdateRoomTypeMutation} from "../../../../../../../../../../hooks/use-partner-queries";
@@ -26,12 +26,12 @@ export default function EditRoomPage({ params }: EditRoomPageProps) {
         isLoading: isFetching,
         isError,
         error,
-    } = useRoomTypeQuery(user.partnerId, roomId);
+    } = useRoomTypeQuery(String(user?.partnerId), roomId);
 
-    const updateRoomMutation = useUpdateRoomTypeMutation(user.partnerId, hotelId, roomId);
+    const updateRoomMutation = useUpdateRoomTypeMutation(String(user?.partnerId), hotelId, roomId);
 
-    const handleUpdateRoom = async (data: RoomFormData) => {
-        if (!user.partnerId) {
+    const handleUpdateRoom = async (data: RoomTypeRequestPayload) => {
+        if (!user?.partnerId) {
             toast.error("Identifiant partenaire introuvable.");
             return;
         }

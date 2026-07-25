@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { ListChecks, CalendarClock, Wallet } from "lucide-react";
-
+export const dynamic = "force-dynamic";
 const STAT_CARDS = [
     { key: "activeListings", icon: ListChecks },
     { key: "pendingBookings", icon: CalendarClock },

@@ -5,18 +5,23 @@ const TOKEN_KEY = "guentours.token";
 const PROFILE_KEY = "guentours.profile";
 
 export type UserRole =
-    | "CUSTOMER"
-    | "ADMIN"
-    | "PARTNER_AIRLINE"
-    | "PARTNER_HOTEL"
-    | "PARTNER_CAR_RENTAL"
-    | "PARTNER_FURNISHED_RENTAL";
+  | "CUSTOMER"
+  | "ADMIN"
+  | "PARTNER_AIRLINE"
+  | "PARTNER_HOTEL"
+  | "PARTNER_CAR_RENTAL"
+  | "PARTNER_FURNISHED_RENTAL"
+  | "RESELLER";
+
+export type ResellerStatus = "PENDING" | "APPROVED" | "REJECTED";
 
 export interface StoredProfile {
   email: string;
   fullName: string;
   role: UserRole;
   partnerId?: string; // présent uniquement pour les comptes partenaires
+  resellerStatus?: ResellerStatus | string; // 👈 Ajouter cette propriété
+  resellerId?: string; // 👈 (Optionnel mais recommandé si présent dans le JWT/Session)
 }
 
 export function getStoredToken(): string | null {

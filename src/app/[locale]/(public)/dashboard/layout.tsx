@@ -42,9 +42,8 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
 
   // Vérification du statut revendeur
   const isReseller =
-    user?.isReseller === true ||
     user?.role === "RESELLER" ||
-    user?.roles?.includes("RESELLER") ||
+    user?.role?.includes("RESELLER") ||
     user?.resellerStatus === "APPROVED" ||
     user?.resellerStatus === "ACTIVE";
 
