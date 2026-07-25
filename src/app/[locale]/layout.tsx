@@ -62,9 +62,10 @@ export default async function LocaleLayout({
         <body className="min-h-full flex flex-col bg-background font-sans text-foreground transition-colors duration-300">
         <NextIntlClientProvider messages={messages}>
             <Providers>
-                <main className="flex-1 flex flex-col w-full animate-fade-in">
+                {/* Conteneur fluide sans animation ni transform qui casserait le fixed */}
+                <div className="flex-1 flex flex-col w-full">
                     {children}
-                </main>
+                </div>
                 <Toaster
                     richColors
                     position="top-right"

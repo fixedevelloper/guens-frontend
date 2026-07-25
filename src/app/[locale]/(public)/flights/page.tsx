@@ -4,7 +4,20 @@
 import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Search, X, ArrowLeftRight, Calendar, Users, Filter, PlaneTakeoff, Sparkles } from "lucide-react";
+import {
+  Search,
+  X,
+  ArrowLeftRight,
+  Calendar,
+  Users,
+  Filter,
+  PlaneTakeoff,
+  Sparkles,
+  Mail,
+  Bell,
+  CheckCircle2,
+  ShieldCheck
+} from "lucide-react";
 
 import { useRouter } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
@@ -17,6 +30,7 @@ import { useFlightSearch } from "@/hooks/use-search";
 import { flightSearchParamsToQuery, multiCitySearchParamsToQuery, parseFlightSearchParams } from "@/lib/search-params";
 import { DEFAULT_FLIGHT_FILTERS, computeFlightFilterOptions, filterFlightOffers } from "@/lib/filters";
 import type { FlightSearchParams, MultiCityFlightSearchParams } from "@/lib/api/types";
+import DynamicFlightLoader from "@/components/search/dynamic-flight-loader";
 
 export default function FlightsPage() {
   return (
@@ -37,6 +51,7 @@ export default function FlightsPage() {
 
 function FlightsPageContent() {
   const t = useTranslations("SearchResults");
+  const tCta = useTranslations("Cta.flights");
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -66,7 +81,7 @@ function FlightsPageContent() {
   const isFilteredOut = (query.data?.length ?? 0) > 0 && filteredOffers.length === 0;
 
   return (
-      <div className="min-h-screen bg-slate-50/50 dark:bg-zinc-950/30 pb-20 sm:pb-8">
+      <div className="min-h-screen bg-slate-50/50 dark:bg-zinc-950/30 pb-20 sm:pb-12">
 
         {/* 1. BARRE DE NAVIGATION MOBILE POSITIONNÉE AU DÉBUT ET FLOTTANTE */}
         <div className="fixed bottom-18 left-1/2 z-[100] flex -translate-x-1/2 items-center gap-1 rounded-full border border-border/40 bg-background/95 p-1.5 shadow-lg backdrop-blur-md pointer-events-auto sm:hidden mb-[env(safe-area-inset-bottom,0px)]">
@@ -93,11 +108,10 @@ function FlightsPageContent() {
 
         <div className="mx-auto max-w-6xl px-4 py-6 sm:py-10">
 
-          {/* Résumé de recherche ultra-stylé */}
-
-              <div className="mb-8 flex flex-col items-center justify-between gap-4 rounded-3xl border border-border/60 bg-gradient-to-r from-background via-background/90 to-primary/5 p-4 shadow-sm backdrop-blur-sm sm:flex-row sm:rounded-full sm:py-3 sm:pl-6 sm:pr-3">
-                {params && (
-                    <div className="flex flex-wrap items-center justify-center gap-3 text-sm sm:justify-start">
+          {/* Résumé de recherche */}
+          <div className="mb-8 flex flex-col items-center justify-between gap-4 rounded-3xl border border-border/60 bg-gradient-to-r from-background via-background/90 to-primary/5 p-4 shadow-sm backdrop-blur-sm sm:flex-row sm:rounded-full sm:py-3 sm:pl-6 sm:pr-3">
+            {params && (
+                <div className="flex flex-wrap items-center justify-center gap-3 text-sm sm:justify-start">
                   <div className="flex items-center gap-2 font-bold text-foreground">
                     <span className="rounded-xl bg-primary/10 px-3 py-1 text-xs font-bold text-primary shadow-2xs">{params.origin}</span>
                     <div className="flex size-7 items-center justify-center rounded-full bg-muted/60 text-muted-foreground transition-transform hover:rotate-180 duration-300">
@@ -113,21 +127,21 @@ function FlightsPageContent() {
                   <div className="hidden h-4 w-px bg-border/80 sm:block" />
                   <div className="flex items-center gap-2 rounded-xl bg-muted/40 px-3 py-1 text-xs font-medium text-muted-foreground">
                     <Users className="size-3.5 text-primary" />
-<span>
-  {((params.adults ?? 1) + (params.children ?? 0))} {t("passenger", { count: (params.adults ?? 1) + (params.children ?? 0) })}
-</span>                  </div>
+                    <span>
+                  {((params.adults ?? 1) + (params.children ?? 0))} {t("passenger", { count: (params.adults ?? 1) + (params.children ?? 0) })}
+                </span>
+                  </div>
                 </div>
-                )}
-                <Button
-                    onClick={() => setEditing((v) => !v)}
-                    size="sm"
-                    className="w-full rounded-2xl sm:w-auto sm:rounded-full bg-primary font-semibold text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/20 transition-all duration-200 active:scale-95"
-                >
-                  <Search className="mr-2 size-4" />
-                  Modifier
-                </Button>
-              </div>
-
+            )}
+            <Button
+                onClick={() => setEditing((v) => !v)}
+                size="sm"
+                className="w-full rounded-2xl sm:w-auto sm:rounded-full bg-primary font-semibold text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/20 transition-all duration-200 active:scale-95"
+            >
+              <Search className="mr-2 size-4" />
+              Modifier
+            </Button>
+          </div>
 
           {/* Formulaire rétractable Desktop */}
           {editing && (
@@ -146,7 +160,7 @@ function FlightsPageContent() {
 
           {/* Grille Principale */}
           {query.isLoading ? (
-              <div className="grid gap-8 lg:grid-cols-[290px_1fr]">
+             /* <div className="grid gap-8 lg:grid-cols-[290px_1fr]">
                 <aside className="hidden lg:block space-y-4">
                   <Skeleton className="h-[450px] w-full rounded-3xl" />
                 </aside>
@@ -155,17 +169,18 @@ function FlightsPageContent() {
                       <Skeleton key={n} className="h-48 w-full rounded-3xl" />
                   ))}
                 </div>
-              </div>
+              </div>*/
+              <DynamicFlightLoader isPending={true } />
           ) : (
               <div className="grid gap-8 lg:grid-cols-[290px_1fr]">
-                {/* Panneau de filtres Desktop - Positionné à gauche */}
+                {/* Panneau de filtres Desktop */}
                 <aside className="hidden lg:block">
                   <div className="lg:sticky lg:top-24 rounded-3xl border border-border/60 bg-background/90 p-5 shadow-sm backdrop-blur-sm">
                     <FlightFilters options={filterOptions} value={filters} onChange={setFilters} />
                   </div>
                 </aside>
 
-                {/* Résultats de recherche ou Empty State moderne */}
+                {/* Résultats de recherche ou Empty State */}
                 <div className="space-y-4">
                   {isFilteredOut ? (
                       <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border/80 bg-background/50 p-12 text-center shadow-xs backdrop-blur-xs animate-in fade-in zoom-in-95 duration-300">
@@ -192,6 +207,61 @@ function FlightsPageContent() {
                 </div>
               </div>
           )}
+
+          {/* CALL TO ACTION : ALERTE PRIX & BONS PLANS (Couleurs #15a4e6 et #7bcd4f) */}
+          {/* CALL TO ACTION : ALERTE PRIX VOLS */}
+          <div className="relative mt-12 overflow-hidden rounded-3xl bg-gradient-to-br from-[#15a4e6] via-[#128bc3] to-[#0c6b99] p-6 sm:p-10 text-white shadow-xl">
+            <div className="absolute -top-20 -right-20 size-72 rounded-full bg-[#7bcd4f]/30 blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-20 -left-20 size-72 rounded-full bg-[#7bcd4f]/20 blur-3xl pointer-events-none" />
+
+            <div className="relative z-10 grid gap-8 lg:grid-cols-12 lg:items-center">
+              <div className="lg:col-span-7 space-y-3.5 text-center sm:text-left">
+                <div className="inline-flex items-center gap-2 rounded-full bg-white/15 border border-white/20 px-3.5 py-1 text-xs font-bold text-white backdrop-blur-md">
+                  <Sparkles className="size-3.5 text-[#7bcd4f]" />
+                  <span>{tCta("badge")}</span>
+                </div>
+
+                <h2 className="text-2xl font-black tracking-tight sm:text-3xl lg:text-4xl leading-tight">
+                  {tCta("title")}
+                </h2>
+
+                <p className="text-white/90 text-sm sm:text-base max-w-xl leading-relaxed">
+                  {tCta("description")}
+                </p>
+
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 pt-2 text-xs font-semibold text-white/95">
+                  <div className="flex items-center gap-1.5 bg-black/10 rounded-lg px-2.5 py-1 backdrop-blur-xs">
+                    <CheckCircle2 className="size-4 text-[#7bcd4f]" />
+                    <span>{tCta("free")}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 bg-black/10 rounded-lg px-2.5 py-1 backdrop-blur-xs">
+                    <ShieldCheck className="size-4 text-[#7bcd4f]" />
+                    <span>{tCta("noSpam")}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="lg:col-span-5">
+                <form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-3 bg-white/10 p-3 sm:p-4 rounded-2xl backdrop-blur-md border border-white/20 shadow-inner">
+                  <div className="relative">
+                    <Mail className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-white/70" />
+                    <input
+                        type="email"
+                        placeholder={tCta("placeholder")}
+                        className="w-full rounded-xl bg-white/15 pl-10 pr-4 py-3 text-sm text-white placeholder:text-white/70 focus:outline-none focus:ring-2 focus:ring-[#7bcd4f] border border-white/10 transition-all"
+                    />
+                  </div>
+                  <Button
+                      type="submit"
+                      className="w-full rounded-xl bg-[#7bcd4f] hover:bg-[#6ebd44] py-6 font-bold text-slate-950 active:scale-95 shadow-lg shadow-[#7bcd4f]/25 transition-all duration-200"
+                  >
+                    <Bell className="mr-2 size-4" />
+                    {tCta("button")}
+                  </Button>
+                </form>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Tiroir coulissant de Filtres Mobile */}

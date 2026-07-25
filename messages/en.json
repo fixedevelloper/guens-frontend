@@ -1,7 +1,7 @@
 {
   "Metadata": {
-    "title": "GuenTours — Flights and hotels at the best price",
-    "description": "Compare and book flights and hotels across multiple providers (Travelopro, Sabre, Travelport) in a single search."
+    "title": "GuenTours — Travel Agency | Book Flights & Hotels at the Best Price",
+    "description": "Book your flight tickets and hotel rooms easily at the best rates. Enjoy exclusive deals and plan your trip seamlessly with GuenTours."
   },
   "Nav": {
     "brand": "GuenTours",
@@ -18,12 +18,12 @@
     "becomeHost": "Become a host"
   },
  "Home": {
-    "badgeFlights": "Cheap Flight Comparison",
+   "badgeFlights": "Best Rate Flight Booking",
     "badgeHotels": "Hotel & Accommodation Booking",
-    "heroTitleFlights": "Compare and Book Flights at the Best Rates",
-    "heroTitleHotels": "Find the Perfect Hotel for Your Stay",
-    "heroSubtitleFlights": "Get direct access to thousands of destinations. Find cheap flight tickets and multi-city flights tailored to your budget.",
-    "heroSubtitleHotels": "Browse a wide selection of hotel rooms, residences, and vacation apartments with the best price guaranteed.",
+   "heroTitleFlights": "Book Your Flight Tickets at the Best Price",
+   "heroTitleHotels": "Find and Book the Ideal Hotel for Your Stay",
+   "heroSubtitleFlights": "Direct access to thousands of destinations. Get the best rates on one-way, round-trip, and multi-city flights.",
+   "heroSubtitleHotels": "Explore a wide selection of hotels, residences, and vacation rentals at guaranteed best rates.",
     "tabFlights": "Find a flight",
     "tabHotels": "Book a hotel",
     "statTravelers": "Happy Travelers",
@@ -121,6 +121,7 @@
     "nonstop": "Nonstop",
     "duration": "Duration",
     "backToSearch": "Edit search",
+    "closeSearch": "Close Search",
     "rating": "Rating",
     "roomType": "Room type",
     "night": "{count, plural, =1 {1 night} other {# nights}}",
@@ -337,21 +338,66 @@
     "resellerDashboard": "Reseller Dashboard",
     "commissions": "My Commissions",
     "wallet": "Wallet & Balance",
-    "customers": "My Customers"
-  },
+    "customers": "My Customers",
+    "welcomeBadge": "GuenTours Customer Area",
+    "subtitle": "Manage your flight and hotel bookings, access your e-tickets, and plan your next trips.",
+    "newBookingBtn": "Book a Trip",
+    "myBookingsDesc": "History and details of all your flights and accommodations",
+    "stats": {
+      "total": "Total Bookings",
+      "upcoming": "Upcoming",
+      "completed": "History"
+    },
+    "tabs": {
+      "all": "All",
+      "upcoming": "Upcoming",
+      "completed": "Past"
+    },
+    "refresh": "Refresh list",
+    "errorTitle": "Loading Error",
+    "retry": "Retry",
+    "noBookingsTitle": "No bookings found yet",
+    "noBookingsDesc": "You haven't made any bookings yet. Explore our best flight and hotel deals!",
+    "noFilteredBookingsTitle": "No bookings found",
+    "noFilteredBookingsDesc": "There are no bookings matching this filter at the moment.",
+    "searchDealsBtn": "Search flights or hotels"
+  }
+  ,
   "Auth": {
-    "loginTitle": "Sign in",
-    "registerTitle": "Create an account",
+    "loginTitle": "Welcome back",
+    "loginSubtitle": "Enter your credentials to access your account.",
     "email": "Email address",
+    "emailPlaceholder": "your@email.com",
+    "emailInvalid": "Please enter a valid email address.",
     "password": "Password",
-    "fullName": "Full name",
-    "phone": "Phone",
+    "passwordRequired": "Password is required.",
     "loginSubmit": "Sign in",
-    "registerSubmit": "Create my account",
-    "noAccount": "Don't have an account?",
-    "hasAccount": "Already registered?",
+    "loggingIn": "Signing in...",
+    "noAccount": "Don't have an account yet?",
     "switchToRegister": "Create an account",
-    "switchToLogin": "Sign in"
+    "bannerTitle": "Explore the world, book with peace of mind.",
+    "bannerDescription": "Access your personalized hotel offers, compare real-time rates, and prepare your next stays with our premium selection.",
+    "bannerStat": "Over 10,000 properties listed worldwide.",
+    "registerTitle": "Create an account",
+    "registerSubtitle": "Join our platform to plan your travel seamlessly.",
+    "fullName": "Full name",
+    "fullNamePlaceholder": "John Doe",
+    "fullNameRequired": "Please enter your full name.",
+    "phone": "Phone number",
+    "phoneOptional": "(Optional)",
+    "phonePlaceholder": "+237 6xx xxx xxx",
+    "passwordMinLength": "Password must be at least 8 characters long.",
+    "passwordPlaceholder": "•••••••• (8 chars min.)",
+    "registerSubmit": "Create an account",
+    "creatingAccount": "Creating account...",
+    "hasAccount": "Already have an account?",
+    "switchToLogin": "Sign in",
+    "registerBannerTitle": "Create your account in just a few moments.",
+    "registerBannerDescription": "Join us to unlock negotiated rates with top providers, manage your bookings effortlessly, and track your travel itineraries.",
+    "registerFeature1": "Instant and free access to exclusive deals",
+    "registerFeature2": "Real-time multi-provider comparison",
+    "registerFeature3": "Dedicated support and itinerary tracking",
+    "copyright": "© 2026 Guen's Travel. All rights reserved."
   },
   "Errors": {
     "generic": "Something went wrong. Please try again.",
@@ -411,12 +457,42 @@
     "privacySection4Body": "In accordance with applicable regulations, you have the right to access, correct, and delete your data by contacting us."
   },
   "AppPromo": {
-    "badge": "Available now",
-    "title": "Travel lighter with the Guen's travel app",
-    "description": "Book, manage your stays, and access your tickets right from your pocket. Scan the QR code to download our app.",
-    "cta": "Download the app"
+    "badge": "Mobile Application",
+    "title": "Take GuenTours wherever you go",
+    "description": "Book your flights and hotel rooms directly from your smartphone. Access exclusive deals and real-time updates.",
+    "appStoreSub": "Download on the",
+    "googlePlaySub": "Get it on",
+    "scanToDownload": "Scan to download"
   },
-  
+  "Partner": {
+    "dashboard": {
+      "title": "Partner Dashboard",
+      "subtitle": "Overview your listings, approve incoming bookings, and track your revenue in real time.",
+      "badge": "Verified Partner Account",
+      "addListing": "Add new listing",
+      "cards": {
+        "activeListings": "Active listings",
+        "activeListingsSubtitle": "+2 properties this month",
+        "pendingBookings": "Pending requests",
+        "pendingBookingsSubtitle": "Action required within 24h",
+        "monthlyRevenue": "Monthly revenue",
+        "monthlyRevenueSubtitle": "+18.4% compared to last month"
+      },
+      "quickActions": {
+        "title": "Quick Shortcuts",
+        "desc": "Direct access to key features",
+        "manageListings": "Manage my listings",
+        "viewBookings": "View bookings",
+        "payouts": "Payouts & Earnings"
+      },
+      "recentActivity": {
+        "title": "Recent Booking Requests",
+        "desc": "Review and manage latest customer reservations",
+        "viewAll": "View all",
+        "empty": "No booking requests at the moment."
+      }
+    }
+  },
   "ErrorPage": {
     "title": "Something went wrong",
     "description": "We couldn't load this page. A temporary problem has occurred.",
@@ -501,7 +577,117 @@
       "contact": "Contact:",
       "dashboardBtn": "Return to Dashboard"
     }
+  },
+
+    "Cta": {
+      "flights": {
+        "badge": "Never miss a price drop",
+        "title": "Get the best flight deals delivered straight to your inbox",
+        "description": "Flight prices change constantly. Set up an alert to be notified immediately when a lower rate is available.",
+        "free": "100% Free",
+        "noSpam": "No spam",
+        "placeholder": "Enter your email address...",
+        "button": "Create my price alert"
+      },
+      "hotels": {
+        "badge": "Exclusive discounts & Flash sales",
+        "title": "Unlock member rates and hotel price drops",
+        "description": "Never miss a last-minute deal. Subscribe to receive the best hotel offers tailored to your travel plans.",
+        "negotiated": "Negotiated rates",
+        "easyUnsubscribe": "Easy unsubscribe",
+        "placeholder": "Your email address...",
+        "button": "Activate hotel alerts"
+      }
+    },
+  "BecomeHost": {
+    "badge": "Partners & Hosts Space",
+    "title": "Become an official partner",
+    "subtitle": "Grow your visibility and manage your transport or accommodation offers by joining our network.",
+    "steps": {
+      "selectSector": "Select your line of business",
+      "applicationForm": "Application form"
+    },
+    "partnerTypes": {
+      "airline": {
+        "label": "Travel / Transport Company",
+        "description": "Commercial flights, charters, or air carriers"
+      },
+      "hotel": {
+        "label": "Hotel & Establishment",
+        "description": "Hotels, resorts, residences"
+      },
+      "carRental": {
+        "label": "Car Rental",
+        "description": "Car rental agencies / private fleets"
+      },
+      "furnishedRental": {
+        "label": "Furnished Rental",
+        "description": "Apartments, villas, and private accommodations"
+      }
+    },
+    "form": {
+      "title": "Company Information",
+      "descriptionHeader": "Provide legal and administrative details for review of your application.",
+      "sectionLegal": "Legal Entity",
+      "companyName": "Company Name / Business Name",
+      "companyNamePlaceholder": "e.g., TransAir Express",
+      "registrationNumber": "Registration / Trade Register No.",
+      "registrationNumberPlaceholder": "e.g., CI-ABJ-03-2024-B12-...",
+      "sectionContact": "Contact & Manager",
+      "contactName": "Manager's Full Name",
+      "contactNamePlaceholder": "e.g., John Doe",
+      "email": "Business Email",
+      "emailPlaceholder": "contact@company.com",
+      "phone": "Phone / WhatsApp",
+      "phonePlaceholder": "+225 07 00 00 00 00",
+      "city": "City",
+      "cityPlaceholder": "Abidjan",
+      "country": "Country",
+      "countryPlaceholder": "Ivory Coast",
+      "sectionCapacity": "Capacity & Overview",
+      "capacityLabel": {
+        "AIRLINE": "Fleet size / Managed routes",
+        "HOTEL": "Number of rooms / suites available",
+        "CAR_RENTAL": "Fleet size",
+        "FURNISHED_RENTAL": "Number of apartments / properties"
+      },
+      "capacityPlaceholder": "e.g., 12",
+      "description": "Brief overview of your offer",
+      "descriptionPlaceholder": "Briefly describe your services, coverage areas, or key features...",
+      "submit": "Submit Application",
+      "submitting": "Processing..."
+    },
+    "errors": {
+      "selectSector": "Please select a line of business.",
+      "conflict": "An account with this email or registration number already exists.",
+      "default": "Unable to send your request. Please check your information and try again."
+    },
+    "success": {
+      "title": "Application Submitted! 🎉",
+      "description": "Thank you for your interest. Your application has been sent to our partnership team.",
+      "nextStepTitle": "Next step: Review within 48h",
+      "nextStepDesc": "Our team will verify your registration details before activating your partner access.",
+      "backHome": "Back to Home"
+    }
+  },
+  "FlightLoader": {
+    "steps": [
+      {
+        "title": "Analyzing available offers...",
+        "description": "Searching through airlines to find the best rates for you."
+      },
+      {
+        "title": "Optimizing flight route...",
+        "description": "Filtering shortest layovers and fastest flight durations."
+      },
+      {
+        "title": "Checking comfort options...",
+        "description": "Verifying seat availability, baggage allowance, and inflight meals."
+      },
+      {
+        "title": "Finalizing best rates...",
+        "description": "Calculating exact taxes and comprehensive travel coverage options."
+      }
+    ]
   }
-
-
 }

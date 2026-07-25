@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import {
     Plane,
     Building2,
@@ -29,43 +30,38 @@ import {
     CardDescription,
 } from "@/components/ui/card";
 import { PartnerType, PartnerRegistrationRequest } from "@/types/partner";
-import {createPartner} from "../../../../lib/api/partner";
+import { createPartner } from "../../../../lib/api/partner";
 
-interface PartnerTypeOption {
-    value: PartnerType;
-    label: string;
-    description: string;
-    icon: typeof Plane;
-}
-
-const PARTNER_TYPES: PartnerTypeOption[] = [
+const PARTNER_TYPE_CONFIG = [
     {
-        value: "AIRLINE",
-        label: "Compagnie de Voyage / Transport",
-        description: "Vols réguliers, charters ou transporteurs aériens",
+        value: "AIRLINE" as PartnerType,
+        labelKey: "partnerTypes.airline.label",
+        descKey: "partnerTypes.airline.description",
         icon: Plane,
     },
     {
-        value: "HOTEL",
-        label: "Hôtel & Établissement",
-        description: "Hôtels, complexes hôteliers, résidences",
+        value: "HOTEL" as PartnerType,
+        labelKey: "partnerTypes.hotel.label",
+        descKey: "partnerTypes.hotel.description",
         icon: Building2,
     },
     {
-        value: "CAR_RENTAL",
-        label: "Location de Véhicules",
-        description: "Agences de location auto / flottes privées",
+        value: "CAR_RENTAL" as PartnerType,
+        labelKey: "partnerTypes.carRental.label",
+        descKey: "partnerTypes.carRental.description",
         icon: Car,
     },
     {
-        value: "FURNISHED_RENTAL",
-        label: "Location Meublée",
-        description: "Appartements, villas et hébergements privés",
+        value: "FURNISHED_RENTAL" as PartnerType,
+        labelKey: "partnerTypes.furnishedRental.label",
+        descKey: "partnerTypes.furnishedRental.description",
         icon: HomeIcon,
     },
 ];
 
 export default function BecomeHostPage() {
+    const t = useTranslations("BecomeHost");
+
     const [partnerType, setPartnerType] = useState<PartnerType | null>(null);
     const [submitting, setSubmitting] = useState(false);
     const [success, setSuccess] = useState(false);
@@ -95,7 +91,7 @@ export default function BecomeHostPage() {
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         if (!partnerType) {
-            setErrorMessage("Veuillez sélectionner un secteur d'activité.");
+            setErrorMessage(t("errors.selectSector"));
             return;
         }
 
@@ -115,13 +111,10 @@ export default function BecomeHostPage() {
             const status = err?.response?.status;
 
             if (status === 409) {
-                setErrorMessage(
-                    "Un compte avec cet email ou ce numéro RCCM/Registre existe déjà."
-                );
+                setErrorMessage(t("errors.conflict"));
             } else {
                 setErrorMessage(
-                    err?.response?.data?.message ||
-                    "Impossible d'envoyer votre demande. Veuillez vérifier vos données et réessayer."
+                    err?.response?.data?.message || t("errors.default")
                 );
             }
         } finally {
@@ -140,11 +133,10 @@ export default function BecomeHostPage() {
 
                         <div className="space-y-3">
                             <h1 className="text-3xl font-extrabold tracking-tight">
-                                Demande enregistrée ! 🎉
+                                {t("success.title")}
                             </h1>
                             <p className="text-muted-foreground text-base max-w-md mx-auto">
-                                Merci de votre intérêt. Votre dossier a bien été transmis à notre
-                                équipe de gestion des partenariats.
+                                {t("success.description")}
                             </p>
                         </div>
 
@@ -153,11 +145,10 @@ export default function BecomeHostPage() {
                                 <ShieldCheck className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                                 <div>
                                     <p className="font-semibold text-foreground">
-                                        Prochaine étape : validation sous 48h
+                                        {t("success.nextStepTitle")}
                                     </p>
                                     <p className="text-muted-foreground text-xs mt-1">
-                                        Nos agents vérifient le RCCM et les détails fournis avant
-                                        d'activer votre accès partenaire.
+                                        {t("success.nextStepDesc")}
                                     </p>
                                 </div>
                             </div>
@@ -165,7 +156,7 @@ export default function BecomeHostPage() {
 
                         <div className="pt-2 flex justify-center">
                             <Button asChild size="lg">
-                                <Link href="/">Retour à l'accueil</Link>
+                                <Link href="/">{t("success.backHome")}</Link>
                             </Button>
                         </div>
                     </CardContent>
@@ -179,29 +170,28 @@ export default function BecomeHostPage() {
             <div className="text-center space-y-4 max-w-3xl mx-auto">
                 <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-xs font-semibold text-primary border border-primary/20 shadow-sm">
                     <Sparkles className="h-3.5 w-3.5" />
-                    Espace Partenaires & Hôtes
+                    {t("badge")}
                 </div>
 
                 <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight">
-                    Devenez partenaire officiel
+                    {t("title")}
                 </h1>
 
                 <p className="text-muted-foreground text-base sm:text-lg leading-relaxed max-w-2xl mx-auto">
-                    Développez votre visibilité et gérez vos offres de transport ou
-                    d'hébergement en rejoignant notre réseau.
+                    {t("subtitle")}
                 </p>
             </div>
 
             <div className="mt-14 space-y-4">
                 <div className="flex items-center gap-2 font-semibold text-sm text-foreground/80">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">
-            1
-          </span>
-                    Sélectionnez votre secteur d'activité
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">
+                        1
+                    </span>
+                    {t("steps.selectSector")}
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-                    {PARTNER_TYPES.map(({ value, label, description, icon: Icon }) => {
+                    {PARTNER_TYPE_CONFIG.map(({ value, labelKey, descKey, icon: Icon }) => {
                         const isSelected = partnerType === value;
 
                         return (
@@ -232,9 +222,11 @@ export default function BecomeHostPage() {
                                     <Icon className="h-6 w-6" />
                                 </div>
 
-                                <h3 className="font-semibold text-sm text-foreground">{label}</h3>
+                                <h3 className="font-semibold text-sm text-foreground">
+                                    {t(labelKey)}
+                                </h3>
                                 <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
-                                    {description}
+                                    {t(descKey)}
                                 </p>
                             </button>
                         );
@@ -246,14 +238,14 @@ export default function BecomeHostPage() {
                 <Card className="mt-10 border shadow-xl overflow-hidden">
                     <CardHeader className="border-b bg-muted/20">
                         <div className="flex items-center gap-2 font-semibold text-sm text-foreground/80 mb-1">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">
-                2
-              </span>
-                            Dossier de candidature
+                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">
+                                2
+                            </span>
+                            {t("steps.applicationForm")}
                         </div>
-                        <CardTitle className="text-2xl">Informations sur l'entreprise</CardTitle>
+                        <CardTitle className="text-2xl">{t("form.title")}</CardTitle>
                         <CardDescription className="text-base">
-                            Renseignez les informations légales et administratives pour l'étude de votre profil.
+                            {t("form.descriptionHeader")}
                         </CardDescription>
                     </CardHeader>
 
@@ -266,19 +258,22 @@ export default function BecomeHostPage() {
                         )}
 
                         <form onSubmit={handleSubmit} className="space-y-8">
+                            {/* Entité juridique */}
                             <div className="space-y-4">
                                 <h4 className="text-sm font-semibold text-muted-foreground flex items-center gap-2 border-b pb-2">
                                     <Building className="h-4 w-4" />
-                                    Entité juridique
+                                    {t("form.sectionLegal")}
                                 </h4>
 
                                 <div className="grid gap-4 sm:grid-cols-2">
                                     <div className="space-y-2">
-                                        <Label htmlFor="companyName">Nom / Raison sociale *</Label>
+                                        <Label htmlFor="companyName">
+                                            {t("form.companyName")} *
+                                        </Label>
                                         <Input
                                             id="companyName"
                                             name="companyName"
-                                            placeholder="ex: TransAir Express"
+                                            placeholder={t("form.companyNamePlaceholder")}
                                             required
                                             value={form.companyName}
                                             onChange={handleChange}
@@ -287,12 +282,12 @@ export default function BecomeHostPage() {
 
                                     <div className="space-y-2">
                                         <Label htmlFor="registrationNumber">
-                                            N° RCCM / Registre de Commerce *
+                                            {t("form.registrationNumber")} *
                                         </Label>
                                         <Input
                                             id="registrationNumber"
                                             name="registrationNumber"
-                                            placeholder="ex: CI-ABJ-03-2024-B12-..."
+                                            placeholder={t("form.registrationNumberPlaceholder")}
                                             required
                                             value={form.registrationNumber}
                                             onChange={handleChange}
@@ -301,19 +296,22 @@ export default function BecomeHostPage() {
                                 </div>
                             </div>
 
+                            {/* Responsable & Contact */}
                             <div className="space-y-4">
                                 <h4 className="text-sm font-semibold text-muted-foreground flex items-center gap-2 border-b pb-2">
                                     <UserCheck className="h-4 w-4" />
-                                    Responsable & Contact
+                                    {t("form.sectionContact")}
                                 </h4>
 
                                 <div className="grid gap-4 sm:grid-cols-2">
                                     <div className="space-y-2">
-                                        <Label htmlFor="contactName">Nom complet du responsable *</Label>
+                                        <Label htmlFor="contactName">
+                                            {t("form.contactName")} *
+                                        </Label>
                                         <Input
                                             id="contactName"
                                             name="contactName"
-                                            placeholder="ex: Jean Dupont"
+                                            placeholder={t("form.contactNamePlaceholder")}
                                             required
                                             value={form.contactName}
                                             onChange={handleChange}
@@ -321,12 +319,14 @@ export default function BecomeHostPage() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label htmlFor="email">Email professionnel *</Label>
+                                        <Label htmlFor="email">
+                                            {t("form.email")} *
+                                        </Label>
                                         <Input
                                             id="email"
                                             name="email"
                                             type="email"
-                                            placeholder="contact@entreprise.com"
+                                            placeholder={t("form.emailPlaceholder")}
                                             required
                                             value={form.email}
                                             onChange={handleChange}
@@ -334,11 +334,13 @@ export default function BecomeHostPage() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label htmlFor="phone">Téléphone / WhatsApp *</Label>
+                                        <Label htmlFor="phone">
+                                            {t("form.phone")} *
+                                        </Label>
                                         <Input
                                             id="phone"
                                             name="phone"
-                                            placeholder="+225 07 00 00 00 00"
+                                            placeholder={t("form.phonePlaceholder")}
                                             required
                                             value={form.phone}
                                             onChange={handleChange}
@@ -347,11 +349,11 @@ export default function BecomeHostPage() {
 
                                     <div className="grid grid-cols-2 gap-2">
                                         <div className="space-y-2">
-                                            <Label htmlFor="city">Ville *</Label>
+                                            <Label htmlFor="city">{t("form.city")} *</Label>
                                             <Input
                                                 id="city"
                                                 name="city"
-                                                placeholder="Abidjan"
+                                                placeholder={t("form.cityPlaceholder")}
                                                 required
                                                 value={form.city}
                                                 onChange={handleChange}
@@ -359,11 +361,11 @@ export default function BecomeHostPage() {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <Label htmlFor="country">Pays *</Label>
+                                            <Label htmlFor="country">{t("form.country")} *</Label>
                                             <Input
                                                 id="country"
                                                 name="country"
-                                                placeholder="Côte d'Ivoire"
+                                                placeholder={t("form.countryPlaceholder")}
                                                 required
                                                 value={form.country}
                                                 onChange={handleChange}
@@ -373,40 +375,36 @@ export default function BecomeHostPage() {
                                 </div>
                             </div>
 
+                            {/* Capacité & Présentation */}
                             <div className="space-y-4">
                                 <h4 className="text-sm font-semibold text-muted-foreground flex items-center gap-2 border-b pb-2">
                                     <FileText className="h-4 w-4" />
-                                    Capacité & Présentation
+                                    {t("form.sectionCapacity")}
                                 </h4>
 
                                 <div className="space-y-4">
                                     <div className="space-y-2">
                                         <Label htmlFor="fleetOrRoomsCount">
-                                            {partnerType === "AIRLINE" &&
-                                            "Nombre d'appareils en flotte / Lignes gérées"}
-                                            {partnerType === "HOTEL" &&
-                                            "Nombre de chambres / suites disponibles"}
-                                            {partnerType === "CAR_RENTAL" &&
-                                            "Taille de la flotte automobile"}
-                                            {partnerType === "FURNISHED_RENTAL" &&
-                                            "Nombre d'appartements / logements"}
+                                            {t(`form.capacityLabel.${partnerType}`)}
                                         </Label>
                                         <Input
                                             id="fleetOrRoomsCount"
                                             name="fleetOrRoomsCount"
-                                            placeholder="ex: 12"
+                                            placeholder={t("form.capacityPlaceholder")}
                                             value={form.fleetOrRoomsCount}
                                             onChange={handleChange}
                                         />
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label htmlFor="description">Présentation rapide de votre offre</Label>
+                                        <Label htmlFor="description">
+                                            {t("form.description")}
+                                        </Label>
                                         <Textarea
                                             id="description"
                                             name="description"
                                             rows={4}
-                                            placeholder="Décrivez brièvement vos services, vos zones de couverture ou vos spécificités..."
+                                            placeholder={t("form.descriptionPlaceholder")}
                                             value={form.description}
                                             onChange={handleChange}
                                         />
@@ -424,11 +422,11 @@ export default function BecomeHostPage() {
                                     {submitting ? (
                                         <>
                                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                            Traitement en cours...
+                                            {t("form.submitting")}
                                         </>
                                     ) : (
                                         <>
-                                            Soumettre mon dossier
+                                            {t("form.submit")}
                                             <ArrowRight className="ml-2 h-4 w-4" />
                                         </>
                                     )}

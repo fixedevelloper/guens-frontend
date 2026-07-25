@@ -174,7 +174,7 @@ export default function ResellerDashboardPage() {
           </div>
           <div className="mt-3 flex items-center justify-between text-xs border-t border-slate-100 pt-3 dark:border-slate-800">
             <span className="text-slate-500">Portefeuille Revendeur</span>
-            <Link href="/reseller/wallet" className="flex items-center gap-0.5 font-medium text-blue-600 hover:underline dark:text-blue-400">
+            <Link href="/dashboard/reseller/wallet" className="flex items-center gap-0.5 font-medium text-blue-600 hover:underline dark:text-blue-400">
               Gérer <ArrowUpRight className="h-3 w-3" />
             </Link>
           </div>
@@ -195,7 +195,7 @@ export default function ResellerDashboardPage() {
             <span className="text-amber-600 font-medium dark:text-amber-400">
               {formatCurrency(overview?.pendingCommissions, overview?.currency)} en attente
             </span>
-            <Link href="/reseller/commissions" className="flex items-center gap-0.5 font-medium text-blue-600 hover:underline dark:text-blue-400">
+            <Link href="/dashboard/reseller/commissions" className="flex items-center gap-0.5 font-medium text-blue-600 hover:underline dark:text-blue-400">
               Détails <ArrowUpRight className="h-3 w-3" />
             </Link>
           </div>
@@ -214,7 +214,7 @@ export default function ResellerDashboardPage() {
           </div>
           <div className="mt-3 flex items-center justify-between text-xs border-t border-slate-100 pt-3 dark:border-slate-800">
             <span className="text-slate-500">{overview?.totalBookingsCount ?? 0} commandes totales</span>
-            <Link href="/reseller/bookings" className="flex items-center gap-0.5 font-medium text-blue-600 hover:underline dark:text-blue-400">
+            <Link href="/dashboard/reseller/bookings" className="flex items-center gap-0.5 font-medium text-blue-600 hover:underline dark:text-blue-400">
               Voir tout <ArrowUpRight className="h-3 w-3" />
             </Link>
           </div>
@@ -233,7 +233,7 @@ export default function ResellerDashboardPage() {
           </div>
           <div className="mt-3 flex items-center justify-between text-xs border-t border-slate-100 pt-3 dark:border-slate-800">
             <span className="text-slate-500">Clients rattachés</span>
-            <Link href="/reseller/customers" className="flex items-center gap-0.5 font-medium text-blue-600 hover:underline dark:text-blue-400">
+            <Link href="/dashboard/reseller/customers" className="flex items-center gap-0.5 font-medium text-blue-600 hover:underline dark:text-blue-400">
               Répertoire <ArrowUpRight className="h-3 w-3" />
             </Link>
           </div>
@@ -252,7 +252,7 @@ export default function ResellerDashboardPage() {
             </p>
           </div>
           <Link
-            href="/reseller/bookings"
+            href="/dashboard/reseller/bookings"
             className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
           >
             Voir l'historique complet

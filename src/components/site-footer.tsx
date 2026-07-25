@@ -6,7 +6,7 @@ import { Mail, Phone, MapPin, ShieldCheck, ArrowUpRight } from "lucide-react";
 
 import { Link } from "@/i18n/navigation";
 
-const PAYMENT_BADGES = ["Visa", "Mastercard", "PayPal", "Amex"];
+const PAYMENT_BADGES = ["Visa", "Mastercard", "PayPal", "Orange Money", 'Mtn Mobile Money'];
 
 export function SiteFooter() {
   const t = useTranslations("Footer");
@@ -49,11 +49,11 @@ export function SiteFooter() {
                   </a>
                 </li>
                 <li>
-                  <a href="tel:+237600000000" className="inline-flex items-center gap-3 transition-colors hover:text-white group">
+                  <a href="tel:+237683437157" className="inline-flex items-center gap-3 transition-colors hover:text-white group">
                   <span className="flex size-8 items-center justify-center rounded-lg bg-neutral-900 border border-neutral-800 shadow-inner transition-colors group-hover:bg-neutral-800 group-hover:text-white">
                     <Phone className="size-3.5" />
                   </span>
-                    +237 600 000 000
+                    +237 6 83 43 71 57
                   </a>
                 </li>
                 <li className="flex items-center gap-3">

@@ -1,7 +1,7 @@
 {
   "Metadata": {
-    "title": "GuenTours — Vols et hôtels au meilleur prix",
-    "description": "Comparez et réservez vols et hôtels chez plusieurs fournisseurs (Travelopro, Sabre, Travelport) en une seule recherche."
+    "title": "Guen's travel — Agence de Voyage | Réservation Vols & Hôtels au Meilleur Prix",
+    "description": "Réservez facilement vos billets d'avion et vos hôtels au meilleur tarif. Profitez d'offres exclusives et planifiez votre voyage en toute simplicité avec GuenTours."
   },
   "Nav": {
     "brand": "GuenTours",
@@ -19,12 +19,12 @@
 
   },
 "Home": {
-    "badgeFlights": "Comparateur de Vols Pas Chers",
+  "badgeFlights": "Réservation de Vols au Meilleur Tarif",
     "badgeHotels": "Réservation d'Hôtels & Hébergements",
-    "heroTitleFlights": "Comparez et Réservez vos Vols au Meilleur Prix",
-    "heroTitleHotels": "Trouvez l'Hôtel Idéal pour votre Séjour",
-    "heroSubtitleFlights": "Accédez en direct à des milliers de destinations. Trouvez des billets d'avion pas chers et des liaisons multi-destinations adaptées à votre budget.",
-    "heroSubtitleHotels": "Parcourez une large sélection de chambres d'hôtels, résidences et appartements de vacances au meilleur prix garanti.",
+  "heroTitleFlights": "Réservez vos Billets d'Avion au Meilleur Prix",
+  "heroTitleHotels": "Trouvez et Réservez l'Hôtel Idéal pour Votre Séjour",
+  "heroSubtitleFlights": "Accédez en direct à des milliers de destinations. Profitez des meilleurs tarifs sur vos vols simples, allers-retours et itinéraires multi-destinations.",
+  "heroSubtitleHotels": "Découvrez une large sélection d'hôtels, résidences et hébergements de vacances aux meilleurs tarifs garantis.",
     "tabFlights": "Trouver un vol",
     "tabHotels": "Réserver un hôtel",
     "statTravelers": "Voyageurs Satisfaits",
@@ -125,7 +125,7 @@
     "rating": "Note",
     "roomType": "Type de chambre",
     "night": "{count, plural, =1 {1 nuit} other {# nuits}}",
-     "closeSearch": "Fermer la recherche",
+    "closeSearch": "Fermer la recherche",
     "passenger": "Passagers"
   },
   "Filters": {
@@ -338,21 +338,65 @@
     "resellerDashboard": "Tableau de bord Revendeur",
     "commissions": "Mes Commissions",
     "wallet": "Portefeuille & Solde",
-    "customers": "Mes Clients"
+    "customers": "Mes Clients",
+    "welcomeBadge": "Espace Client GuenTours",
+    "subtitle": "Gérez vos réservations de vols et d'hôtels, consultez vos billets et préparez vos prochains voyages.",
+    "newBookingBtn": "Réserver un voyage",
+    "myBookingsDesc": "Historique et détail de tous vos trajets et hébergements",
+    "stats": {
+      "total": "Total Réservations",
+      "upcoming": "À venir",
+      "completed": "Historique"
+    },
+    "tabs": {
+      "all": "Toutes",
+      "upcoming": "À venir",
+      "completed": "Passées"
+    },
+    "refresh": "Actualiser la liste",
+    "errorTitle": "Erreur de chargement",
+    "retry": "Réessayer",
+    "noBookingsTitle": "Aucun voyage réservé pour l'instant",
+    "noBookingsDesc": "Vous n'avez pas encore effectué de réservation. Explorez nos meilleures offres de vols et d'hôtels !",
+    "noFilteredBookingsTitle": "Aucune réservation trouvée",
+    "noFilteredBookingsDesc": "Aucune réservation ne correspond à ce filtre pour le moment.",
+    "searchDealsBtn": "Rechercher un vol ou hôtel"
   },
   "Auth": {
-    "loginTitle": "Connexion",
-    "registerTitle": "Créer un compte",
+    "loginTitle": "Ravi de vous revoir",
+    "loginSubtitle": "Saisissez vos identifiants pour accéder à votre espace.",
     "email": "Adresse e-mail",
+    "emailPlaceholder": "votre@adresse.com",
+    "emailInvalid": "Veuillez saisir une adresse e-mail valide.",
     "password": "Mot de passe",
-    "fullName": "Nom complet",
-    "phone": "Téléphone",
+    "passwordRequired": "Le mot de passe est obligatoire.",
     "loginSubmit": "Se connecter",
-    "registerSubmit": "Créer mon compte",
+    "loggingIn": "Connexion en cours...",
     "noAccount": "Pas encore de compte ?",
-    "hasAccount": "Déjà inscrit ?",
     "switchToRegister": "Créer un compte",
-    "switchToLogin": "Se connecter"
+    "bannerTitle": "Explorez le monde, réservez en toute sérénité.",
+    "bannerDescription": "Accédez à vos offres d'hôtels personnalisées, comparez les tarifs en temps réel et préparez vos prochains séjours avec notre sélection haut de gamme.",
+    "bannerStat": "Plus de 10 000 hébergements répertoriés à travers le monde.",
+    "registerTitle": "Créer un compte",
+    "registerSubtitle": "Rejoignez notre plateforme pour planifier vos voyages.",
+    "fullName": "Nom complet",
+    "fullNamePlaceholder": "John Doe",
+    "fullNameRequired": "Veuillez saisir votre nom complet.",
+    "phone": "Téléphone",
+    "phoneOptional": "(Optionnel)",
+    "phonePlaceholder": "+237 6xx xxx xxx",
+    "passwordMinLength": "Le mot de passe doit contenir au moins 8 caractères.",
+    "passwordPlaceholder": "•••••••• (8 caractères min.)",
+    "registerSubmit": "Créer un compte",
+    "creatingAccount": "Création du compte...",
+    "hasAccount": "Vous avez déjà un compte ?",
+    "switchToLogin": "Se connecter",
+    "registerBannerTitle": "Créez votre compte en quelques instants.",
+    "registerBannerDescription": "Rejoignez-nous pour débloquer des tarifs négociés auprès des plus grands prestataires, gérer vos réservations facilement et suivre vos itinéraires de voyage.",
+    "registerFeature1": "Accès gratuit et instantané aux offres",
+    "registerFeature2": "Comparateur multi-fournisseurs en temps réel",
+    "registerFeature3": "Support dédié et suivi de vos dossiers",
+    "copyright": "© 2026 Guen's Travel. Tous droits réservés."
   },
   "Errors": {
     "generic": "Une erreur inattendue est survenue. Merci de réessayer.",
@@ -412,10 +456,12 @@
     "privacySection4Body": "Conformément à la réglementation applicable, vous disposez d'un droit d'accès, de rectification et de suppression de vos données en nous contactant."
   },
   "AppPromo": {
-    "badge": "Disponible maintenant",
-    "title": "Voyagez plus léger avec l'application Guen's travel",
-    "description": "Réservez, gérez vos séjours et accédez à vos billets directement depuis votre poche. Scannez le QR code pour télécharger notre application.",
-    "cta": "Télécharger l'app"
+    "badge": "Application Mobile",
+    "title": "Emportez GuenTours partout avec vous",
+    "description": "Réservez vos billets d'avion et vos hôtels directement depuis votre téléphone. Profitez d'offres exlusives et de notifications en temps réel.",
+    "appStoreSub": "Télécharger dans l'",
+    "googlePlaySub": "Disponible sur",
+    "scanToDownload": "Scannez pour télécharger"
   },
   "Partner": {
     "navDashboard": "Tableau de bord",
@@ -426,6 +472,33 @@
       "PENDING_REVIEW": "En attente",
       "APPROVED": "Approuvé",
       "REJECTED": "Rejeté"
+    },
+    "dashboard": {
+      "title": "Tableau de bord Partenaire",
+      "subtitle": "Supervisez vos annonces, validez vos réservations et suivez vos revenus en temps réel.",
+      "badge": "Espace Partenaire Vérifié",
+      "addListing": "Ajouter une offre",
+      "cards": {
+        "activeListings": "Annonces actives",
+        "activeListingsSubtitle": "+2 hébergements ce mois",
+        "pendingBookings": "Demandes en attente",
+        "pendingBookingsSubtitle": "À valider sous 24h",
+        "monthlyRevenue": "Revenus du mois",
+        "monthlyRevenueSubtitle": "+18.4% par rapport au mois dernier"
+      },
+      "quickActions": {
+        "title": "Raccourcis de gestion",
+        "desc": "Accès direct à vos fonctionnalités clés",
+        "manageListings": "Gérer mes annonces",
+        "viewBookings": "Voir les réservations",
+        "payouts": "Revenus & Règlements"
+      },
+      "recentActivity": {
+        "title": "Dernières demandes de réservation",
+        "desc": "Consultez et gérez les réservations récentes de vos clients",
+        "viewAll": "Tout voir",
+        "empty": "Aucune demande de réservation pour le moment."
+      }
     }
   },
   
@@ -514,7 +587,118 @@
       "contact": "Contact :",
       "dashboardBtn": "Retourner à mon tableau de bord"
     }
-  }
+  },
 
+    "Cta": {
+      "flights": {
+        "badge": "Ne manquez aucune baisse de prix",
+        "title": "Recevez les meilleures offres de vols directement par email",
+        "description": "Les prix des billets varient constamment. Activez une alerte pour être notifié immédiatement dès qu'un tarif avantageux est disponible.",
+        "free": "100% Gratuit",
+        "noSpam": "Aucun spam",
+        "placeholder": "Entrez votre adresse email...",
+        "button": "Créer mon alerte prix"
+      },
+      "hotels": {
+        "badge": "Réductions exclusives & Ventes flash",
+        "title": "Débloquez les tarifs membres et les baisses de prix d'hôtels",
+        "description": "Ne manquez aucune promotion de dernière minute. Abonnez-vous pour recevoir directement les meilleures offres d'hébergement adaptées à vos projets de voyage.",
+        "negotiated": "Offres négociées",
+        "easyUnsubscribe": "Désinscription facile",
+        "placeholder": "Votre adresse email...",
+        "button": "Activer les alertes hôtel"
+      }
+    },
+  "BecomeHost": {
+    "badge": "Espace Partenaires & Hôtes",
+    "title": "Devenez partenaire officiel",
+    "subtitle": "Développez votre visibilité et gérez vos offres de transport ou d'hébergement en rejoignant notre réseau.",
+    "steps": {
+      "selectSector": "Sélectionnez votre secteur d'activité",
+      "applicationForm": "Dossier de candidature"
+    },
+    "partnerTypes": {
+      "airline": {
+        "label": "Compagnie de Voyage / Transport",
+        "description": "Vols réguliers, charters ou transporteurs aériens"
+      },
+      "hotel": {
+        "label": "Hôtel & Établissement",
+        "description": "Hôtels, complexes hôteliers, résidences"
+      },
+      "carRental": {
+        "label": "Location de Véhicules",
+        "description": "Agences de location auto / flottes privées"
+      },
+      "furnishedRental": {
+        "label": "Location Meublée",
+        "description": "Appartements, villas et hébergements privés"
+      }
+    },
+    "form": {
+      "title": "Informations sur l'entreprise",
+      "descriptionHeader": "Renseignez les informations légales et administratives pour l'étude de votre profil.",
+      "sectionLegal": "Entité juridique",
+      "companyName": "Nom / Raison sociale",
+      "companyNamePlaceholder": "ex: TransAir Express",
+      "registrationNumber": "N° RCCM / Registre de Commerce",
+      "registrationNumberPlaceholder": "ex: CI-ABJ-03-2024-B12-...",
+      "sectionContact": "Responsable & Contact",
+      "contactName": "Nom complet du responsable",
+      "contactNamePlaceholder": "ex: Jean Dupont",
+      "email": "Email professionnel",
+      "emailPlaceholder": "contact@entreprise.com",
+      "phone": "Téléphone / WhatsApp",
+      "phonePlaceholder": "+225 07 00 00 00 00",
+      "city": "Ville",
+      "cityPlaceholder": "Abidjan",
+      "country": "Pays",
+      "countryPlaceholder": "Côte d'Ivoire",
+      "sectionCapacity": "Capacité & Présentation",
+      "capacityLabel": {
+        "AIRLINE": "Nombre d'appareils en flotte / Lignes gérées",
+        "HOTEL": "Nombre de chambres / suites disponibles",
+        "CAR_RENTAL": "Taille de la flotte automobile",
+        "FURNISHED_RENTAL": "Nombre d'appartements / logements"
+      },
+      "capacityPlaceholder": "ex: 12",
+      "description": "Présentation rapide de votre offre",
+      "descriptionPlaceholder": "Décrivez brièvement vos services, vos zones de couverture ou vos spécificités...",
+      "submit": "Soumettre mon dossier",
+      "submitting": "Traitement en cours..."
+    },
+    "errors": {
+      "selectSector": "Veuillez sélectionner un secteur d'activité.",
+      "conflict": "Un compte avec cet email ou ce numéro RCCM/Registre existe déjà.",
+      "default": "Impossible d'envoyer votre demande. Veuillez vérifier vos données et réessayer."
+    },
+    "success": {
+      "title": "Demande enregistrée ! 🎉",
+      "description": "Merci de votre intérêt. Votre dossier a bien été transmis à notre équipe de gestion des partenariats.",
+      "nextStepTitle": "Prochaine étape : validation sous 48h",
+      "nextStepDesc": "Nos agents vérifient le RCCM et les détails fournis avant d'activer votre accès partenaire.",
+      "backHome": "Retour à l'accueil"
+    }
+  },
+  "FlightLoader": {
+    "steps": [
+      {
+        "title": "Analyse des offres en cours...",
+        "description": "Nous interrogeons les compagnies aériennes pour trouver les meilleurs tarifs."
+      },
+      {
+        "title": "Optimisation de l'itinéraire...",
+        "description": "Filtrage des escales les plus courtes et des trajets les plus rapides."
+      },
+      {
+        "title": "Vérification des options de confort...",
+        "description": "Analyse de la disponibilité des sièges, bagages et repas à bord."
+      },
+      {
+        "title": "Finalisation des tarifs...",
+        "description": "Calcul des meilleures taxes et garanties multirisques pour votre voyage."
+      }
+    ]
+  }
 
 }
