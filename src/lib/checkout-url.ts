@@ -51,3 +51,21 @@ export function checkoutUrlForHotel(offer: HarmonizedHotelOffer, offerId: string
   });
   return `/checkout?${qs.toString()}`;
 }
+export function resellerCheckoutUrlForFlight(offer: HarmonizedFlightOffer, offerId: string) {
+  const quote = offer.quotes.find((q) => q.offerId === offerId) as ProviderQuote;
+  const qs = new URLSearchParams({
+    offerId,
+    offerType: "FLIGHT",
+    airline: offer.airline,
+    flightNumber: offer.flightNumber,
+    origin: offer.origin,
+    destination: offer.destination,
+    departureTime: offer.departureTime,
+    arrivalTime: offer.arrivalTime,
+    cabinClass: offer.cabinClass,
+    providerType: quote.providerType,
+    amount: String(quote.price.amount),
+    currency: quote.price.currency,
+  });
+  return `/dashboard/reseller/flights/checkout?${qs.toString()}`;
+}

@@ -11,10 +11,10 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { airlineLabel, formatDuration, formatMoney, formatTime, providerLabel } from "@/lib/format";
 import type { HarmonizedFlightOffer } from "@/lib/api/types";
-import { checkoutUrlForFlight } from "@/lib/checkout-url";
+import {checkoutUrlForFlight, resellerCheckoutUrlForFlight} from "@/lib/checkout-url";
 import {useState} from "react";
 
-export function FlightResultsList({ offers }: { offers: HarmonizedFlightOffer[] }) {
+export function FlightResultsList({ offers,isReseller = false }: { offers: HarmonizedFlightOffer[],isReseller: boolean }) {
   const t = useTranslations("Filters");
   const locale = useLocale();
 
@@ -31,13 +31,13 @@ export function FlightResultsList({ offers }: { offers: HarmonizedFlightOffer[] 
   return (
       <div className="grid gap-4">
         {offers.map((offer, index) => (
-            <FlightOfferCard key={`${offer.airline}-${offer.flightNumber}-${index}`} offer={offer} locale={locale} />
+            <FlightOfferCard key={`${offer.airline}-${offer.flightNumber}-${index}`} offer={offer} locale={locale} isReseller={isReseller} />
         ))}
       </div>
   );
 }
 
-export function FlightOfferCard({ offer, locale }: { offer: HarmonizedFlightOffer; locale: string }) {
+export function FlightOfferCard({ offer, locale,isReseller }: { offer: HarmonizedFlightOffer; locale: string, isReseller:boolean }) {
   const t = useTranslations("SearchResults");
   const router = useRouter();
   const [showDetails, setShowDetails] = useState(false);
@@ -47,7 +47,12 @@ export function FlightOfferCard({ offer, locale }: { offer: HarmonizedFlightOffe
   const cheapestQuote = sortedQuotes[0];
 
   function handleSelect(offerId: string) {
-    router.push(checkoutUrlForFlight(offer, offerId));
+    if (isReseller){
+      router.push(resellerCheckoutUrlForFlight(offer, offerId));
+    }else {
+      router.push(checkoutUrlForFlight(offer, offerId));
+    }
+
   }
 
   return (

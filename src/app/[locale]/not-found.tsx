@@ -1,4 +1,3 @@
-// app/[locale]/not-found.tsx
 import { useTranslations } from "next-intl";
 import { Compass, ArrowLeft } from "lucide-react";
 

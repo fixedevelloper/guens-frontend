@@ -142,14 +142,14 @@ export default function ResellerDashboardPage() {
           </div>
           <div className="flex items-center gap-3">
             <Link
-              href="/flights"
+              href="/dashboard/reseller/flights"
               className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2.5 text-xs font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/20"
             >
               <Plane className="h-4 w-4" />
               Réserver un vol
             </Link>
             <Link
-              href="/hotels"
+              href="/dashboard/hotels"
               className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs font-semibold text-blue-900 shadow-sm transition-all hover:bg-blue-50"
             >
               <Building2 className="h-4 w-4 text-blue-600" />

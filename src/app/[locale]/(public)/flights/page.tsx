@@ -205,7 +205,7 @@ function FlightsPageContent() {
                   {isResultsEmpty ? (
                       <EmptyResults onReset={() => setFilters(DEFAULT_FLIGHT_FILTERS)} />
                   ) : (
-                      <FlightResultsList offers={filteredOffers} />
+                      <FlightResultsList offers={filteredOffers} isReseller={false} />
                   )}
                 </main>
               </div>

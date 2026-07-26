@@ -59,7 +59,7 @@ export default function GlobalError({
                         variant="outline"
                         className="w-full sm:w-auto rounded-xl font-bold gap-2 px-5"
                     >
-                        <Link href="/">
+                        <Link href="/public">
                             <Home className="size-4" />
                             {t("goHome") ?? "Accueil"}
                         </Link>
