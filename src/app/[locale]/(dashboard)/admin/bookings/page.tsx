@@ -77,7 +77,8 @@ export default function AdminBookingsPage() {
                 <BookingRow 
                   key={booking.id} 
                   booking={booking} 
-                  showContact 
+                  showContact
+                  isAdmin
                 />
               ))}
             </div>

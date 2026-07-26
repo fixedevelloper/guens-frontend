@@ -1,3 +1,4 @@
+// app/[locale]/flights/page.tsx
 "use client";
 
 import { Suspense, useMemo, useState, useEffect } from "react";
@@ -14,6 +15,8 @@ import {
   Sparkles,
   Mail,
   Bell,
+  CheckCircle2,
+  ShieldCheck
 } from "lucide-react";
 
 import { useRouter } from "@/i18n/navigation";
@@ -60,6 +63,7 @@ export default function FlightsPage() {
 }
 
 function FlightsPageContent() {
+  const t = useTranslations("SearchResults");
   const tCta = useTranslations("Cta.flights");
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -132,7 +136,7 @@ function FlightsPageContent() {
               variant="ghost"
               size="sm"
               onClick={() => setIsMobileFilterOpen(true)}
-              className="rounded-full px-4 py-2.5 text-xs font-bold gap-2"
+              className="rounded-full px-4 py-2.5 text-xs font-bold gap-2 text-foreground active:bg-muted"
           >
             <Filter className="size-4 text-primary shrink-0" />
             <span>Filtres</span>
@@ -254,7 +258,7 @@ function FlightsPageContent() {
 
         {isMobileFilterOpen && (
             <MobileSheet title="Filtres" onClose={closePanels}>
-              <div className="flex-1 overflow-y-auto p-5 pb-20 overscroll-contain">
+              <div className="flex-1 overflow-y-auto p-5 pb-20">
                 <FlightFilters options={filterOptions} value={filters} onChange={setFilters} />
               </div>
               <div className="absolute bottom-0 left-0 right-0 border-t bg-background/95 p-4 backdrop-blur-md">
@@ -267,7 +271,7 @@ function FlightsPageContent() {
 
         {editing && (
             <MobileSheet title="Modifier la recherche" onClose={closePanels}>
-              <div className="flex-1 overflow-y-auto p-5 pb-12 overscroll-contain">
+              <div className="flex-1 overflow-y-auto p-5 pb-12">
                 <FlightSearchForm
                     defaultValues={params ?? undefined}
                     onSearch={handleSearch}
@@ -290,7 +294,7 @@ function MobileSheet({
   children: React.ReactNode;
 }) {
   return (
-      <div className="fixed inset-0 z-50 flex items-end justify-center lg:hidden sm:items-center sm:justify-end">
+      <div className="fixed inset-0 z-5000 flex items-end justify-center lg:hidden sm:items-center sm:justify-end">
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs" onClick={onClose} />
         <div className="relative z-10 flex h-[88dvh] w-full flex-col overflow-hidden rounded-t-3xl bg-background shadow-2xl animate-in slide-in-from-bottom duration-300 sm:h-[90dvh] sm:w-[480px] sm:rounded-l-3xl sm:rounded-tr-none sm:slide-in-from-right">
           <div className="flex h-14 shrink-0 items-center justify-between border-b bg-muted/30 px-5">

@@ -26,6 +26,10 @@ export async function cancelBooking(bookingId: string) {
   const { data } = await apiClient.post<BookingResponse>(`/api/bookings/${bookingId}/cancel`);
   return data;
 }
+export async function updateBooking(bookingId: string,status:string) {
+  const { data } = await apiClient.post<BookingResponse>(`/api/bookings/${bookingId}/cancel`);
+  return data;
+}
 
 /** Base URL for the SSE tracking stream - consumed directly with EventSource, not axios. */
 export function bookingTrackUrl(bookingId: string) {

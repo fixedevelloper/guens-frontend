@@ -22,7 +22,7 @@ export function OfferSummaryCard({ offer }: { offer: OfferSummary }) {
           {t("summaryTitle") ?? "Récapitulatif"}
         </h3>
         <Badge variant="secondary" className="rounded-full font-medium px-2.5 py-0.5 text-[11px] border border-border/30">
-          {providerLabel(offer.providerType)}
+         {/* {providerLabel(offer.providerType)}*/}
         </Badge>
       </div>
 

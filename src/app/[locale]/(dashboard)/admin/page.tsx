@@ -168,7 +168,7 @@ export default function AdminOverviewPage() {
             <div className="divide-y divide-border/30 -my-3">
               {recentBookings.map((booking) => (
                 <div key={booking.id} className="py-3.5 first:pt-0 last:pb-0">
-                  <BookingRow booking={booking} showContact />
+                  <BookingRow booking={booking} showContact isAdmin/>
                 </div>
               ))}
             </div>
