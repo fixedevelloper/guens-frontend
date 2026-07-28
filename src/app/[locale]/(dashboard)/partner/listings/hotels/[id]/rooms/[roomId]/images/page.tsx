@@ -1,7 +1,8 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import {
     ArrowLeft,
     UploadCloud,
@@ -11,6 +12,7 @@ import {
     Loader2,
     CheckCircle2,
     Images,
+    DoorOpen,
 } from "lucide-react";
 
 import { Link } from "@/i18n/navigation";
@@ -18,13 +20,30 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import {ImageSelectModal} from "../../../../../../../../../../components/partner/media/ImageSelectModal";
+import { useAuth } from "@/context/auth-context";
+import {
+    addRoomImage,
+    deleteRoomImage,
+    getRoom,
+    setPrimaryRoomImage,
+} from "@/lib/api/partner";
+import { RoomImageResponse } from "@/lib/api/types";
+import { ImageSelectModal } from "@/components/partner/media/ImageSelectModal";
 
 export interface RoomImageItem {
     id: string;
     url: string;
     isPrimary: boolean;
     name?: string;
+}
+
+function toRoomImageItem(image: RoomImageResponse): RoomImageItem {
+    return {
+        id: image.id,
+        url: image.url,
+        isPrimary: image.isPrimary,
+        name: image.caption ?? undefined,
+    };
 }
 
 interface PageProps {
@@ -38,67 +57,89 @@ interface PageProps {
 export default function RoomImagesPage({ params }: PageProps) {
     const { id, roomId } = use(params);
     const t = useTranslations("RoomImages");
+    const { partnerId } = useAuth();
 
-    // État de la modale de sélection de couverture
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [images, setImages] = useState<RoomImageItem[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
 
-    const [images, setImages] = useState<RoomImageItem[]>([
-        {
-            id: "1",
-            url: "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80",
-            isPrimary: true,
-            name: "lit-principal.jpg",
-        },
-        {
-            id: "2",
-            url: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80",
-            isPrimary: false,
-            name: "salle-de-bain.jpg",
-        },
-    ]);
+    useEffect(() => {
+        if (!partnerId) return;
 
-    const [isDragging, setIsDragging] = useState(false);
-    const [isUploading, setIsUploading] = useState(false);
+        let cancelled = false;
+        setLoading(true);
+        setLoadError(null);
 
-    // Callback appelé quand une image est choisie dans la modale
-    const handleSelectImage = (selectedImage: { id: string; url: string }) => {
-        setImages((prev) => {
-            const exists = prev.some((img) => img.id === selectedImage.id);
+        getRoom(partnerId, id, roomId)
+            .then((room) => {
+                if (cancelled) return;
+                setImages(room.images.map(toRoomImageItem));
+            })
+            .catch((error) => {
+                console.error("Erreur lors du chargement des images de la chambre:", error);
+                if (!cancelled) setLoadError(t("errorLoadImages"));
+            })
+            .finally(() => {
+                if (!cancelled) setLoading(false);
+            });
 
-            if (exists) {
-                // Si l'image existe déjà, on la passe simplement en couverture principale
-                return prev.map((img) => ({
-                    ...img,
-                    isPrimary: img.id === selectedImage.id,
-                }));
-            } else {
-                // Si c'est une nouvelle image sélectionnée dans la bibliothèque globale
-                return [
-                    ...prev.map((img) => ({ ...img, isPrimary: false })),
-                    { id: selectedImage.id, url: selectedImage.url, isPrimary: true },
-                ];
-            }
-        });
+        return () => {
+            cancelled = true;
+        };
+    }, [partnerId, id, roomId, t]);
 
+    const handleSelectImage = async (selectedImage: { url: string; name: string }) => {
+        if (!partnerId) return;
         setIsModalOpen(false);
+
+        const existing = images.find((img) => img.url === selectedImage.url);
+
+        try {
+            const room = existing
+                ? await setPrimaryRoomImage(partnerId, id, roomId, existing.id)
+                : await addRoomImage(partnerId, id, roomId, {
+                    url: selectedImage.url,
+                    caption: selectedImage.name,
+                    isPrimary: true,
+                });
+            setImages(room.images.map(toRoomImageItem));
+        } catch (error) {
+            console.error("Erreur lors de l'ajout de l'image:", error);
+            toast.error(t("errorAddImage"));
+        }
     };
 
-    const handleSetPrimary = (id: string) => {
-        setImages((prev) =>
-            prev.map((img) => ({
-                ...img,
-                isPrimary: img.id === id,
-            }))
-        );
+    const handleSetPrimary = async (imageId: string) => {
+        if (!partnerId) return;
+
+        try {
+            const room = await setPrimaryRoomImage(partnerId, id, roomId, imageId);
+            setImages(room.images.map(toRoomImageItem));
+        } catch (error) {
+            console.error("Erreur lors de la définition de la couverture:", error);
+            toast.error(t("errorSetPrimary"));
+        }
     };
 
-    const handleDelete = (id: string) => {
-        setImages((prev) => prev.filter((img) => img.id !== id));
+    const handleDelete = async (imageId: string) => {
+        if (!partnerId) return;
+
+        const previous = images;
+        setImages((prev) => prev.filter((img) => img.id !== imageId));
+
+        try {
+            await deleteRoomImage(partnerId, id, roomId, imageId);
+        } catch (error) {
+            console.error("Erreur lors de la suppression de l'image:", error);
+            toast.error(t("errorDeleteImage"));
+            setImages(previous);
+        }
     };
 
     return (
         <div className="space-y-6">
-            {/* HEADER & BOUTONS */}
+            {/* HEADER & BOUTONS D'ACTION */}
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                     <Button variant="outline" size="icon" asChild className="rounded-xl size-9 shrink-0">
@@ -107,17 +148,19 @@ export default function RoomImagesPage({ params }: PageProps) {
                         </Link>
                     </Button>
                     <div>
-                        <h1 className="text-lg font-black tracking-tight sm:text-xl">
-                            {t("title") ?? "Galerie d'images de la chambre"}
-                        </h1>
+                        <div className="flex items-center gap-2">
+                            <DoorOpen className="size-4 text-primary shrink-0" />
+                            <h1 className="text-lg font-black tracking-tight sm:text-xl">
+                                {t("title")}
+                            </h1>
+                        </div>
                         <p className="text-xs font-semibold text-muted-foreground">
-                            ID Chambre : <span className="font-mono text-foreground">{roomId}</span>
+                            {t("roomId")} <span className="font-mono text-foreground">{roomId}</span>
                         </p>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-2">
-                    {/* BOUTON POUR OUVRIR LA MODALE DE SÉLECTION */}
                     <Button
                         variant="outline"
                         size="sm"
@@ -125,26 +168,26 @@ export default function RoomImagesPage({ params }: PageProps) {
                         className="rounded-xl font-bold text-xs gap-2 border-border/70 h-9"
                     >
                         <Images className="size-4 text-primary" />
-                        <span>Changer la couverture</span>
+                        <span>{t("changeCover")}</span>
                     </Button>
 
                     <Badge variant="outline" className="rounded-lg px-2.5 py-1 text-xs font-bold">
-                        {images.length} {images.length > 1 ? "images" : "image"}
+                        {t("photoCount", { count: images.length })}
                     </Badge>
                 </div>
             </div>
 
-            {/* ZONE DROP & UPLOAD */}
+            {/* BANNIÈRE TÉLÉCHARGEMENT / SÉLECTION */}
             <Card className="border-2 border-dashed border-border/60 hover:border-primary/50 transition-all rounded-2xl bg-card/50">
                 <CardContent className="flex flex-col items-center justify-center p-8 text-center">
                     <div className="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-3">
                         <UploadCloud className="size-6" />
                     </div>
                     <h3 className="text-sm font-bold text-foreground">
-                        Glissez vos images ici ou parcourez
+                        {t("uploadTitle")}
                     </h3>
-                    <p className="text-xs text-muted-foreground max-w-xs mt-1 mb-4 font-medium">
-                        PNG, JPG ou WEBP jusqu'à 5MB
+                    <p className="text-xs text-muted-foreground max-w-md mt-1 mb-4 font-medium">
+                        {t("uploadDescription")}
                     </p>
                     <Button
                         variant="secondary"
@@ -153,14 +196,32 @@ export default function RoomImagesPage({ params }: PageProps) {
                         className="rounded-xl font-bold text-xs cursor-pointer h-9 px-4 gap-2"
                     >
                         <ImageIcon className="size-3.5" />
-                        Choisir dans la bibliothèque
+                        {t("openGallery")}
                     </Button>
                 </CardContent>
             </Card>
 
-            {/* GRILLE D'IMAGES */}
-            {images.length > 0 && (
+            {/* GRILLE D'IMAGES DE LA CHAMBRE */}
+            {loading ? (
+                <div className="flex flex-col items-center justify-center gap-2 py-12 text-muted-foreground">
+                    <Loader2 className="size-5 animate-spin" />
+                    {t("loadingGallery")}
+                </div>
+            ) : loadError ? (
+                <div className="text-center py-12 text-destructive text-sm font-medium">
+                    {loadError}
+                </div>
+            ) : images.length > 0 && (
                 <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-xs font-black uppercase tracking-wider text-muted-foreground">
+                            {t("sectionTitle")}
+                        </h2>
+                        <span className="text-[11px] font-semibold text-muted-foreground hidden sm:inline">
+                            {t("primaryImageHelp")}
+                        </span>
+                    </div>
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {images.map((img) => (
                             <div
@@ -174,24 +235,26 @@ export default function RoomImagesPage({ params }: PageProps) {
                             >
                                 <img
                                     src={img.url}
-                                    alt={img.name ?? "Room photo"}
+                                    alt={img.name ?? t("imageAlt")}
                                     className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                                 />
 
+                                {/* Badge Couverture */}
                                 {img.isPrimary && (
                                     <Badge className="absolute top-2.5 left-2.5 rounded-lg bg-primary text-primary-foreground text-[10px] font-extrabold gap-1 shadow-md">
                                         <CheckCircle2 className="size-3" />
-                                        Couverture
+                                        {t("primaryBadge")}
                                     </Badge>
                                 )}
 
+                                {/* Overlay d'actions au survol */}
                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-[2px]">
                                     <Button
                                         size="icon"
                                         variant={img.isPrimary ? "default" : "secondary"}
                                         className="rounded-xl size-9 shadow-lg"
                                         onClick={() => handleSetPrimary(img.id)}
-                                        title="Définir comme couverture"
+                                        title={t("setPrimaryTooltip")}
                                     >
                                         <Star
                                             className={cn(
@@ -206,7 +269,7 @@ export default function RoomImagesPage({ params }: PageProps) {
                                         variant="destructive"
                                         className="rounded-xl size-9 shadow-lg"
                                         onClick={() => handleDelete(img.id)}
-                                        title="Supprimer"
+                                        title={t("deleteTooltip")}
                                     >
                                         <Trash2 className="size-4" />
                                     </Button>
@@ -217,12 +280,12 @@ export default function RoomImagesPage({ params }: PageProps) {
                 </div>
             )}
 
-            {/* LA MODALE DE SÉLECTION D'IMAGE */}
+            {/* MODALE DE SÉLECTION D'IMAGE */}
             <ImageSelectModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onSelectImage={handleSelectImage}
-                title="Sélectionner la couverture de l'hôtel"
+                title={t("modalTitle")}
             />
         </div>
     );

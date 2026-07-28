@@ -232,8 +232,7 @@ function HotelsPageContent() {
                         nights={nights}
                         params={params as HotelSearchParams}
                         hoveredKey={hoveredKey}
-                        onHoverChange={setHoveredKey}
-                    />
+                        onHoverChange={setHoveredKey} isReseller={false}                    />
                   </div>
                 </main>
 

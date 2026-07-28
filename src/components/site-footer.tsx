@@ -41,11 +41,11 @@ export function SiteFooter() {
 
               <ul className="mt-2 space-y-3 text-sm text-neutral-400">
                 <li>
-                  <a href="mailto:contact@guenstravelandtours.com" className="inline-flex items-center gap-3 transition-colors hover:text-white group">
+                  <a href="mailto:info@guenstravelandtours.com" className="inline-flex items-center gap-3 transition-colors hover:text-white group">
                   <span className="flex size-8 items-center justify-center rounded-lg bg-neutral-900 border border-neutral-800 shadow-inner transition-colors group-hover:bg-neutral-800 group-hover:text-white">
                     <Mail className="size-3.5" />
                   </span>
-                    contact@guenstravelandtours.com
+                    info@guenstravelandtours.com
                   </a>
                 </li>
                 <li>

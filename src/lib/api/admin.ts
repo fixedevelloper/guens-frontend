@@ -3,6 +3,8 @@ import type {
   AdminUserResponse,
   BookingResponse,
   CommissionWalletBalanceResponse,
+  HotelCityAdminResponse,
+  HotelCityUpsertRequest,
   PageResponse,
   PartnerResponse,
   PartnerStatus,
@@ -58,6 +60,32 @@ export async function syncAirports(): Promise<{ synced: number }> {
 export async function syncCities(): Promise<{ synced: number }> {
   const { data } = await apiClient.post<{ synced: number }>("/api/admin/geo/cities/sync");
   return data;
+}
+
+export interface AdminCitiesQuery {
+  q?: string;
+  sort?: string; // Spring Data format: "cityName,asc" / "countryName,desc"
+}
+
+export async function getAdminCities(page: number, size = 20, query: AdminCitiesQuery = {}) {
+  const { data } = await apiClient.get<PageResponse<HotelCityAdminResponse>>("/api/admin/geo/cities", {
+    params: { page, size, q: query.q || undefined, sort: query.sort },
+  });
+  return data;
+}
+
+export async function createCity(payload: HotelCityUpsertRequest) {
+  const { data } = await apiClient.post<HotelCityAdminResponse>("/api/admin/geo/cities", payload);
+  return data;
+}
+
+export async function updateCity(id: number, payload: HotelCityUpsertRequest) {
+  const { data } = await apiClient.put<HotelCityAdminResponse>(`/api/admin/geo/cities/${id}`, payload);
+  return data;
+}
+
+export async function deleteCity(id: number) {
+  await apiClient.delete(`/api/admin/geo/cities/${id}`);
 }
 
 // Liste paginée des revendeurs avec filtre optionnel par statut

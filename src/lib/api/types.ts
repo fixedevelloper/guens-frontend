@@ -9,7 +9,7 @@ export type ProviderType = "TRAVELOPRO" | "SABRE" | "TRAVELPORT";
 
 export type PassengerType = "ADULT" | "CHILD" | "INFANT";
 
-export type OfferType = "FLIGHT" | "HOTEL";
+export type OfferType = "FLIGHT" | "HOTEL"| "CAR_RENTAL"| "FURNISHED_RENTAL";
 
 export type BookingStatus =
   | "PENDING_PAYMENT"
@@ -25,8 +25,6 @@ export type PaymentStatus = "PENDING" | "SUCCEEDED" | "FAILED";
 export type CabinClass = "ECONOMY" | "PREMIUM_ECONOMY" | "BUSINESS" | "FIRST";
 
 export type PaymentPlan = "PAY_NOW" | "PAY_LATER";
-
-export type PaymentMethod = "CARD" | "MTN_MOBILE_MONEY" | "ORANGE_MONEY";
 
 export interface Money {
   amount: string | number;
@@ -115,6 +113,21 @@ export interface HotelCityOption {
   longitude: number;
 }
 
+export interface HotelCityAdminResponse {
+  id: number;
+  cityName: string;
+  countryName: string;
+  latitude: number;
+  longitude: number;
+}
+
+export interface HotelCityUpsertRequest {
+  cityName: string;
+  countryName: string;
+  latitude: number;
+  longitude: number;
+}
+
 export interface ProviderQuote {
   offerId: string;
   providerType: ProviderType;
@@ -155,9 +168,7 @@ export interface SeatMapResponse {
   columns: string[];
   seats: Seat[];
 }
-
 // ---------- Booking ----------
-
 export interface TravelerRequest {
   fullName: string;
   dateOfBirth?: string;
@@ -165,7 +176,6 @@ export interface TravelerRequest {
   type: PassengerType;
   seatNumber?: string;
 }
-
 export interface CheckoutRequest {
   offerId: string;
   offerType: OfferType;
@@ -174,8 +184,14 @@ export interface CheckoutRequest {
   contactPhone?: string;
   travelers: TravelerRequest[];
   paymentPlan?: PaymentPlan;
+  /**
+   * Nombre d'unités du même article, pertinent UNIQUEMENT pour offerType === "HOTEL"
+   * (ex: réserver 2 chambres identiques). Pour FLIGHT, ignoré côté backend :
+   * le nombre de billets/le prix se déduisent de travelers.length et de leur type
+   * (ADULT/CHILD/INFANT), pas de ce champ. Défaut : 1.
+   */
+  quantity?: number;
 }
-
 export interface MultiCityCheckoutRequest {
   legOfferIds: string[];
   contactEmail: string;
@@ -183,8 +199,9 @@ export interface MultiCityCheckoutRequest {
   contactPhone?: string;
   travelers: TravelerRequest[];
   paymentPlan?: PaymentPlan;
+  // Pas de quantity ici : un itinéraire multi-city se réserve pour le groupe de travelers
+  // fourni, il n'y a pas de notion de "N fois le même itinéraire" en un seul checkout.
 }
-
 export interface BookingFlightLeg {
   legIndex: number;
   airline: string;
@@ -194,7 +211,6 @@ export interface BookingFlightLeg {
   departureTime: string;
   arrivalTime: string;
 }
-
 export interface BookingResponse {
   id: string;
   status: BookingStatus;
@@ -224,24 +240,53 @@ export interface BookingResponse {
   fareClass: string | null;
   createdAt: string;
 }
-
 export interface BookingTravelerResponse {
   fullName: string;
   type: PassengerType;
   seatNumber: string | null;
 }
-
-// ---------- Payment ----------
-
-export interface PaymentRequest {
-  bookingId: string;
-  paymentMethod: PaymentMethod;
-  cardNumber?: string;
-  cardHolderName?: string;
-  expiry?: string;
-  cvv?: string;
-  mobileNumber?: string;
+export type PaymentMethod = "CARD" | "MOBILE_MONEY" | "GOOGLE_PAY" | "APPLE_PAY" | "PAYPAL";
+export interface BillingAddress {
+  address: string;
+  city: string;
+  zipCode?: string;
+  state?: string;
+  countryCode: string; // ISO 3166-1 alpha-2
 }
+
+// Champs communs à tous les paiements
+interface BasePaymentRequest {
+  bookingId: string;
+  countryCode: string; // ISO 3166-1 alpha-2
+  countryCurrency: string; // ISO 4217, ex. "XAF"
+}
+
+// Variante Carte
+export interface CardPaymentRequest extends BasePaymentRequest {
+  paymentMethod: "CARD";
+  cardNumber: string;
+  cardHolderName: string;
+  expiry: string;
+  cvv: string;
+}
+
+// Variante Mobile Money
+export interface MobileMoneyPaymentRequest extends BasePaymentRequest {
+  paymentMethod: "MOBILE_MONEY";
+  mobileNumber: string;
+}
+
+// Variante Wallets / PayPal
+export interface WalletPaymentRequest extends BasePaymentRequest {
+  paymentMethod: "GOOGLE_PAY" | "APPLE_PAY" | "PAYPAL";
+  billingAddress?: BillingAddress;
+}
+
+// Union Discriminée
+export type BookingPaymentRequest =
+    | CardPaymentRequest
+    | MobileMoneyPaymentRequest
+    | WalletPaymentRequest;
 
 export interface PaymentResponse {
   paymentId: string;
@@ -347,6 +392,14 @@ export interface FlightResponse {
 }
 // ---------- Partner: Hotels ----------
 
+export interface HotelImageResponse {
+  id: string;
+  url: string;
+  caption: string | null;
+  isPrimary: boolean;
+  displayOrder: number | null;
+}
+
 export interface HotelResponse {
   id: string;
   name: string;
@@ -355,35 +408,57 @@ export interface HotelResponse {
   starRating: number | null;
   status: "ACTIVE" | "SUSPENDED";
   coverImageUrl: string | null;
+  images: HotelImageResponse[];
 }
 // ---------- Partner: Vehicles ----------
 
 export type VehicleCategory = "ECONOMY" | "COMPACT" | "SUV" | "LUXURY" | "VAN" | "MINIBUS";
+export type Transmission = "MANUAL" | "AUTOMATIC";
+
+export interface VehicleImageResponse {
+  id: string;
+  url: string;
+  caption: string | null;
+  isPrimary: boolean;
+  displayOrder: number | null;
+}
 
 export interface VehicleResponse {
   id: string;
+  partnerId: string;
   brand: string;
   model: string;
+  year: number;
   category: VehicleCategory;
+  transmission: Transmission;
+  seats: number;
+  airConditioning: boolean;
   pricePerDay: number;
   currency: string;
   unitsCount: number;
+  pickupLocations: string[];
   status: "ACTIVE" | "SUSPENDED";
+  coverImageUrl: string | null;
+  images: VehicleImageResponse[];
+}
+
+export interface VehicleRegistrationRequest {
+  brand: string;
+  model: string;
+  year: number;
+  category: VehicleCategory;
+  transmission: Transmission;
+  seats: number;
+  airConditioning: boolean;
+  pricePerDay: number;
+  currency: string;
+  unitsCount: number;
+  pickupLocations: string[];
 }
 
 // ---------- Partner: Properties ----------
 
 export type PropertyType = "APARTMENT" | "VILLA" | "STUDIO" | "HOUSE";
-
-export interface PropertyResponse {
-  id: string;
-  title: string;
-  propertyType: PropertyType;
-  city: string;
-  pricePerNight: number;
-  currency: string;
-}
-
 
 /**
  * Statuts d'une annonce de location meublée
@@ -409,6 +484,14 @@ export interface PropertyFormData {
   description?: string;
 }
 
+export interface PropertyImageResponse {
+  id: string;
+  url: string;
+  caption: string | null;
+  isPrimary: boolean;
+  displayOrder: number | null;
+}
+
 /**
  * Interface de la réponse API Spring Boot pour une propriété
  */
@@ -416,8 +499,8 @@ export interface PropertyResponse extends PropertyFormData {
   id: string;
   partnerId: string;
   status: ListingStatus;
-  coverImageUrl?: string;
-  images?: string[];
+  coverImageUrl: string | null;
+  images: PropertyImageResponse[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -542,6 +625,14 @@ export interface RoomAvailabilityFormData {
   roomsAvailable: number;
 }
 
+export interface RoomImageResponse {
+  id: string;
+  url: string;
+  caption: string | null;
+  isPrimary: boolean;
+  displayOrder: number | null;
+}
+
 export interface RoomTypeResponse {
   id: string;
   name: string;
@@ -558,6 +649,7 @@ export interface RoomTypeResponse {
     quantity: number;
     coverImageUrl?: string;
     amenities: string[];
+  images: RoomImageResponse[];
   status: "ACTIVE" | "SUSPENDED";
 }
 export interface RoomAvailabilityResponse {
@@ -719,4 +811,76 @@ export interface PaginatedResponse<T> {
 
 export interface UpdateCommissionPayload {
   commissionRate: number;
+}
+export interface UpdatePartnerDto {
+  companyName?: string;
+  phone?: string;
+  city?: string;
+  country?: string;
+  description?: string;
+  logoUrl?: string;
+}
+export interface PartnerUpdateRequest {
+  companyName?: string;
+  phone?: string;
+  city?: string;
+  country?: string;
+  description?: string;
+}
+// lib/api/types.ts — ajouts
+
+export interface VehicleSearchParams {
+  pickupCity: string;
+  dropoffCity?: string;
+  rentalStart: string; // ISO date
+  pickupTime?: string; // HH:mm
+  rentalEnd: string;
+  dropoffTime?: string;
+  category?: string;
+  withDriver?: boolean;
+  driverAge25Plus?: boolean;
+  currency?: string;
+}
+
+export interface HarmonizedVehicleOffer {
+  brand: string;
+  model: string;
+  category: string;
+  transmission: string;
+  seats: number;
+  airConditioning: boolean;
+  pickupCity: string;
+  dropoffCity: string;
+  rentalStart: string;
+  pickupTime: string | null;
+  rentalEnd: string;
+  dropoffTime: string | null;
+  withDriver: boolean;
+  driverAge25Plus: boolean;
+  bestOfferId: string;
+  quotes: ProviderQuote[];
+}
+export interface PropertySearchParams {
+  city: string;
+  checkIn: string;
+  checkOut: string;
+  guests?: number;
+  bedrooms?: number;
+  propertyType?: string;
+  entirePlace?: boolean;
+  currency?: string;
+}
+
+export interface HarmonizedPropertyOffer {
+  title: string;
+  propertyType: string;
+  city: string;
+  country: string;
+  bedrooms: number;
+  maxGuests: number;
+  entirePlace: boolean;
+  checkIn: string;
+  checkOut: string;
+  bestOfferId: string;
+  quotes: ProviderQuote[];
 }

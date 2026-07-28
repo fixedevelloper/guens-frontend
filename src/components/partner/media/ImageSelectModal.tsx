@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
     Image as ImageIcon,
     Upload,
@@ -9,7 +9,8 @@ import {
     Loader2,
     X,
     Link as LinkIcon,
-    CloudUpload
+    CloudUpload,
+    AlertCircle
 } from "lucide-react";
 
 import {
@@ -24,15 +25,29 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { UserImage } from "@/types/hotel-form";
+import { listMyImages, uploadImage, UserImageResponse } from "@/lib/api/images";
 
-// Mock des images existantes de l'utilisateur (à remplacer par votre appel API)
-const INITIAL_IMAGES: UserImage[] = [
-    { id: "img-1", url: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80", name: "facade-hotel.jpg", size: "2.4 MB" },
-    { id: "img-2", url: "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=800&q=80", name: "reception-lounge.jpg", size: "1.8 MB" },
-    { id: "img-3", url: "https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=800&q=80", name: "chambre-deluxe.jpg", size: "3.1 MB" },
-    { id: "img-4", url: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=800&q=80", name: "piscine-vue.jpg", size: "2.9 MB" },
-    { id: "img-5", url: "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80", name: "suite-lit-king.jpg", size: "1.5 MB" },
-];
+function formatFileSize(bytes: number): string {
+    if (bytes < 1024) return `${bytes} o`;
+    const units = ["Ko", "Mo", "Go"];
+    let value = bytes / 1024;
+    let unitIndex = 0;
+    while (value >= 1024 && unitIndex < units.length - 1) {
+        value /= 1024;
+        unitIndex++;
+    }
+    return `${value.toFixed(1)} ${units[unitIndex]}`;
+}
+
+function toUserImage(image: UserImageResponse): UserImage {
+    return {
+        id: image.id,
+        url: image.url,
+        name: image.name,
+        size: formatFileSize(image.sizeBytes),
+        createdAt: image.createdAt,
+    };
+}
 
 interface ImageSelectModalProps {
     isOpen: boolean;
@@ -49,17 +64,46 @@ export function ImageSelectModal({
                                      currentSelectedId,
                                      title = "Sélectionner une image",
                                  }: ImageSelectModalProps) {
-    const [images, setImages] = useState<UserImage[]>(INITIAL_IMAGES);
-    const [selectedImage, setSelectedImage] = useState<UserImage | null>(
-        INITIAL_IMAGES.find((img) => img.id === currentSelectedId) || null
-    );
+    const [images, setImages] = useState<UserImage[]>([]);
+    const [selectedImage, setSelectedImage] = useState<UserImage | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [activeTab, setActiveTab] = useState<"gallery" | "upload">("gallery");
 
     // État pour le téléversement (Upload)
     const [uploadUrl, setUploadUrl] = useState("");
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [filePreview, setFilePreview] = useState<string | null>(null);
     const [uploading, setUploading] = useState(false);
+
+    // Récupère la galerie de l'utilisateur connecté depuis le backend à chaque ouverture du modal
+    useEffect(() => {
+        if (!isOpen) return;
+
+        let cancelled = false;
+        setLoading(true);
+        setLoadError(null);
+
+        listMyImages()
+            .then((fetched) => {
+                if (cancelled) return;
+                const mapped = fetched.map(toUserImage);
+                setImages(mapped);
+                setSelectedImage(mapped.find((img) => img.id === currentSelectedId) ?? null);
+            })
+            .catch((error) => {
+                console.error("Erreur lors du chargement des images:", error);
+                if (!cancelled) setLoadError("Impossible de charger vos images.");
+            })
+            .finally(() => {
+                if (!cancelled) setLoading(false);
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [isOpen, currentSelectedId]);
 
     // Filtrage des images par nom
     const filteredImages = images.filter((img) =>
@@ -74,37 +118,39 @@ export function ImageSelectModal({
         }
     };
 
-    // Simulation du dépôt de fichier / téléversement
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            const url = URL.createObjectURL(file);
-            setFilePreview(url);
+            setSelectedFile(file);
+            setFilePreview(URL.createObjectURL(file));
         }
     };
 
     const handleAddImage = async () => {
-        const targetUrl = filePreview || uploadUrl;
-        if (!targetUrl) return;
+        if (!selectedFile && !uploadUrl) return;
 
         setUploading(true);
 
         try {
-            // Simulation d'un upload vers votre backend / Cloudinary / S3
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+            let newImg: UserImage;
 
-            const newImg: UserImage = {
-                id: `img-${Date.now()}`,
-                url: targetUrl,
-                name: filePreview ? "nouvelle-image.jpg" : uploadUrl.split("/").pop() || "image-web.jpg",
-                size: "1.2 MB",
-                createdAt: new Date().toISOString(),
-            };
+            if (selectedFile) {
+                const uploaded = await uploadImage(selectedFile);
+                newImg = toUserImage(uploaded);
+            } else {
+                // Pas d'équivalent backend pour une URL externe : utilisée telle quelle, sans persistance.
+                newImg = {
+                    id: `external-${Date.now()}`,
+                    url: uploadUrl,
+                    name: uploadUrl.split("/").pop() || "image-web.jpg",
+                };
+            }
 
             setImages((prev) => [newImg, ...prev]);
             setSelectedImage(newImg);
 
             // Reset des champs d'upload et retour à la galerie
+            setSelectedFile(null);
             setFilePreview(null);
             setUploadUrl("");
             setActiveTab("gallery");
@@ -152,7 +198,17 @@ export function ImageSelectModal({
                         </div>
 
                         <div className="flex-1 overflow-y-auto pr-1">
-                            {filteredImages.length === 0 ? (
+                            {loading ? (
+                                <div className="flex flex-col items-center justify-center gap-2 py-12 text-muted-foreground">
+                                    <Loader2 className="size-5 animate-spin" />
+                                    Chargement de vos images...
+                                </div>
+                            ) : loadError ? (
+                                <div className="flex flex-col items-center justify-center gap-2 py-12 text-destructive text-center">
+                                    <AlertCircle className="size-5" />
+                                    {loadError}
+                                </div>
+                            ) : filteredImages.length === 0 ? (
                                 <div className="text-center py-12 text-muted-foreground">
                                     Aucune image trouvée.
                                 </div>
@@ -221,7 +277,10 @@ export function ImageSelectModal({
                             <div className="relative h-40 w-full rounded-xl overflow-hidden border">
                                 <img src={filePreview} alt="Aperçu" className="w-full h-full object-cover" />
                                 <button
-                                    onClick={() => setFilePreview(null)}
+                                    onClick={() => {
+                                        setFilePreview(null);
+                                        setSelectedFile(null);
+                                    }}
                                     className="absolute top-2 right-2 bg-black/60 hover:bg-black text-white p-1 rounded-full"
                                 >
                                     <X className="size-4" />

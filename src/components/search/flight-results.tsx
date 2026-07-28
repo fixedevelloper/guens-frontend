@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { airlineLabel, formatDuration, formatMoney, formatTime, providerLabel } from "@/lib/format";
+import { useFlightStore } from "@/store/useFlightStore";
 import type { HarmonizedFlightOffer } from "@/lib/api/types";
 import {checkoutUrlForFlight, resellerCheckoutUrlForFlight} from "@/lib/checkout-url";
 import {useState} from "react";
@@ -42,11 +43,17 @@ export function FlightOfferCard({ offer, locale,isReseller }: { offer: Harmonize
   const router = useRouter();
   const [showDetails, setShowDetails] = useState(false);
 
+  const selectOffer = useFlightStore((state) => state.selectOffer);
+
   // Tri des offres par prix croissant
   const sortedQuotes = [...offer.quotes].sort((a, b) => Number(a.price.amount) - Number(b.price.amount));
   const cheapestQuote = sortedQuotes[0];
 
+  // Enregistre l'offre choisie dans le store avant la navigation, sur le même principe que
+  // le flux hôtel : la page de checkout démarre à partir de l'offre déjà en mémoire, sans
+  // devoir la re-fetcher/re-parser depuis les query params.
   function handleSelect(offerId: string) {
+    selectOffer(offer);
     if (isReseller){
       router.push(resellerCheckoutUrlForFlight(offer, offerId));
     }else {

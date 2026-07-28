@@ -306,12 +306,18 @@ export function FlightSearchForm({
               onSelect={(option) => form.setValue("origin", option.code, { shouldValidate: true })}
             />
             <button
-              type="button"
-              onClick={swapLocations}
-              aria-label={t("swapLocations")}
-              className="absolute top-1/2 -right-4 z-10 flex size-8 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm transition-colors hover:text-primary sm:flex"
+                type="button"
+                onClick={swapLocations}
+                aria-label={t("swapLocations")}
+                className={cn(
+                    "absolute z-10 flex size-8 items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm transition-colors hover:text-primary",
+                    // Mobile : Aligné à droite, à cheval entre le champ du haut et du bas
+                    "bottom-0 right-4 translate-y-1/2",
+                    // Desktop (sm:) : Positionné sur le bord droit extérieur, centré verticalement
+                    "sm:bottom-auto sm:top-1/2 sm:-right-4 sm:-translate-y-1/2"
+                )}
             >
-              <ArrowLeftRight className="size-3.5" />
+              <ArrowLeftRight className="size-3.5 rotate-90 transition-transform sm:rotate-0" />
             </button>
           </div>
 

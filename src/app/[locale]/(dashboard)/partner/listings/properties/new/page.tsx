@@ -41,6 +41,7 @@ import { useCreatePropertyMutation } from "@/hooks/use-partner-queries";
 import { cn } from "@/lib/utils";
 import { PROPERTY_AMENITIES, PropertyFormData, PropertyType } from "../../../../../../../lib/api/types";
 import {ImageSelectModal} from "../../../../../../../components/partner/media/ImageSelectModal";
+import { CityAutocompleteInput } from "@/components/partner/city-autocomplete-input";
 import { UserImage } from "@/types/hotel-form";
 
 // Interface locale pour gérer la valeur de saisie du prix et l'image de couverture
@@ -100,6 +101,10 @@ export default function NewPropertyPage() {
 
     function handleSelectChange(name: keyof LocalPropertyFormState, value: string) {
         setForm((prev) => ({ ...prev, [name]: value }));
+    }
+
+    function handleCityCountryChange(city: string, country: string) {
+        setForm((prev) => ({ ...prev, city, country }));
     }
 
     function toggleAmenity(id: string) {
@@ -317,36 +322,14 @@ export default function NewPropertyPage() {
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="city" className="text-xs font-bold">
-                                            Ville *
-                                        </Label>
-                                        <Input
-                                            id="city"
-                                            name="city"
-                                            placeholder="Ex: Douala"
-                                            value={form.city}
-                                            onChange={handleChange}
-                                            className="rounded-xl text-xs h-10"
-                                            required
-                                        />
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="country" className="text-xs font-bold">
-                                            Pays *
-                                        </Label>
-                                        <Input
-                                            id="country"
-                                            name="country"
-                                            placeholder="Ex: Cameroun"
-                                            value={form.country}
-                                            onChange={handleChange}
-                                            className="rounded-xl text-xs h-10"
-                                            required
-                                        />
-                                    </div>
+                                <div className="space-y-2">
+                                    <Label className="text-xs font-bold">Ville *</Label>
+                                    <CityAutocompleteInput
+                                        cityValue={form.city}
+                                        countryValue={form.country}
+                                        onSelectCity={handleCityCountryChange}
+                                        className="rounded-xl text-xs h-10"
+                                    />
                                 </div>
                             </div>
                         )}

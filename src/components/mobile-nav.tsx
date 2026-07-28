@@ -2,17 +2,21 @@
 
 import React, { useState } from "react";
 import {
+    Home as HomeIcon,
     Plane,
     Building2,
+    Car,
+    BedDouble,
     User,
     LogIn,
     Handshake,
-    Home,
     LayoutDashboard,
     LogOut,
     ShieldCheck,
     UserCheck,
     ChevronRight,
+    MoreVertical,
+    Sparkles,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -32,15 +36,23 @@ export function MobileNav() {
     const router = useRouter();
     const { user, isAuthenticated, isAdmin, logout } = useAuth();
     const [open, setOpen] = useState(false);
+    const [more, setMore] = useState(false);
 
+    // Détection des routes actives
+    const isHomeActive = pathname === "/";
     const isFlightsActive = pathname.startsWith("/flights");
     const isHotelsActive = pathname.startsWith("/hotels");
-    const isHomeActive = pathname === "/";
+    const isCarRentalActive = pathname.startsWith("/car-rentals");
+    const isFurnishedRentalActive = pathname.startsWith("/furnished-rentals");
+    const isBecomeHostActive = pathname.startsWith("/become-host");
     const isDashboardActive =
         pathname.startsWith("/dashboard") ||
         pathname.startsWith("/admin") ||
         pathname.startsWith("/account");
-    const isBecomeHostActive = pathname.startsWith("/become-host");
+
+    // Indique si l'un des sous-menus du menu "Plus" est actif
+    const isMoreActive =
+        isCarRentalActive || isFurnishedRentalActive || isBecomeHostActive;
 
     const handleLogout = async () => {
         setOpen(false);
@@ -51,103 +63,185 @@ export function MobileNav() {
     };
 
     return (
-        <nav className="fixed bottom-0 left-0 right-0 z-50 flex w-full items-center justify-around border-t border-border/40 bg-background/95 px-2 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] backdrop-blur-lg sm:hidden shadow-lg">
-            {/* Accueil */}
+        <nav className="fixed bottom-0 left-0 right-0 z-50 flex w-full items-center justify-around border-t border-border/40 bg-background/95 px-2 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] backdrop-blur-xl sm:hidden shadow-2xl">
+            {/* 1. Accueil */}
             <Link
                 href="/"
-                className={`flex flex-1 flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors ${
+                className={`flex flex-1 min-w-0 flex-col items-center justify-center gap-1 text-[10px] font-medium transition-all active:scale-95 ${
                     isHomeActive
                         ? "text-primary font-bold"
                         : "text-muted-foreground hover:text-foreground"
                 }`}
             >
                 <div
-                    className={`flex items-center justify-center rounded-full px-3 py-1 transition-all ${
-                        isHomeActive ? "bg-primary/10" : ""
+                    className={`flex items-center justify-center rounded-full px-2 py-1 transition-all ${
+                        isHomeActive ? "bg-primary/10 text-primary" : ""
                     }`}
                 >
-                    <Home className="size-5" />
+                    <HomeIcon className="size-4" />car-rental/car-rental-form
                 </div>
-                <span>{t("home")}</span>
+                <span className="truncate max-w-[54px] text-center">{t("home")}</span>
             </Link>
 
-            {/* Vols */}
+            {/* 2. Vols */}
             <Link
                 href="/flights"
-                className={`flex flex-1 flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors ${
+                className={`flex flex-1 min-w-0 flex-col items-center justify-center gap-1 text-[10px] font-medium transition-all active:scale-95 ${
                     isFlightsActive
                         ? "text-primary font-bold"
                         : "text-muted-foreground hover:text-foreground"
                 }`}
             >
                 <div
-                    className={`flex items-center justify-center rounded-full px-3 py-1 transition-all ${
-                        isFlightsActive ? "bg-primary/10" : ""
+                    className={`flex items-center justify-center rounded-full px-2 py-1 transition-all ${
+                        isFlightsActive ? "bg-primary/10 text-primary" : ""
                     }`}
                 >
-                    <Plane className="size-5" />
+                    <Plane className="size-4" />
                 </div>
-                <span>{t("flights")}</span>
+                <span className="truncate max-w-[54px] text-center">{t("flights")}</span>
             </Link>
 
-            {/* Hôtels */}
+            {/* 3. Hôtels */}
             <Link
                 href="/hotels"
-                className={`flex flex-1 flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors ${
+                className={`flex flex-1 min-w-0 flex-col items-center justify-center gap-1 text-[10px] font-medium transition-all active:scale-95 ${
                     isHotelsActive
                         ? "text-primary font-bold"
                         : "text-muted-foreground hover:text-foreground"
                 }`}
             >
                 <div
-                    className={`flex items-center justify-center rounded-full px-3 py-1 transition-all ${
-                        isHotelsActive ? "bg-primary/10" : ""
+                    className={`flex items-center justify-center rounded-full px-2 py-1 transition-all ${
+                        isHotelsActive ? "bg-primary/10 text-primary" : ""
                     }`}
                 >
-                    <Building2 className="size-5" />
+                    <Building2 className="size-4" />
                 </div>
-                <span>{t("hotels")}</span>
+                <span className="truncate max-w-[54px] text-center">{t("hotels")}</span>
             </Link>
 
-            {/* Devenir hôte */}
-            <Link
-                href="/become-host"
-                className={`flex flex-1 flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors ${
-                    isBecomeHostActive
-                        ? "text-primary font-bold"
-                        : "text-muted-foreground hover:text-foreground"
-                }`}
-            >
-                <div
-                    className={`flex items-center justify-center rounded-full px-3 py-1 transition-all ${
-                        isBecomeHostActive ? "bg-primary/10" : ""
-                    }`}
+            {/* 4. Menu "Plus" (Location Auto, Meublés, Hôte) */}
+            <Sheet open={more} onOpenChange={setMore}>
+                <SheetTrigger asChild>
+                    <button
+                        type="button"
+                        className={`flex flex-1 min-w-0 flex-col items-center justify-center gap-1 text-[10px] font-medium transition-all active:scale-95 outline-none ${
+                            isMoreActive
+                                ? "text-primary font-bold"
+                                : "text-muted-foreground hover:text-foreground"
+                        }`}
+                    >
+                        <div
+                            className={`flex items-center justify-center rounded-full px-2 py-1 transition-all ${
+                                isMoreActive ? "bg-primary/10 text-primary" : ""
+                            }`}
+                        >
+                            <MoreVertical className="size-4" />
+                        </div>
+                        <span className="max-w-[54px] truncate text-center">
+                            {t("more")}
+                        </span>
+                    </button>
+                </SheetTrigger>
+
+                <SheetContent
+                    side="bottom"
+                    className="rounded-t-3xl p-6 border-t shadow-2xl bg-background/98 backdrop-blur-2xl"
                 >
-                    <Handshake className="size-5" />
-                </div>
-                <span>{t("becomeHost")}</span>
-            </Link>
+                    <SheetHeader className="text-left pb-4 border-b border-border/50">
+                        <div className="flex items-center gap-2">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary font-bold">
+                                <Sparkles className="h-5 w-5" />
+                            </div>
+                            <SheetTitle className="text-base font-bold text-foreground">
+                                {t("services") || t("more")}
+                            </SheetTitle>
+                        </div>
+                    </SheetHeader>
 
-            {/* Profil / Connexion (Avec Bottom Sheet Modal si connecté) */}
+                    {/* Liste des services secondaires */}
+                    <div className="py-4 space-y-2">
+                        {/* Location de voitures */}
+                        <Link
+                            href="/car-rentals"
+                            onClick={() => setMore(false)}
+                            className={`flex items-center justify-between p-3.5 rounded-2xl transition-all ${
+                                isCarRentalActive
+                                    ? "bg-primary/10 text-primary font-semibold"
+                                    : "hover:bg-muted/70 active:bg-muted text-foreground"
+                            }`}
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 rounded-xl bg-muted/80 text-foreground">
+                                    <Car className="h-5 w-5 text-primary" />
+                                </div>
+                                <span className="text-sm font-medium">{t("carRental")}</span>
+                            </div>
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        </Link>
+
+                        {/* Logements meublés */}
+                        <Link
+                            href="/furnished-rentals"
+                            onClick={() => setMore(false)}
+                            className={`flex items-center justify-between p-3.5 rounded-2xl transition-all ${
+                                isFurnishedRentalActive
+                                    ? "bg-primary/10 text-primary font-semibold"
+                                    : "hover:bg-muted/70 active:bg-muted text-foreground"
+                            }`}
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 rounded-xl bg-muted/80 text-foreground">
+                                    <BedDouble className="h-5 w-5 text-primary" />
+                                </div>
+                                <span className="text-sm font-medium">{t("furnishedRental")}</span>
+                            </div>
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        </Link>
+
+                        {/* Devenir hôte */}
+                        <Link
+                            href="/become-host"
+                            onClick={() => setMore(false)}
+                            className={`flex items-center justify-between p-3.5 rounded-2xl transition-all ${
+                                isBecomeHostActive
+                                    ? "bg-primary/10 text-primary font-semibold"
+                                    : "hover:bg-muted/70 active:bg-muted text-foreground"
+                            }`}
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 rounded-xl bg-muted/80 text-foreground">
+                                    <Handshake className="h-5 w-5 text-primary" />
+                                </div>
+                                <span className="text-sm font-medium">{t("becomeHost")}</span>
+                            </div>
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        </Link>
+                    </div>
+                </SheetContent>
+            </Sheet>
+
+            {/* 5. Profil / Connexion */}
             {isAuthenticated && user ? (
                 <Sheet open={open} onOpenChange={setOpen}>
                     <SheetTrigger asChild>
                         <button
                             type="button"
-                            className={`flex flex-1 flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors outline-none ${
+                            className={`flex flex-1 min-w-0 flex-col items-center justify-center gap-1 text-[10px] font-medium transition-all active:scale-95 outline-none ${
                                 isDashboardActive
                                     ? "text-primary font-bold"
                                     : "text-muted-foreground hover:text-foreground"
                             }`}
                         >
                             <div
-                                className={`flex items-center justify-center rounded-full px-3 py-1 transition-all ${
-                                    isDashboardActive ? "bg-primary/10" : ""
+                                className={`flex items-center justify-center rounded-full px-2 py-1 transition-all ${
+                                    isDashboardActive ? "bg-primary/10 text-primary" : ""
                                 }`}
                             >
-                                <User className="size-5" />
+                                <User className="size-4" />
                             </div>
-                            <span className="max-w-[55px] truncate">
+                            <span className="max-w-[54px] truncate text-center">
                                 {user.fullName?.split(" ")[0] || t("dashboard")}
                             </span>
                         </button>
@@ -155,12 +249,12 @@ export function MobileNav() {
 
                     <SheetContent
                         side="bottom"
-                        className="rounded-t-3xl p-6 border-t shadow-2xl bg-background"
+                        className="rounded-t-3xl p-6 border-t shadow-2xl bg-background/98 backdrop-blur-2xl"
                     >
                         {/* En-tête profil */}
-                        <SheetHeader className="text-left pb-4 border-b">
+                        <SheetHeader className="text-left pb-4 border-b border-border/50">
                             <div className="flex items-center gap-3">
-                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-lg shrink-0">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-lg shrink-0 border border-primary/20">
                                     {user.fullName?.charAt(0).toUpperCase() || "U"}
                                 </div>
                                 <div className="flex flex-col overflow-hidden">
@@ -174,13 +268,12 @@ export function MobileNav() {
                             </div>
                         </SheetHeader>
 
-                        {/* Liens du Modal Bottom Sheet */}
+                        {/* Liens du Compte Utilisateur */}
                         <div className="py-4 space-y-1.5">
-                            {/* Tableau de bord client */}
                             <Link
                                 href="/dashboard"
                                 onClick={() => setOpen(false)}
-                                className="flex items-center justify-between p-3 rounded-2xl hover:bg-muted/60 active:bg-muted transition-colors text-sm font-medium"
+                                className="flex items-center justify-between p-3.5 rounded-2xl hover:bg-muted/70 active:bg-muted transition-colors text-sm font-medium"
                             >
                                 <div className="flex items-center gap-3 text-foreground">
                                     <LayoutDashboard className="h-5 w-5 text-primary" />
@@ -189,12 +282,11 @@ export function MobileNav() {
                                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
                             </Link>
 
-                            {/* Espace Admin (si administrateur) */}
                             {isAdmin && (
                                 <Link
                                     href="/admin"
                                     onClick={() => setOpen(false)}
-                                    className="flex items-center justify-between p-3 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold text-sm transition-colors"
+                                    className="flex items-center justify-between p-3.5 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold text-sm transition-colors"
                                 >
                                     <div className="flex items-center gap-3">
                                         <ShieldCheck className="h-5 w-5" />
@@ -204,11 +296,10 @@ export function MobileNav() {
                                 </Link>
                             )}
 
-                            {/* Mon Compte / Profil */}
                             <Link
                                 href="/account"
                                 onClick={() => setOpen(false)}
-                                className="flex items-center justify-between p-3 rounded-2xl hover:bg-muted/60 active:bg-muted transition-colors text-sm font-medium"
+                                className="flex items-center justify-between p-3.5 rounded-2xl hover:bg-muted/70 active:bg-muted transition-colors text-sm font-medium"
                             >
                                 <div className="flex items-center gap-3 text-foreground">
                                     <UserCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
@@ -219,11 +310,10 @@ export function MobileNav() {
 
                             <hr className="my-2 border-border/40" />
 
-                            {/* Bouton de Déconnexion */}
                             <button
                                 type="button"
                                 onClick={handleLogout}
-                                className="w-full flex items-center justify-between p-3 rounded-2xl text-destructive hover:bg-destructive/10 active:bg-destructive/20 transition-colors text-sm font-semibold"
+                                className="w-full flex items-center justify-between p-3.5 rounded-2xl text-destructive hover:bg-destructive/10 active:bg-destructive/20 transition-colors text-sm font-semibold"
                             >
                                 <div className="flex items-center gap-3">
                                     <LogOut className="h-5 w-5" />
@@ -236,20 +326,20 @@ export function MobileNav() {
             ) : (
                 <Link
                     href="/login"
-                    className={`flex flex-1 flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors ${
+                    className={`flex flex-1 min-w-0 flex-col items-center justify-center gap-1 text-[10px] font-medium transition-all active:scale-95 ${
                         pathname.startsWith("/login") || pathname.startsWith("/register")
                             ? "text-primary font-bold"
                             : "text-muted-foreground hover:text-foreground"
                     }`}
                 >
                     <div
-                        className={`flex items-center justify-center rounded-full px-3 py-1 transition-all ${
-                            pathname.startsWith("/login") ? "bg-primary/10" : ""
+                        className={`flex items-center justify-center rounded-full px-2 py-1 transition-all ${
+                            pathname.startsWith("/login") ? "bg-primary/10 text-primary" : ""
                         }`}
                     >
-                        <LogIn className="size-5" />
+                        <LogIn className="size-4" />
                     </div>
-                    <span>{t("login")}</span>
+                    <span className="truncate max-w-[54px] text-center">{t("login")}</span>
                 </Link>
             )}
         </nav>

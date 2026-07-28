@@ -5,6 +5,8 @@ import { useTranslations } from "next-intl";
 import {
   Plane,
   Building2,
+  Car,
+  Home,
   Globe,
   User,
   LogOut,
@@ -31,8 +33,11 @@ export function SiteHeader() {
   const router = useRouter();
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
 
+  // Détection des routes actives
   const isFlightsActive = pathname.startsWith("/flights");
   const isHotelsActive = pathname.startsWith("/hotels");
+  const isCarRentalActive = pathname.startsWith("/car-rentals");
+  const isFurnishedRentalActive = pathname.startsWith("/furnished-rentals");
   const isBecomeHostActive = pathname.startsWith("/become-host");
 
   return (
@@ -44,7 +49,7 @@ export function SiteHeader() {
               href="/"
               className="group flex items-center gap-2.5 py-1.5 transition-opacity hover:opacity-90"
           >
-            <div className="relative h-16 w-40 sm:w-48 overflow-hidden rounded-md transition-transform duration-200 group-hover:scale-[0.98]">
+            <div className="relative h-16 w-36 sm:w-44 overflow-hidden rounded-md transition-transform duration-200 group-hover:scale-[0.98]">
               <Image
                   src="/logo.png"
                   alt="Logo"
@@ -56,36 +61,72 @@ export function SiteHeader() {
           </Link>
 
           {/* Navigation centrale (Desktop uniquement) */}
-          <nav className="hidden items-center gap-2 sm:flex">
+          <nav className="hidden items-center gap-1.5 lg:flex">
+            {/* Vols */}
             <Button
                 asChild
                 variant={isFlightsActive ? "secondary" : "ghost"}
                 size="default"
-                className={`gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200 ${
+                className={`gap-2 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-200 ${
                     isFlightsActive
                         ? "bg-primary/10 text-primary hover:bg-primary/15"
                         : "text-muted-foreground hover:text-foreground"
                 }`}
             >
               <Link href="/flights" className="flex items-center gap-2">
-                <Plane className="size-5" />
+                <Plane className="size-4" />
                 {t("flights")}
               </Link>
             </Button>
 
+            {/* Hôtels */}
             <Button
                 asChild
                 variant={isHotelsActive ? "secondary" : "ghost"}
                 size="default"
-                className={`gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200 ${
+                className={`gap-2 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-200 ${
                     isHotelsActive
                         ? "bg-primary/10 text-primary hover:bg-primary/15"
                         : "text-muted-foreground hover:text-foreground"
                 }`}
             >
               <Link href="/hotels" className="flex items-center gap-2">
-                <Building2 className="size-5" />
+                <Building2 className="size-4" />
                 {t("hotels")}
+              </Link>
+            </Button>
+
+            {/* Location de voitures */}
+            <Button
+                asChild
+                variant={isCarRentalActive ? "secondary" : "ghost"}
+                size="default"
+                className={`gap-2 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-200 ${
+                    isCarRentalActive
+                        ? "bg-primary/10 text-primary hover:bg-primary/15"
+                        : "text-muted-foreground hover:text-foreground"
+                }`}
+            >
+              <Link href="/car-rentals" className="flex items-center gap-2">
+                <Car className="size-4" />
+                {t("carRental")}
+              </Link>
+            </Button>
+
+            {/* Locations meublées */}
+            <Button
+                asChild
+                variant={isFurnishedRentalActive ? "secondary" : "ghost"}
+                size="default"
+                className={`gap-2 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-200 ${
+                    isFurnishedRentalActive
+                        ? "bg-primary/10 text-primary hover:bg-primary/15"
+                        : "text-muted-foreground hover:text-foreground"
+                }`}
+            >
+              <Link href="/furnished-rentals" className="flex items-center gap-2">
+                <Home className="size-4" />
+                {t("furnishedRental")}
               </Link>
             </Button>
           </nav>
@@ -98,7 +139,7 @@ export function SiteHeader() {
                 asChild
                 variant={isBecomeHostActive ? "secondary" : "outline"}
                 size="default"
-                className={`hidden md:inline-flex gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 ${
+                className={`hidden xl:inline-flex gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 ${
                     isBecomeHostActive
                         ? "bg-primary/10 text-primary hover:bg-primary/15"
                         : "border-border/60 hover:bg-muted"
@@ -135,7 +176,7 @@ export function SiteHeader() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Profil ou Connexion (Desktop uniquement) */}
+            {/* Profil ou Connexion */}
             <div className="hidden sm:flex items-center gap-2">
               {isAuthenticated && user ? (
                   <DropdownMenu>

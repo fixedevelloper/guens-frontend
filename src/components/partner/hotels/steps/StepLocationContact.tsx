@@ -1,14 +1,16 @@
 import { MapPin } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { CityAutocompleteInput } from "@/components/partner/city-autocomplete-input";
 import { HotelFormData } from "@/types/hotel-form";
 
 interface StepLocationContactProps {
     form: HotelFormData;
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    onCityCountryChange: (city: string, country: string) => void;
 }
 
-export function StepLocationContact({ form, onChange }: StepLocationContactProps) {
+export function StepLocationContact({ form, onChange, onCityCountryChange }: StepLocationContactProps) {
     return (
         <div className="space-y-5 animate-in fade-in-50 duration-200">
             <div>
@@ -21,29 +23,13 @@ export function StepLocationContact({ form, onChange }: StepLocationContactProps
                 </p>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                    <Label htmlFor="city">Ville *</Label>
-                    <Input
-                        id="city"
-                        name="city"
-                        placeholder="ex: Douala"
-                        required
-                        value={form.city}
-                        onChange={onChange}
-                    />
-                </div>
-
-                <div className="space-y-2">
-                    <Label htmlFor="country">Pays *</Label>
-                    <Input
-                        id="country"
-                        name="country"
-                        required
-                        value={form.country}
-                        onChange={onChange}
-                    />
-                </div>
+            <div className="space-y-2">
+                <Label>Ville *</Label>
+                <CityAutocompleteInput
+                    cityValue={form.city}
+                    countryValue={form.country}
+                    onSelectCity={onCityCountryChange}
+                />
             </div>
 
             <div className="space-y-2">

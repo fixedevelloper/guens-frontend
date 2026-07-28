@@ -1,6 +1,6 @@
-// components/checkout/checkout-form.tsx
 "use client";
 
+import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray, useForm } from "react-hook-form";
 import { useTranslations } from "next-intl";
@@ -39,14 +39,17 @@ const schema = z.object({
 });
 
 export type CheckoutFormValues = z.infer<typeof schema>;
+export type PaymentPlanValue = "PAY_NOW" | "PAY_LATER";
 
 interface CheckoutFormProps {
   selectedSeats?: string[];
   onSubmit: (request: Omit<CheckoutRequest, "offerId" | "offerType">) => void;
   isSubmitting: boolean;
+  /** Remonte le choix PAY_NOW/PAY_LATER au parent, pour que OfferSummaryCard puisse afficher le bon montant. */
+  onPaymentPlanChange?: (plan: PaymentPlanValue) => void;
 }
 
-export function CheckoutForm({ selectedSeats, onSubmit, isSubmitting }: CheckoutFormProps) {
+export function CheckoutForm({ selectedSeats, onSubmit, isSubmitting, onPaymentPlanChange }: CheckoutFormProps) {
   const t = useTranslations("Checkout");
 
   const form = useForm<CheckoutFormValues>({
@@ -71,6 +74,11 @@ export function CheckoutForm({ selectedSeats, onSubmit, isSubmitting }: Checkout
 
   const { fields, append, remove } = useFieldArray({ control: form.control, name: "travelers" });
   const paymentPlan = form.watch("paymentPlan");
+
+  // Synchronise le parent dès le montage (valeur par défaut) et à chaque changement de choix.
+  useEffect(() => {
+    onPaymentPlanChange?.(paymentPlan);
+  }, [paymentPlan, onPaymentPlanChange]);
 
   function handleSubmit(values: CheckoutFormValues) {
     onSubmit({
@@ -181,7 +189,6 @@ export function CheckoutForm({ selectedSeats, onSubmit, isSubmitting }: Checkout
                       key={field.id}
                       className="group relative grid gap-4 p-3.5 sm:p-5 rounded-2xl border border-border/50 bg-slate-50/30 dark:bg-zinc-900/10 hover:border-border/80 transition-colors"
                   >
-                    {/* Entête Voyageur */}
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 min-w-0 flex-wrap">
                     <span className="text-sm font-bold text-foreground/90 whitespace-nowrap">
@@ -208,7 +215,6 @@ export function CheckoutForm({ selectedSeats, onSubmit, isSubmitting }: Checkout
                       )}
                     </div>
 
-                    {/* Formulaire Voyageur */}
                     <div className="grid gap-3.5 sm:gap-4 grid-cols-1 sm:grid-cols-2">
                       <FormField
                           control={form.control}
@@ -293,7 +299,6 @@ export function CheckoutForm({ selectedSeats, onSubmit, isSubmitting }: Checkout
                   </div>
               ))}
 
-              {/* Bouton pour ajouter un voyageur */}
               <Button
                   type="button"
                   variant="outline"
@@ -356,7 +361,6 @@ export function CheckoutForm({ selectedSeats, onSubmit, isSubmitting }: Checkout
             </div>
           </div>
 
-          {/* NOTICE & SOUMISSION */}
           <div className="space-y-4 pt-4 border-t border-border/40">
             <p className="text-xs text-muted-foreground/80 leading-relaxed bg-slate-50 dark:bg-zinc-900/40 p-3.5 rounded-xl border border-border/30">
               {t("guestNotice") ?? "En soumettant cette demande, vous confirmez que les informations ci-dessus correspondent exactement à vos pièces d'identité officielles de voyage."}

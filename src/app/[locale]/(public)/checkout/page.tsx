@@ -87,7 +87,7 @@ function CheckoutPageContent() {
       );
     }
   }
-
+  const [paymentPlan, setPaymentPlan] = useState<"PAY_NOW" | "PAY_LATER">("PAY_NOW");
   /* OFFRE EXPIRÉE OU INVALIDE */
   if (!offer) {
     return (
@@ -200,7 +200,7 @@ function CheckoutPageContent() {
         {/* Résumé de l'offre */}
         <div className="order-1 lg:order-2">
           <div className="lg:sticky lg:top-24">
-            <OfferSummaryCard offer={offer} />
+            <OfferSummaryCard offer={offer} paymentPlan={paymentPlan} />
           </div>
         </div>
 
@@ -248,6 +248,7 @@ function CheckoutPageContent() {
                 onSubmit={handleSubmit}
                 isSubmitting={isSubmitting}
                 selectedSeats={selectedSeats}
+                onPaymentPlanChange={setPaymentPlan}
             />
           </div>
         </div>

@@ -27,6 +27,7 @@ import { FlightSearchForm } from "@/components/search/flight-search-form";
 import { FlightResultsList } from "@/components/search/flight-results";
 import { FlightFilters } from "@/components/search/flight-filters";
 import { useFlightSearch } from "@/hooks/use-search";
+import { useFlightStore } from "@/store/useFlightStore";
 import {
   flightSearchParamsToQuery,
   multiCitySearchParamsToQuery,
@@ -74,6 +75,35 @@ function FlightsPageContent() {
 
   const params = useMemo(() => parseFlightSearchParams(searchParams), [searchParams]);
   const query = useFlightSearch(params);
+
+  // --- Synchronisation avec le store ---
+  const setStoreSearchParams = useFlightStore((state) => state.setSearchParams);
+  const setStoreSearchResults = useFlightStore((state) => state.setSearchResults);
+  const setStoreLoading = useFlightStore((state) => state.setLoading);
+  const setStoreError = useFlightStore((state) => state.setError);
+
+  useEffect(() => {
+    if (params) {
+      setStoreSearchParams(params);
+    }
+  }, [params, setStoreSearchParams]);
+
+  useEffect(() => {
+    setStoreLoading(query.isLoading);
+  }, [query.isLoading, setStoreLoading]);
+
+  useEffect(() => {
+    if (query.isError) {
+      setStoreError(t("noResults") ?? "Impossible de charger les résultats de vol.");
+    }
+  }, [query.isError, setStoreError, t]);
+
+  useEffect(() => {
+    if (query.data) {
+      setStoreSearchResults(query.data);
+    }
+  }, [query.data, setStoreSearchResults]);
+  // --- Fin synchronisation ---
 
   const filterOptions = useMemo(
       () => computeFlightFilterOptions(query.data ?? []),

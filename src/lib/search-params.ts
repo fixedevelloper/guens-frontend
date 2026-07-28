@@ -4,8 +4,9 @@ import type {
   FlightSearchParams,
   HotelSearchParams,
   JourneyType,
-  MultiCityFlightSearchParams,
+  MultiCityFlightSearchParams, VehicleSearchParams,
 } from "@/lib/api/types";
+import {CarSearchParams} from "@/components/search/car-rental-form";
 
 export function parseFlightSearchParams(sp: URLSearchParams): FlightSearchParams | null {
   const origin = sp.get("origin");
@@ -100,4 +101,81 @@ export function hotelSearchParamsToQuery(params: HotelSearchParams): string {
   if (params.rooms) qs.set("rooms", String(params.rooms));
   if (params.currency) qs.set("currency", params.currency);
   return qs.toString();
+}
+
+export function carSearchParamsToQuery(params: CarSearchParams): string {
+  const q = new URLSearchParams({
+    pickupCity: params.pickupLocation,
+    rentalStart: params.pickupDate,
+    pickupTime: params.pickupTime,
+    rentalEnd: params.dropoffDate,
+    dropoffTime: params.dropoffTime,
+    withDriver: String(params.withDriver),
+    driverAge25Plus: String(params.driverAge25Plus),
+    currency: "XAF", // requis (@NotBlank) côté backend, absent du formulaire
+  });
+  if (params.differentDropoff && params.dropoffLocation) {
+    q.set("dropoffCity", params.dropoffLocation);
+  }
+  return q.toString();
+}
+
+export function parseVehicleSearchParams(searchParams: URLSearchParams): VehicleSearchParams | null {
+  const pickupCity = searchParams.get("pickupCity");
+  const rentalStart = searchParams.get("rentalStart");
+  const rentalEnd = searchParams.get("rentalEnd");
+  if (!pickupCity || !rentalStart || !rentalEnd) return null;
+
+  return {
+    pickupCity,
+    dropoffCity: searchParams.get("dropoffCity") ?? undefined,
+    rentalStart,
+    pickupTime: searchParams.get("pickupTime") ?? undefined,
+    rentalEnd,
+    dropoffTime: searchParams.get("dropoffTime") ?? undefined,
+    withDriver: searchParams.get("withDriver") === "true",
+    driverAge25Plus: searchParams.get("driverAge25Plus") !== "false",
+    currency: searchParams.get("currency") ?? "XAF",
+  };
+}
+
+import type { PropertySearchParams } from "@/lib/api/types";
+import type { FurnishedRentalSearchParams } from "@/components/search/furnished-rental-form";
+
+export function furnishedRentalSearchParamsToQuery(params: FurnishedRentalSearchParams): string {
+  const q = new URLSearchParams({
+    city: params.location,
+    checkIn: params.checkInDate,
+    checkOut: params.checkOutDate,
+    guests: String(params.guests),
+    entirePlace: String(params.entirePlace),
+    currency: "XAF", // requis (@NotBlank) côté backend, absent du formulaire
+  });
+  if (params.bedrooms !== "any") {
+    q.set("bedrooms", params.bedrooms);
+  }
+  if (params.propertyType !== "all") {
+    q.set("propertyType", params.propertyType);
+  }
+  return q.toString();
+}
+
+export function parsePropertySearchParams(searchParams: URLSearchParams): PropertySearchParams | null {
+  const city = searchParams.get("city");
+  const checkIn = searchParams.get("checkIn");
+  const checkOut = searchParams.get("checkOut");
+  if (!city || !checkIn || !checkOut) return null;
+
+  const bedrooms = searchParams.get("bedrooms");
+
+  return {
+    city,
+    checkIn,
+    checkOut,
+    guests: Number(searchParams.get("guests") ?? "1"),
+    bedrooms: bedrooms ? Number(bedrooms) : undefined,
+    propertyType: searchParams.get("propertyType") ?? undefined,
+    entirePlace: searchParams.get("entirePlace") === "true",
+    currency: searchParams.get("currency") ?? "XAF",
+  };
 }

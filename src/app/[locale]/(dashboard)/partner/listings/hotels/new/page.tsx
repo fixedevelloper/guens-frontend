@@ -54,6 +54,10 @@ export default function NewHotelPage() {
         setForm((prev) => ({ ...prev, coverImageUrl: url }));
     }
 
+    function handleCityCountryChange(city: string, country: string) {
+        setForm((prev) => ({ ...prev, city, country }));
+    }
+
     function toggleAmenity(id: string) {
         setForm((prev) => ({
             ...prev,
@@ -121,7 +125,22 @@ export default function NewHotelPage() {
             {/* Formulaire */}
             <Card className="border shadow-sm">
                 <CardContent className="pt-6">
-                    <form onSubmit={handleSubmit} className="space-y-6">
+                    <form
+                        onSubmit={handleSubmit}
+                        onKeyDown={(e) => {
+                            // Empêche la touche Entrée dans un champ (ex: heures d'arrivée/départ) de
+                            // soumettre le formulaire tant qu'on n'est pas sur la dernière étape - la
+                            // soumission implicite du navigateur ignore le bouton "Suivant" (type="button").
+                            if (
+                                e.key === "Enter" &&
+                                currentStep < FORM_STEPS.length &&
+                                (e.target as HTMLElement).tagName !== "TEXTAREA"
+                            ) {
+                                e.preventDefault();
+                            }
+                        }}
+                        className="space-y-6"
+                    >
                         {currentStep === 1 && (
                             <StepGeneralInfo
                                 form={form}
@@ -135,6 +154,7 @@ export default function NewHotelPage() {
                             <StepLocationContact
                                 form={form}
                                 onChange={handleChange}
+                                onCityCountryChange={handleCityCountryChange}
                             />
                         )}
 

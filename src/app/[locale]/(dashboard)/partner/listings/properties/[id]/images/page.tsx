@@ -1,24 +1,33 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import {
     ArrowLeft,
     UploadCloud,
     Trash2,
     Star,
-    ImageIcon,
+    Image as ImageIcon,
     CheckCircle2,
     Images,
     Building2,
+    Loader2,
 } from "lucide-react";
-import { toast } from "sonner";
 
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/auth-context";
+import {
+    addPropertyImage,
+    deletePropertyImage,
+    getPropertyById,
+    setPrimaryPropertyImage,
+} from "@/lib/api/partner";
+import { PropertyImageResponse } from "@/lib/api/types";
 import { ImageSelectModal } from "@/components/partner/media/ImageSelectModal";
 
 export interface PropertyImageItem {
@@ -26,6 +35,15 @@ export interface PropertyImageItem {
     url: string;
     isPrimary: boolean;
     name?: string;
+}
+
+function toPropertyImageItem(image: PropertyImageResponse): PropertyImageItem {
+    return {
+        id: image.id,
+        url: image.url,
+        isPrimary: image.isPrimary,
+        name: image.caption ?? undefined,
+    };
 }
 
 interface PageProps {
@@ -39,78 +57,91 @@ export default function PropertyImagesPage({ params }: PageProps) {
     // Dépaquetage du paramètre asynchrone Next.js 15
     const { id } = use(params);
     const t = useTranslations("PropertiesImages");
+    const { partnerId } = useAuth();
 
     // État de la modale
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    // État des images (Mock initial / API)
-    const [images, setImages] = useState<PropertyImageItem[]>([
-        {
-            id: "h-img-1",
-            url: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80",
-            isPrimary: true,
-            name: "facade-principale.jpg",
-        },
-        {
-            id: "h-img-2",
-            url: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80",
-            isPrimary: false,
-            name: "reception-lobby.jpg",
-        },
-        {
-            id: "h-img-3",
-            url: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1200&q=80",
-            isPrimary: false,
-            name: "piscine-exterieure.jpg",
-        },
-    ]);
+    // État des images, chargées depuis le backend
+    const [images, setImages] = useState<PropertyImageItem[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
 
-    // Sélection d'image depuis la modale
-    const handleSelectImage = (selectedImage: { id: string; url: string }) => {
-        setImages((prev) => {
-            const exists = prev.some((img) => img.id === selectedImage.id);
+    useEffect(() => {
+        if (!partnerId) return;
 
-            if (exists) {
-                // Définit l'image existante comme image de couverture
-                return prev.map((img) => ({
-                    ...img,
-                    isPrimary: img.id === selectedImage.id,
-                }));
-            } else {
-                // Ajoute la nouvelle image et la définit comme couverture
-                return [
-                    ...prev.map((img) => ({ ...img, isPrimary: false })),
-                    { id: selectedImage.id, url: selectedImage.url, isPrimary: true },
-                ];
-            }
-        });
+        let cancelled = false;
+        setLoading(true);
+        setLoadError(null);
 
+        getPropertyById(partnerId, id)
+            .then((property) => {
+                if (cancelled) return;
+                setImages(property.images.map(toPropertyImageItem));
+            })
+            .catch((error) => {
+                console.error("Erreur lors du chargement des images du logement:", error);
+                if (!cancelled) setLoadError("Impossible de charger les images de ce logement.");
+            })
+            .finally(() => {
+                if (!cancelled) setLoading(false);
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [partnerId, id]);
+
+    // Sélection d'image depuis la modale (bibliothèque personnelle) : ajoutée à la galerie du logement
+    // si son URL n'y figure pas déjà, puis définie comme couverture.
+    const handleSelectImage = async (selectedImage: { url: string; name: string }) => {
+        if (!partnerId) return;
         setIsModalOpen(false);
-        toast.success(t("coverUpdatedSuccess") ?? "Photo de couverture mise à jour !");
+
+        const existing = images.find((img) => img.url === selectedImage.url);
+
+        try {
+            const property = existing
+                ? await setPrimaryPropertyImage(partnerId, id, existing.id)
+                : await addPropertyImage(partnerId, id, {
+                      url: selectedImage.url,
+                      caption: selectedImage.name,
+                      isPrimary: true,
+                  });
+            setImages(property.images.map(toPropertyImageItem));
+        } catch (error) {
+            console.error("Erreur lors de l'ajout de l'image:", error);
+            toast.error("Impossible d'ajouter cette image à la galerie.");
+        }
     };
 
     // Définir une photo de couverture
-    const handleSetPrimary = (imageId: string) => {
-        setImages((prev) =>
-            prev.map((img) => ({
-                ...img,
-                isPrimary: img.id === imageId,
-            }))
-        );
-        toast.success(t("setPrimarySuccess") ?? "Définie comme photo de couverture.");
+    const handleSetPrimary = async (imageId: string) => {
+        if (!partnerId) return;
+
+        try {
+            const property = await setPrimaryPropertyImage(partnerId, id, imageId);
+            setImages(property.images.map(toPropertyImageItem));
+        } catch (error) {
+            console.error("Erreur lors de la définition de la couverture:", error);
+            toast.error("Impossible de définir cette image comme couverture.");
+        }
     };
 
     // Supprimer une image de la galerie
-    const handleDelete = (imageId: string) => {
-        setImages((prev) => {
-            const filtered = prev.filter((img) => img.id !== imageId);
-            // Si on a supprimé l'image principale et qu'il reste d'autres images, réassigner la première
-            if (filtered.length > 0 && !filtered.some((img) => img.isPrimary)) {
-                filtered[0].isPrimary = true;
-            }
-            return filtered;
-        });
-        toast.info(t("imageDeleted") ?? "Photo retirée de la galerie.");
+    const handleDelete = async (imageId: string) => {
+        if (!partnerId) return;
+
+        const previous = images;
+        setImages((prev) => prev.filter((img) => img.id !== imageId));
+
+        try {
+            await deletePropertyImage(partnerId, id, imageId);
+        } catch (error) {
+            console.error("Erreur lors de la suppression de l'image:", error);
+            toast.error("Impossible de supprimer cette image.");
+            setImages(previous);
+        }
     };
 
     return (
@@ -119,7 +150,7 @@ export default function PropertyImagesPage({ params }: PageProps) {
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                     <Button variant="outline" size="icon" asChild className="rounded-xl size-9 shrink-0">
-                        <Link href={`/listings/hotels/${id}`}>
+                        <Link href="/partner/listings">
                             <ArrowLeft className="size-4" />
                         </Link>
                     </Button>
@@ -127,11 +158,11 @@ export default function PropertyImagesPage({ params }: PageProps) {
                         <div className="flex items-center gap-2">
                             <Building2 className="size-4 text-primary shrink-0" />
                             <h1 className="text-lg font-black tracking-tight sm:text-xl">
-                                {t("title") ?? "Galerie de l'établissement"}
+                                {t("title") ?? "Galerie du logement"}
                             </h1>
                         </div>
                         <p className="text-xs font-semibold text-muted-foreground">
-                            ID Établissement : <span className="font-mono text-foreground">{id}</span>
+                            ID Logement : <span className="font-mono text-foreground">{id}</span>
                         </p>
                     </div>
                 </div>
@@ -161,10 +192,10 @@ export default function PropertyImagesPage({ params }: PageProps) {
                         <UploadCloud className="size-6" />
                     </div>
                     <h3 className="text-sm font-bold text-foreground">
-                        {t("uploadTitle") ?? "Ajouter des visuels pour cet établissement"}
+                        {t("uploadTitle") ?? "Ajouter des visuels pour ce logement"}
                     </h3>
                     <p className="text-xs text-muted-foreground max-w-md mt-1 mb-4 font-medium">
-                        Mettez en valeur la façade, la réception, le restaurant et les équipements extérieurs.
+                        Mettez en valeur le salon, les chambres et les équipements extérieurs.
                     </p>
                     <Button
                         variant="secondary"
@@ -179,14 +210,23 @@ export default function PropertyImagesPage({ params }: PageProps) {
             </Card>
 
             {/* GRILLE D'IMAGES */}
-            {images.length > 0 ? (
+            {loading ? (
+                <div className="flex flex-col items-center justify-center gap-2 py-12 text-muted-foreground">
+                    <Loader2 className="size-5 animate-spin" />
+                    Chargement de la galerie...
+                </div>
+            ) : loadError ? (
+                <div className="text-center py-12 text-destructive text-sm font-medium">
+                    {loadError}
+                </div>
+            ) : images.length > 0 ? (
                 <div className="space-y-3">
                     <div className="flex items-center justify-between">
                         <h2 className="text-xs font-black uppercase tracking-wider text-muted-foreground">
-                            {t("sectionTitle") ?? "Photos de l'établissement"}
+                            {t("sectionTitle") ?? "Photos du logement"}
                         </h2>
                         <span className="text-[11px] font-semibold text-muted-foreground hidden sm:inline">
-                            La photo marquée "Couverture" apparaîtra dans les résultats de recherche.
+                            La photo marquée &quot;Couverture&quot; apparaîtra dans les résultats de recherche.
                         </span>
                     </div>
 
@@ -195,16 +235,15 @@ export default function PropertyImagesPage({ params }: PageProps) {
                             <div
                                 key={img.id}
                                 className={cn(
-                                    "group relative aspect-[16/10] rounded-2xl overflow-hidden border bg-muted/30 transition-all",
+                                    "group relative aspect-16/10 rounded-2xl overflow-hidden border bg-muted/30 transition-all",
                                     img.isPrimary
                                         ? "border-primary ring-2 ring-primary/20 shadow-xs"
                                         : "border-border/50 hover:border-border"
                                 )}
                             >
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                     src={img.url}
-                                    alt={img.name ?? "Photo de l'établissement"}
+                                    alt={img.name ?? "Property photo"}
                                     className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                                 />
 
@@ -223,7 +262,7 @@ export default function PropertyImagesPage({ params }: PageProps) {
                                         variant={img.isPrimary ? "default" : "secondary"}
                                         className="rounded-xl size-9 shadow-lg"
                                         onClick={() => handleSetPrimary(img.id)}
-                                        title="Définir comme couverture de l'établissement"
+                                        title="Définir comme couverture du logement"
                                     >
                                         <Star
                                             className={cn(
@@ -262,7 +301,7 @@ export default function PropertyImagesPage({ params }: PageProps) {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onSelectImage={handleSelectImage}
-                title="Sélectionner la couverture de l'établissement"
+                title="Sélectionner la couverture du logement"
             />
         </div>
     );

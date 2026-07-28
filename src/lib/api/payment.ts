@@ -1,7 +1,7 @@
 import { apiClient } from "./client";
-import type { PaymentRequest, PaymentResponse } from "./types";
+import type { BookingPaymentRequest, PaymentResponse } from "./types";
 
-export async function pay(request: PaymentRequest) {
+export async function pay(request: BookingPaymentRequest) {
   const { data } = await apiClient.post<PaymentResponse>("/api/payments", request);
   return data;
 }

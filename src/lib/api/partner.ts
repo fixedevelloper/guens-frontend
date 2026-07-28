@@ -8,14 +8,23 @@ import type {
     FlightFormData,
     FlightResponse,
     HotelResponse,
-    PageResponse, PropertyFormData,
+    PageResponse, PartnerUpdateRequest, PropertyFormData,
     PropertyResponse, RoomAvailabilityFormData, RoomAvailabilityResponse,
     RoomTypeResponse,
+    VehicleRegistrationRequest,
     VehicleResponse,
 } from "./types";
 import { BookingResponse } from "./types";
 import { RoomTypeRequestPayload } from "../../components/partner/rooms/RoomForm";
 
+
+export async function getPartnerBookings(partnerId: string, page: number, size = 20) {
+    const { data } = await apiClient.get<PageResponse<BookingResponse>>(
+        `/api/partners/${partnerId}/bookings`,
+        { params: { page, size } }
+    );
+    return data;
+}
 // --- Flights ---
 
 export async function getPartnerFlights(partnerId: string, page: number, size = 20) {
@@ -93,7 +102,46 @@ export async function deleteHotel(partnerId: string, hotelId: string) {
     await apiClient.delete(`/api/partners/${partnerId}/hotels/${hotelId}`);
 }
 
+export async function getHotel(partnerId: string, hotelId: string): Promise<HotelResponse> {
+    const { data } = await apiClient.get<HotelResponse>(
+        `/api/partners/${partnerId}/hotels/${hotelId}`
+    );
+    return data;
+}
+
+export async function addHotelImage(
+    partnerId: string,
+    hotelId: string,
+    payload: { url: string; caption?: string; displayOrder?: number; isPrimary: boolean }
+): Promise<HotelResponse> {
+    const { data } = await apiClient.post<HotelResponse>(
+        `/api/partners/${partnerId}/hotels/${hotelId}/images`,
+        payload
+    );
+    return data;
+}
+
+export async function deleteHotelImage(partnerId: string, hotelId: string, imageId: string): Promise<void> {
+    await apiClient.delete(`/api/partners/${partnerId}/hotels/${hotelId}/images/${imageId}`);
+}
+
+export async function setPrimaryHotelImage(
+    partnerId: string,
+    hotelId: string,
+    imageId: string
+): Promise<HotelResponse> {
+    const { data } = await apiClient.patch<HotelResponse>(
+        `/api/partners/${partnerId}/hotels/${hotelId}/images/${imageId}/primary`
+    );
+    return data;
+}
+
 // --- Vehicles ---
+
+export async function createVehicle(partnerId: string, payload: VehicleRegistrationRequest): Promise<VehicleResponse> {
+    const { data } = await apiClient.post<VehicleResponse>(`/api/partners/${partnerId}/vehicles`, payload);
+    return data;
+}
 
 export async function getPartnerVehicles(partnerId: string, page: number, size = 20) {
     const { data } = await apiClient.get<PageResponse<VehicleResponse>>(
@@ -113,6 +161,52 @@ export async function activateVehicle(partnerId: string, vehicleId: string) {
 
 export async function deleteVehicle(partnerId: string, vehicleId: string) {
     await apiClient.delete(`/api/partners/${partnerId}/vehicles/${vehicleId}`);
+}
+
+export async function getVehicle(partnerId: string, vehicleId: string): Promise<VehicleResponse> {
+    const { data } = await apiClient.get<VehicleResponse>(
+        `/api/partners/${partnerId}/vehicles/${vehicleId}`
+    );
+    return data;
+}
+
+export async function addVehicleImage(
+    partnerId: string,
+    vehicleId: string,
+    payload: { url: string; caption?: string; displayOrder?: number; isPrimary: boolean }
+): Promise<VehicleResponse> {
+    const { data } = await apiClient.post<VehicleResponse>(
+        `/api/partners/${partnerId}/vehicles/${vehicleId}/images`,
+        payload
+    );
+    return data;
+}
+
+export async function deleteVehicleImage(partnerId: string, vehicleId: string, imageId: string): Promise<void> {
+    await apiClient.delete(`/api/partners/${partnerId}/vehicles/${vehicleId}/images/${imageId}`);
+}
+
+export async function setPrimaryVehicleImage(
+    partnerId: string,
+    vehicleId: string,
+    imageId: string
+): Promise<VehicleResponse> {
+    const { data } = await apiClient.patch<VehicleResponse>(
+        `/api/partners/${partnerId}/vehicles/${vehicleId}/images/${imageId}/primary`
+    );
+    return data;
+}
+
+export async function updateVehicle(
+    partnerId: string,
+    vehicleId: string,
+    payload: VehicleRegistrationRequest
+): Promise<VehicleResponse> {
+    const { data } = await apiClient.put<VehicleResponse>(
+        `/api/partners/${partnerId}/vehicles/${vehicleId}`,
+        payload
+    );
+    return data;
 }
 
 // --- Properties (Locations Meublées) ---
@@ -161,7 +255,7 @@ export async function getPropertyById(
 export async function updateProperty(
     partnerId: string,
     propertyId: string,
-    payload: Partial<PropertyFormData>
+    payload: PropertyFormData
 ): Promise<PropertyResponse> {
     const { data } = await apiClient.put<PropertyResponse>(
         `/api/partners/${partnerId}/properties/${propertyId}`,
@@ -182,10 +276,41 @@ export async function deleteProperty(partnerId: string, propertyId: string) {
     await apiClient.delete(`/api/partners/${partnerId}/properties/${propertyId}`);
 }
 
+export async function addPropertyImage(
+    partnerId: string,
+    propertyId: string,
+    payload: { url: string; caption?: string; displayOrder?: number; isPrimary: boolean }
+): Promise<PropertyResponse> {
+    const { data } = await apiClient.post<PropertyResponse>(
+        `/api/partners/${partnerId}/properties/${propertyId}/images`,
+        payload
+    );
+    return data;
+}
+
+export async function deletePropertyImage(partnerId: string, propertyId: string, imageId: string): Promise<void> {
+    await apiClient.delete(`/api/partners/${partnerId}/properties/${propertyId}/images/${imageId}`);
+}
+
+export async function setPrimaryPropertyImage(
+    partnerId: string,
+    propertyId: string,
+    imageId: string
+): Promise<PropertyResponse> {
+    const { data } = await apiClient.patch<PropertyResponse>(
+        `/api/partners/${partnerId}/properties/${propertyId}/images/${imageId}/primary`
+    );
+    return data;
+}
+
 // --- Partner Management ---
 
 export async function createPartner(request: PartnerRegistrationRequest): Promise<PartnerResponse> {
     const { data } = await apiClient.post<PartnerResponse>("/api/partners/register", request);
+    return data;
+}
+export async function updatePartner(partnerId: string, payload: PartnerUpdateRequest) {
+    const { data } = await apiClient.patch<PartnerResponse>(`/api/partners/${partnerId}`, payload);
     return data;
 }
 
@@ -275,6 +400,53 @@ export async function getRoomTypeById(
 ): Promise<RoomTypeResponse> {
     const { data } = await apiClient.get<RoomTypeResponse>(
         `/api/partners/${partnerId}/hotels/room-types/${roomTypeId}`
+    );
+    return data;
+}
+
+/**
+ * Récupère les détails d'un type de chambre (galerie de photos incluse).
+ * hotelId n'apparaît pas dans la route Spring mais est gardé pour cohérence avec getHotel().
+ * Route Spring: GET /api/partners/{partnerId}/hotels/room-types/{roomTypeId}
+ */
+export async function getRoom(
+    partnerId: string,
+    hotelId: string,
+    roomTypeId: string
+): Promise<RoomTypeResponse> {
+    return getRoomTypeById(partnerId, roomTypeId);
+}
+
+export async function addRoomImage(
+    partnerId: string,
+    hotelId: string,
+    roomTypeId: string,
+    payload: { url: string; caption?: string; displayOrder?: number; isPrimary: boolean }
+): Promise<RoomTypeResponse> {
+    const { data } = await apiClient.post<RoomTypeResponse>(
+        `/api/partners/${partnerId}/hotels/room-types/${roomTypeId}/images`,
+        payload
+    );
+    return data;
+}
+
+export async function deleteRoomImage(
+    partnerId: string,
+    hotelId: string,
+    roomTypeId: string,
+    imageId: string
+): Promise<void> {
+    await apiClient.delete(`/api/partners/${partnerId}/hotels/room-types/${roomTypeId}/images/${imageId}`);
+}
+
+export async function setPrimaryRoomImage(
+    partnerId: string,
+    hotelId: string,
+    roomTypeId: string,
+    imageId: string
+): Promise<RoomTypeResponse> {
+    const { data } = await apiClient.patch<RoomTypeResponse>(
+        `/api/partners/${partnerId}/hotels/room-types/${roomTypeId}/images/${imageId}/primary`
     );
     return data;
 }

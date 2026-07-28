@@ -1,8 +1,31 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { getFlightSeatMap, searchFlights, searchHotels, searchMultiCityFlights ,getHotelDeatils,getHotelRooms} from "@/lib/api/search";
-import type { FlightSearchParams, HotelSearchParams, MultiCityFlightSearchParams } from "@/lib/api/types";
+import {
+  getFlightSeatMap, searchFlights, searchHotels, searchMultiCityFlights, getHotelDeatils, getHotelRooms,
+  searchVehicles, searchProperties
+} from "@/lib/api/search";
+import type {
+  FlightSearchParams,
+  HotelSearchParams,
+  MultiCityFlightSearchParams, PropertySearchParams,
+  VehicleSearchParams
+} from "@/lib/api/types";
 
+
+export function useVehicleSearch(params: VehicleSearchParams | null) {
+  return useQuery({
+    queryKey: ["vehicles", params],
+    queryFn: () => searchVehicles(params as VehicleSearchParams),
+    enabled: params !== null,
+  });
+}
+export function usePropertySearch(params: PropertySearchParams | null) {
+  return useQuery({
+    queryKey: ["properties", params],
+    queryFn: () => searchProperties(params as PropertySearchParams),
+    enabled: params !== null,
+  });
+}
 export function useFlightSearch(params: FlightSearchParams | null) {
   return useQuery({
     queryKey: ["flights", params],

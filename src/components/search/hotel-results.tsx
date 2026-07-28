@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { formatMoney } from "@/lib/format";
 import { hotelOfferKey } from "@/lib/filters";
 import { galleryHues } from "@/lib/hotel-mock-content";
+import { useHotelStore } from "@/store/useHotelStore";
 import type { HarmonizedHotelOffer, HotelSearchParams } from "@/lib/api/types";
 
 interface HotelResultsListProps {
@@ -20,9 +21,10 @@ interface HotelResultsListProps {
   params: HotelSearchParams;
   hoveredKey: string | null;
   onHoverChange: (key: string | null) => void;
+  isReseller: boolean;
 }
 
-export function HotelResultsList({ offers, nights, params, hoveredKey, onHoverChange }: HotelResultsListProps) {
+export function HotelResultsList({ offers, nights, params, hoveredKey, onHoverChange, isReseller = false }: HotelResultsListProps) {
   const t = useTranslations("Filters");
 
   if (offers.length === 0) {
@@ -48,6 +50,7 @@ export function HotelResultsList({ offers, nights, params, hoveredKey, onHoverCh
                   id={key}
                   isActive={hoveredKey === key}
                   onHoverChange={(hovering) => onHoverChange(hovering ? key : null)}
+                  isReseller={isReseller}
               />
           );
         })}
@@ -62,6 +65,7 @@ function HotelOfferCard({
                           id,
                           isActive,
                           onHoverChange,
+                          isReseller
                         }: {
   offer: HarmonizedHotelOffer;
   nights: number;
@@ -69,6 +73,7 @@ function HotelOfferCard({
   id: string;
   isActive: boolean;
   onHoverChange: (hovering: boolean) => void;
+  isReseller?: boolean;
 }) {
   const t = useTranslations("SearchResults");
   const locale = useLocale();
@@ -76,20 +81,18 @@ function HotelOfferCard({
   const minPrice = Math.min(...offer.quotes.map((q) => Number(q.price.amount)));
   const currency = offer.quotes[0].price.currency;
 
-  // Construction dynamique de l'URL avec tous les critères de recherche + l'offerId
+  const selectOffer = useHotelStore((state) => state.selectOffer);
 
-  // Fonction utilitaire pour slugifier le nom de l'hôtel sans caractères spéciaux
   function slugify(text: string) {
     return text
         .toLowerCase()
         .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "") // Supprime les accents
-        .replace(/[^a-z0-9 -]/g, "")     // Supprime les caractères spéciaux
-        .replace(/\s+/g, "-")            // Remplace les espaces par des tirets
-        .replace(/-+/g, "-");            // Évite les tirets doubles
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9 -]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-");
   }
 
-// Dans le composant HotelOfferCard :
   const hotelSlug = slugify(offer.hotelName);
 
   const searchUrlParams = new URLSearchParams();
@@ -100,8 +103,15 @@ function HotelOfferCard({
   });
   searchUrlParams.set("offerId", offer.bestOfferId);
 
-// Lien sécurisé (ex: /hotels/hotel-hilton-douala?offerId=off_12345&checkIn=...)
-  const detailHref = `/hotels/${hotelSlug}?${searchUrlParams.toString()}`;
+  const basePath = isReseller ? "/dashboard/reseller" : "";
+  const detailHref = `${basePath}/hotels/${hotelSlug}?${searchUrlParams.toString()}`;
+
+  // Enregistre l'offre choisie dans le store avant la navigation, pour que la page de détail
+  // (hotelDetail, roomOffers...) démarre à partir de la bonne offre sans devoir la re-fetcher
+  // depuis les query params.
+  function handleSelect() {
+    selectOffer(offer);
+  }
 
   return (
       <Card
@@ -118,7 +128,6 @@ function HotelOfferCard({
       >
         <div className="flex flex-col sm:flex-row h-full">
 
-          {/* VIGNETTE VISUELLE MINIMALISTE */}
           <div
               className="relative flex h-32 items-center justify-center text-white/80 sm:h-auto sm:w-44 sm:shrink-0 transition-opacity duration-300"
               style={{ background: `linear-gradient(135deg, hsl(${hue} 55% 44%), hsl(${(hue + 35) % 360} 55% 30%))` }}
@@ -127,7 +136,6 @@ function HotelOfferCard({
             <Building2 className="size-9 stroke-[1.5] drop-shadow-xs animate-pulse duration-4000" />
           </div>
 
-          {/* CONTENU ET INFORMATIONS */}
           <div className="flex flex-1 flex-col justify-between gap-4 p-5 sm:flex-row sm:items-stretch">
 
             <div className="flex flex-col justify-between gap-3.5">
@@ -152,7 +160,6 @@ function HotelOfferCard({
               </div>
             </div>
 
-            {/* COLONNE TARIFS ET SÉLECTION */}
             <div className="flex items-end justify-between gap-4 border-t border-dashed border-border/60 pt-4 sm:flex-col sm:items-end sm:justify-between sm:border-t-0 sm:border-l sm:border-border/40 sm:pl-5 sm:pt-0 sm:shrink-0 sm:text-right">
 
               <div className="space-y-0.5">
@@ -168,7 +175,7 @@ function HotelOfferCard({
                   asChild
                   className="rounded-xl font-bold text-xs gap-1 py-4.5 px-4.5 shadow-2xs transition-all active:scale-97 group"
               >
-                <Link href={detailHref} className="group inline-flex items-center gap-1">
+                <Link href={detailHref} onClick={handleSelect} className="group inline-flex items-center gap-1">
                   {t("selectOffer") ?? "Choisir cette offre"}
                   <ChevronRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
                 </Link>

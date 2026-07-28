@@ -1,275 +1,356 @@
-// components/checkout/payment-form.tsx
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useTranslations } from "next-intl";
-import { CreditCard, Lock, Smartphone, ShieldCheck, Check } from "lucide-react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { CreditCard, Smartphone, Wallet } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
-import type { PaymentMethod } from "@/lib/api/types";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CountrySelect } from "./country-select";
 
-const schema = z.object({
-  paymentMethod: z.enum(["CARD", "MTN_MOBILE_MONEY", "ORANGE_MONEY"]),
-  cardNumber: z.string().trim().optional(),
-  cardHolderName: z.string().trim().optional(),
-  expiry: z.string().trim().optional(),
-  cvv: z.string().trim().optional(),
-  mobileNumber: z.string().trim().optional(),
-});
+export const PAYMENT_METHODS = ["CARD", "MOBILE_MONEY", "GOOGLE_PAY", "APPLE_PAY", "PAYPAL"] as const;
+export type PaymentMethodOption = (typeof PAYMENT_METHODS)[number];
 
-export type PaymentFormValues = z.infer<typeof schema>;
+const REQUIRES_BILLING_ADDRESS: ReadonlySet<PaymentMethodOption> = new Set([
+    "GOOGLE_PAY",
+    "APPLE_PAY",
+    "PAYPAL",
+]);
 
-interface PaymentFormProps {
-  onSubmit: (values: PaymentFormValues) => void;
-  isSubmitting: boolean;
-}
-
-const METHODS: { 
-  value: PaymentMethod; 
-  labelKey: "methodCard" | "methodMtn" | "methodOrange";
-  colorClass: string;
-}[] = [
-  { value: "CARD", labelKey: "methodCard", colorClass: "active:border-primary active:bg-primary/5" },
-  { value: "MTN_MOBILE_MONEY", labelKey: "methodMtn", colorClass: "active:border-amber-500 active:bg-amber-500/5 dark:active:bg-amber-500/10" },
-  { value: "ORANGE_MONEY", labelKey: "methodOrange", colorClass: "active:border-orange-500 active:bg-orange-500/5 dark:active:bg-orange-500/10" },
-];
-
-export function PaymentForm({ onSubmit, isSubmitting }: PaymentFormProps) {
-  const t = useTranslations("Payment");
-
-  const form = useForm<PaymentFormValues>({
-    resolver: zodResolver(schema),
-    defaultValues: {
-      paymentMethod: "CARD",
-      cardNumber: "",
-      cardHolderName: "",
-      expiry: "",
-      cvv: "",
-      mobileNumber: "",
-    },
-  });
-
-  const paymentMethod = form.watch("paymentMethod");
-  const isMobileMoney = paymentMethod !== "CARD";
-
-  function handleSubmit(values: PaymentFormValues) {
-    if (values.paymentMethod === "CARD") {
-      let hasError = false;
-      if (!values.cardNumber?.match(/^\d{12,19}$/)) {
-        form.setError("cardNumber", { message: t("cardNumberInvalid") ?? "Numéro de carte invalide" });
-        hasError = true;
-      }
-      if (!values.cardHolderName?.trim()) {
-        form.setError("cardHolderName", { message: t("cardHolderRequired") ?? "Nom requis" });
-        hasError = true;
-      }
-      if (!values.expiry?.match(/^(0[1-9]|1[0-2])\/\d{2}$/)) {
-        form.setError("expiry", { message: t("expiryInvalid") ?? "Format requis (MM/AA)" });
-        hasError = true;
-      }
-      if (!values.cvv?.match(/^\d{3,4}$/)) {
-        form.setError("cvv", { message: t("cvvInvalid") ?? "CVV invalide" });
-        hasError = true;
-      }
-      if (hasError) return;
-    } else {
-      if (!values.mobileNumber?.match(/^\+?\d{8,15}$/)) {
-        form.setError("mobileNumber", { message: t("mobileNumberInvalid") ?? "Numéro de téléphone mobile invalide" });
-        return;
-      }
-    }
-    onSubmit(values);
-  }
-
-  return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        
-        {/* Sélecteur de méthode de paiement */}
-        <div className="grid grid-cols-3 gap-2.5">
-          {METHODS.map((method) => {
-            const isSelected = paymentMethod === method.value;
-            
-            // Personnalisation des styles selon le type de paiement choisi
-            let selectionBorder = "border-primary bg-primary/5";
-            if (method.value === "MTN_MOBILE_MONEY") {
-              selectionBorder = "border-amber-500 bg-amber-500/[0.07] dark:bg-amber-500/[0.12] text-amber-600 dark:text-amber-400";
-            } else if (method.value === "ORANGE_MONEY") {
-              selectionBorder = "border-orange-500 bg-orange-500/[0.07] dark:bg-orange-500/[0.12] text-orange-600 dark:text-orange-400";
+const paymentFormSchema = z
+    .object({
+        countryCode: z.string().length(2, "Sélectionne un pays"),
+        currency: z.string().min(3),
+        paymentMethod: z.enum(PAYMENT_METHODS),
+        cardNumber: z.string().optional(),
+        cardHolderName: z.string().optional(),
+        expiry: z.string().optional(),
+        cvv: z.string().optional(),
+        mobileNumber: z.string().optional(),
+        billingZipCode: z.string().optional(),
+        billingCity: z.string().optional(),
+        billingAddress: z.string().optional(),
+        billingState: z.string().optional(),
+    })
+    .superRefine((data, ctx) => {
+        if (data.paymentMethod === "CARD") {
+            if (!data.cardNumber || !/^\d{12,19}$/.test(data.cardNumber.replace(/\s+/g, ""))) {
+                ctx.addIssue({ code: "custom", path: ["cardNumber"], message: "Numéro de carte invalide" });
             }
+            if (!data.cardHolderName?.trim()) {
+                ctx.addIssue({ code: "custom", path: ["cardHolderName"], message: "Nom du titulaire requis" });
+            }
+            if (!data.expiry || !/^(0[1-9]|1[0-2])\/\d{2}$/.test(data.expiry)) {
+                ctx.addIssue({ code: "custom", path: ["expiry"], message: "Format MM/AA attendu" });
+            }
+            if (!data.cvv || !/^\d{3,4}$/.test(data.cvv)) {
+                ctx.addIssue({ code: "custom", path: ["cvv"], message: "CVV invalide" });
+            }
+        }
 
-            return (
-              <button
-                key={method.value}
-                type="button"
-                onClick={() => form.setValue("paymentMethod", method.value)}
-                className={cn(
-                  "relative flex flex-col items-center gap-2 rounded-2xl border p-3.5 text-center transition-all duration-200 outline-none active:scale-95 shadow-2xs",
-                  isSelected 
-                    ? [selectionBorder, "ring-2 ring-current/10 font-bold"] 
-                    : "border-border/60 hover:border-border hover:bg-slate-50/50 dark:hover:bg-zinc-900/30"
-                )}
-              >
-                {/* Petite puce de sélection active */}
-                {isSelected && (
-                  <div className="absolute top-1.5 right-1.5 size-3.5 flex items-center justify-center rounded-full bg-current text-white">
-                    <Check className="size-2 stroke-[4.5]" />
-                  </div>
-                )}
+        if (data.paymentMethod === "MOBILE_MONEY") {
+            if (!data.mobileNumber || !/^\+?\d{8,15}$/.test(data.mobileNumber.replace(/\s+/g, ""))) {
+                ctx.addIssue({ code: "custom", path: ["mobileNumber"], message: "Numéro invalide" });
+            }
+        }
 
-                {method.value === "CARD" ? (
-                  <CreditCard className={cn("size-5", isSelected ? "text-primary" : "text-muted-foreground/80")} />
-                ) : (
-                  <Smartphone className={cn("size-5", isSelected ? "text-current" : "text-muted-foreground/80")} />
-                )}
-                
-                <span className="text-[10px] sm:text-xs font-bold leading-tight select-none">
-                  {t(method.labelKey) ?? (
-                    method.value === "CARD" ? "Carte" : 
-                    method.value === "MTN_MOBILE_MONEY" ? "MTN MoMo" : "Orange Money"
-                  )}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+        if (REQUIRES_BILLING_ADDRESS.has(data.paymentMethod)) {
+            if (!data.billingAddress?.trim()) {
+                ctx.addIssue({ code: "custom", path: ["billingAddress"], message: "Adresse requise" });
+            }
+            if (!data.billingCity?.trim()) {
+                ctx.addIssue({ code: "custom", path: ["billingCity"], message: "Ville requise" });
+            }
+            if (!data.billingZipCode?.trim()) {
+                ctx.addIssue({ code: "custom", path: ["billingZipCode"], message: "Code postal requis" });
+            }
+            if (!data.billingState?.trim()) {
+                ctx.addIssue({ code: "custom", path: ["billingState"], message: "Région/État requis" });
+            }
+        }
+    });
 
-        {/* CONTENU MOBILE MONEY */}
-        {isMobileMoney ? (
-          <div className="p-4 rounded-2xl border border-border/50 bg-slate-50/20 dark:bg-zinc-900/10 space-y-4">
-            <FormField
-              control={form.control}
-              name="mobileNumber"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs font-bold text-muted-foreground/95">{t("mobileNumber") ?? "Numéro Mobile Money"}</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/60" />
-                      <Input 
-                        inputMode="tel" 
-                        placeholder="+237 6xx xxx xxx" 
-                        className="pl-9 rounded-xl border-border/80 bg-background focus-visible:ring-primary/20" 
-                        {...field} 
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <p className="text-[11px] text-muted-foreground/80 leading-relaxed">
-              Une fois soumis, une demande de débit sera envoyée directement sur votre téléphone. Veuillez valider la transaction en saisissant votre code PIN secret sur votre carte SIM.
-            </p>
-          </div>
-        ) : (
-          /* CONTENU CARTE BANCAIRE */
-          <div className="space-y-4">
-            <FormField
-              control={form.control}
-              name="cardNumber"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs font-bold text-muted-foreground/95">{t("cardNumber")}</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/60" />
-                      <Input 
-                        inputMode="numeric" 
-                        placeholder="4242 4242 4242 1234" 
-                        className="pl-9 rounded-xl border-border/80 focus-visible:ring-primary/20" 
-                        {...field} 
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="cardHolderName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs font-bold text-muted-foreground/95">{t("cardHolderName")}</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="Jean Dupont" 
-                      className="rounded-xl border-border/80 focus-visible:ring-primary/20" 
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+export type PaymentFormValues = z.infer<typeof paymentFormSchema>;
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="expiry"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs font-bold text-muted-foreground/95">{t("expiry")}</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="MM/AA" 
-                        className="rounded-xl border-border/80 focus-visible:ring-primary/20 text-center" 
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+const METHOD_CONFIG: Record<PaymentMethodOption, { label: string; icon: typeof CreditCard }> = {
+    CARD: { label: "Carte bancaire", icon: CreditCard },
+    MOBILE_MONEY: { label: "Mobile Money", icon: Smartphone },
+    GOOGLE_PAY: { label: "Google Pay", icon: Wallet },
+    APPLE_PAY: { label: "Apple Pay", icon: Wallet },
+    PAYPAL: { label: "PayPal", icon: Wallet },
+};
+
+type PaymentFormProps = {
+    onSubmit: (values: PaymentFormValues) => void;
+    isSubmitting: boolean;
+    defaultCountryCode?: string;
+    defaultCurrency?: string;
+};
+
+export function PaymentForm({
+                                onSubmit,
+                                isSubmitting,
+                                defaultCountryCode,
+                                defaultCurrency,
+                            }: PaymentFormProps) {
+    const form = useForm<PaymentFormValues>({
+        resolver: zodResolver(paymentFormSchema),
+        defaultValues: {
+            countryCode: defaultCountryCode ?? "",
+            currency: defaultCurrency ?? "",
+            paymentMethod: "CARD",
+            cardNumber: "",
+            cardHolderName: "",
+            expiry: "",
+            cvv: "",
+            mobileNumber: "",
+            billingZipCode: "",
+            billingCity: "",
+            billingAddress: "",
+            billingState: "",
+        },
+    });
+
+    const method = form.watch("paymentMethod");
+    const countryCode = form.watch("countryCode");
+    const requiresBillingAddress = REQUIRES_BILLING_ADDRESS.has(method);
+
+    const handleFormSubmit = (data: PaymentFormValues) => {
+        // Filtrage des données inutiles selon le mode de paiement
+        const payload: PaymentFormValues = {
+            countryCode: data.countryCode,
+            currency: data.currency,
+            paymentMethod: data.paymentMethod,
+        };
+
+        if (data.paymentMethod === "CARD") {
+            payload.cardNumber = data.cardNumber?.replace(/\s+/g, "");
+            payload.cardHolderName = data.cardHolderName?.trim();
+            payload.expiry = data.expiry;
+            payload.cvv = data.cvv;
+        } else if (data.paymentMethod === "MOBILE_MONEY") {
+            payload.mobileNumber = data.mobileNumber?.replace(/\s+/g, "");
+        }
+
+        if (REQUIRES_BILLING_ADDRESS.has(data.paymentMethod)) {
+            payload.billingAddress = data.billingAddress?.trim();
+            payload.billingCity = data.billingCity?.trim();
+            payload.billingZipCode = data.billingZipCode?.trim();
+            payload.billingState = data.billingState?.trim();
+        }
+
+        onSubmit(payload);
+    };
+
+    return (
+        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-5 sm:space-y-6">
+            <div className="space-y-2">
+                <Label className="text-xs font-bold sm:text-sm">Pays de facturation</Label>
+                <CountrySelect
+                    value={countryCode}
+                    onChange={(iso2, currency) => {
+                        form.setValue("countryCode", iso2, { shouldValidate: true });
+                        form.setValue("currency", currency, { shouldValidate: true });
+                    }}
+                    disabled={isSubmitting}
+                />
+                {form.formState.errors.countryCode && (
+                    <p className="text-xs font-semibold text-destructive">
+                        {form.formState.errors.countryCode.message}
+                    </p>
                 )}
-              />
-              <FormField
-                control={form.control}
-                name="cvv"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs font-bold text-muted-foreground/95">{t("cvv")}</FormLabel>
-                    <FormControl>
-                      <Input 
-                        inputMode="numeric" 
-                        maxLength={4}
-                        placeholder="123" 
-                        className="rounded-xl border-border/80 focus-visible:ring-primary/20 text-center" 
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </div>
-          </div>
-        )}
 
-        {/* Réassurance de sécurité */}
-        <div className="flex items-start gap-2.5 p-3 rounded-xl bg-emerald-500/[0.05] border border-emerald-500/10 text-emerald-700 dark:text-emerald-400">
-          <Lock className="size-4 shrink-0 mt-0.5" />
-          <p className="text-xs font-medium leading-normal">
-            {t("secureNotice") ?? "Vos données de paiement sont cryptées de bout en bout et traitées de manière totalement sécurisée."}
-          </p>
-        </div>
+            <div className="space-y-2">
+                <Label className="text-xs font-bold sm:text-sm">Mode de règlement</Label>
+                <Tabs
+                    value={method}
+                    onValueChange={(value) => {
+                        const next = value as PaymentMethodOption;
+                        form.setValue("paymentMethod", next, { shouldValidate: true });
+                    }}
+                >
+                    <TabsList className="grid h-auto w-full grid-cols-2 gap-2 rounded-2xl p-1 sm:grid-cols-3 lg:grid-cols-5">
+                        {PAYMENT_METHODS.map((m) => {
+                            const Icon = METHOD_CONFIG[m].icon;
+                            return (
+                                <TabsTrigger
+                                    key={m}
+                                    value={m}
+                                    className="flex h-auto flex-col gap-1 rounded-xl px-3 py-3 text-[10px] font-bold sm:px-4"
+                                >
+                                    <Icon className="size-4 sm:size-5" />
+                                    <span className="leading-tight">{METHOD_CONFIG[m].label}</span>
+                                </TabsTrigger>
+                            );
+                        })}
+                    </TabsList>
+                </Tabs>
+            </div>
 
-        {/* Bouton d'action */}
-        <Button 
-          type="submit" 
-          size="lg" 
-          className="w-full rounded-xl shadow-md font-bold tracking-wide gap-2 py-6 bg-primary hover:bg-primary/95 text-primary-foreground" 
-          disabled={isSubmitting}
-        >
-          <ShieldCheck className="size-5 shrink-0" />
-          {isSubmitting ? t("processing") : t("submit")}
-        </Button>
-      </form>
-    </Form>
-  );
+            {method === "CARD" && (
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="space-y-1.5 sm:col-span-2">
+                        <Label className="text-xs font-bold">Numéro de carte</Label>
+                        <Input
+                            inputMode="numeric"
+                            placeholder="4242 4242 4242 4242"
+                            {...form.register("cardNumber")}
+                            disabled={isSubmitting}
+                            className="rounded-xl"
+                        />
+                        {form.formState.errors.cardNumber && (
+                            <p className="text-xs font-semibold text-destructive">
+                                {form.formState.errors.cardNumber.message}
+                            </p>
+                        )}
+                    </div>
+
+                    <div className="space-y-1.5 sm:col-span-2">
+                        <Label className="text-xs font-bold">Nom du titulaire</Label>
+                        <Input
+                            placeholder="Jean Dupont"
+                            {...form.register("cardHolderName")}
+                            disabled={isSubmitting}
+                            className="rounded-xl"
+                        />
+                        {form.formState.errors.cardHolderName && (
+                            <p className="text-xs font-semibold text-destructive">
+                                {form.formState.errors.cardHolderName.message}
+                            </p>
+                        )}
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <Label className="text-xs font-bold">Expiration (MM/AA)</Label>
+                        <Input
+                            placeholder="12/28"
+                            {...form.register("expiry")}
+                            disabled={isSubmitting}
+                            className="rounded-xl"
+                        />
+                        {form.formState.errors.expiry && (
+                            <p className="text-xs font-semibold text-destructive">
+                                {form.formState.errors.expiry.message}
+                            </p>
+                        )}
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <Label className="text-xs font-bold">CVV</Label>
+                        <Input
+                            placeholder="123"
+                            {...form.register("cvv")}
+                            disabled={isSubmitting}
+                            className="rounded-xl"
+                        />
+                        {form.formState.errors.cvv && (
+                            <p className="text-xs font-semibold text-destructive">
+                                {form.formState.errors.cvv.message}
+                            </p>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {method === "MOBILE_MONEY" && (
+                <div className="space-y-1.5">
+                    <Label className="text-xs font-bold">Numéro mobile money</Label>
+                    <Input
+                        placeholder="+237 6XX XXX XXX"
+                        {...form.register("mobileNumber")}
+                        disabled={isSubmitting}
+                        className="rounded-xl"
+                    />
+                    {form.formState.errors.mobileNumber && (
+                        <p className="text-xs font-semibold text-destructive">
+                            {form.formState.errors.mobileNumber.message}
+                        </p>
+                    )}
+                </div>
+            )}
+
+            {requiresBillingAddress && (
+                <div className="space-y-4 rounded-2xl border border-dashed p-4">
+                    <p className="text-xs font-semibold text-muted-foreground">
+                        Adresse de facturation requise pour {METHOD_CONFIG[method].label}. Tu seras ensuite
+                        redirigé pour finaliser le paiement en toute sécurité.
+                    </p>
+
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div className="space-y-1.5 sm:col-span-2">
+                            <Label className="text-xs font-bold">Adresse</Label>
+                            <Input
+                                placeholder="3563 Huntertown Rd"
+                                {...form.register("billingAddress")}
+                                disabled={isSubmitting}
+                                className="rounded-xl"
+                            />
+                            {form.formState.errors.billingAddress && (
+                                <p className="text-xs font-semibold text-destructive">
+                                    {form.formState.errors.billingAddress.message}
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <Label className="text-xs font-bold">Ville</Label>
+                            <Input
+                                placeholder="Douala"
+                                {...form.register("billingCity")}
+                                disabled={isSubmitting}
+                                className="rounded-xl"
+                            />
+                            {form.formState.errors.billingCity && (
+                                <p className="text-xs font-semibold text-destructive">
+                                    {form.formState.errors.billingCity.message}
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <Label className="text-xs font-bold">Code postal</Label>
+                            <Input
+                                placeholder="00237"
+                                {...form.register("billingZipCode")}
+                                disabled={isSubmitting}
+                                className="rounded-xl"
+                            />
+                            {form.formState.errors.billingZipCode && (
+                                <p className="text-xs font-semibold text-destructive">
+                                    {form.formState.errors.billingZipCode.message}
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="space-y-1.5 sm:col-span-2">
+                            <Label className="text-xs font-bold">Région / État</Label>
+                            <Input
+                                placeholder="Littoral"
+                                {...form.register("billingState")}
+                                disabled={isSubmitting}
+                                className="rounded-xl"
+                            />
+                            {form.formState.errors.billingState && (
+                                <p className="text-xs font-semibold text-destructive">
+                                    {form.formState.errors.billingState.message}
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <Button
+                type="submit"
+                className="w-full rounded-xl py-6 font-bold sm:py-5"
+                disabled={isSubmitting || !countryCode}
+            >
+                {isSubmitting ? "Traitement en cours..." : "Payer"}
+            </Button>
+        </form>
+    );
 }

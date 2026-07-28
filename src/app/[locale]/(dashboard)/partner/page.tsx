@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import {
     ListChecks,
     CalendarClock,
@@ -12,25 +12,89 @@ import {
     ArrowUpRight,
     Sparkles,
     Clock,
-    CheckCircle2,
     TrendingUp,
     ChevronRight,
     ShieldCheck,
+    Loader2,
+    AlertCircle,
+    Plane,
+    Building,
+    Car,
+    Home,
+    Ticket,
 } from "lucide-react";
 
+import { useAuth } from "@/context/auth-context";
+import { useBookingsQuery } from "@/hooks/use-partner-queries";
+import { formatDateTime, formatMoney } from "@/lib/format";
+import { StatusBadge } from "@/components/tracking/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { OfferType } from "@/lib/api/types";
+
+function OfferTypeBadge({ offerType }: { offerType: OfferType }) {
+    switch (offerType) {
+        case "FLIGHT":
+            return (
+                <Badge variant="outline" className="gap-1 bg-blue-500/10 text-blue-600 border-blue-500/20 font-semibold text-[10px]">
+                    <Plane className="size-3" /> Vol
+                </Badge>
+            );
+        case "HOTEL":
+            return (
+                <Badge variant="outline" className="gap-1 bg-purple-500/10 text-purple-600 border-purple-500/20 font-semibold text-[10px]">
+                    <Building className="size-3" /> Hôtel
+                </Badge>
+            );
+        case "CAR_RENTAL":
+            return (
+                <Badge variant="outline" className="gap-1 bg-amber-500/10 text-amber-600 border-amber-500/20 font-semibold text-[10px]">
+                    <Car className="size-3" /> Location
+                </Badge>
+            );
+        case "FURNISHED_RENTAL":
+            return (
+                <Badge variant="outline" className="gap-1 bg-emerald-500/10 text-emerald-600 border-emerald-500/20 font-semibold text-[10px]">
+                    <Home className="size-3" /> Résidence
+                </Badge>
+            );
+        default:
+            return (
+                <Badge variant="outline" className="gap-1 font-mono text-[10px]">
+                    <Ticket className="size-3" /> {offerType}
+                </Badge>
+            );
+    }
+}
 
 export default function PartnerDashboardPage() {
     const t = useTranslations("Partner.dashboard");
+    const locale = useLocale();
+    const { user } = useAuth();
+    const partnerId = user?.partnerId ?? user?.partnerId ?? "";
 
-    // Données des cartes de statistiques (extensibles ou connectables aux props/API)
+    // Récupération en direct des 5 dernières réservations (Page 0, Taille 5)
+    const { data, isLoading, isError, error, refetch } = useBookingsQuery(
+        partnerId,
+        0,
+        5
+    );
+
+    const recentBookings = data?.content ?? [];
+    const totalBookingsCount = data?.totalElements ?? 0;
+
+    // Calcul dynamique des réservations en attente sur l'échantillon récent
+    const pendingBookingsCount = recentBookings.filter(
+        (b) => b.status === "PENDING_PAYMENT"
+    ).length;
+
+    // Données dynamiques des cartes de statistiques
     const statCards = [
         {
             key: "activeListings",
             icon: ListChecks,
-            value: "12",
+            value: "12", // À raccorder à votre hook d'annonces si disponible
             subtitle: t("cards.activeListingsSubtitle"),
             color: "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 dark:text-emerald-400",
             borderColor: "border-emerald-200 dark:border-emerald-800/40",
@@ -38,7 +102,7 @@ export default function PartnerDashboardPage() {
         {
             key: "pendingBookings",
             icon: CalendarClock,
-            value: "5",
+            value: isLoading ? "..." : String(pendingBookingsCount),
             subtitle: t("cards.pendingBookingsSubtitle"),
             color: "text-amber-600 bg-amber-50 dark:bg-amber-950/50 dark:text-amber-400",
             borderColor: "border-amber-200 dark:border-amber-800/40",
@@ -46,30 +110,10 @@ export default function PartnerDashboardPage() {
         {
             key: "monthlyRevenue",
             icon: Wallet,
-            value: "2,450,000 FCFA",
+            value: totalBookingsCount > 0 ? `${totalBookingsCount} réservations` : "0 FCFA",
             subtitle: t("cards.monthlyRevenueSubtitle"),
             color: "text-primary bg-primary/10",
             borderColor: "border-primary/20",
-        },
-    ];
-
-    // Exemples d'activités récentes / réservations en attente
-    const dummyRecentBookings = [
-        {
-            id: "BK-8091",
-            title: "Appartement d'exception - Bonapriso",
-            client: "Jean-Paul M.",
-            date: "25 - 28 Jul 2026",
-            amount: "185,000 FCFA",
-            status: "PENDING",
-        },
-        {
-            id: "BK-8088",
-            title: "Toyota Prado 2023 (Avec Chauffeur)",
-            client: "Aïcha K.",
-            date: "26 Jul 2026",
-            amount: "75,000 FCFA",
-            status: "CONFIRMED",
         },
     ];
 
@@ -111,13 +155,13 @@ export default function PartnerDashboardPage() {
                 {statCards.map(({ key, icon: Icon, value, subtitle, color, borderColor }) => (
                     <Card
                         key={key}
-                        className={`border shadow-sm hover:shadow-md transition-all duration-200 ${borderColor}`}
+                        className={`border shadow-xs hover:shadow-md transition-all duration-200 ${borderColor}`}
                     >
                         <CardContent className="p-6 space-y-4">
                             <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                                    {t(`cards.${key}`)}
-                                </span>
+                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                  {t(`cards.${key}`)}
+                </span>
                                 <div className={`p-3 rounded-2xl ${color}`}>
                                     <Icon className="h-5 w-5" />
                                 </div>
@@ -137,10 +181,11 @@ export default function PartnerDashboardPage() {
                 ))}
             </div>
 
-            {/* Raccourcis d'actions et Réservations récentes */}
+            {/* Activités récentes et Raccourcis */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Dernières réservations */}
-                <Card className="lg:col-span-2 border shadow-md">
+
+                {/* Réservations récentes en direct */}
+                <Card className="lg:col-span-2 border shadow-md overflow-hidden">
                     <CardHeader className="border-b bg-card/50 pb-4">
                         <div className="flex items-center justify-between">
                             <div>
@@ -163,46 +208,77 @@ export default function PartnerDashboardPage() {
                     </CardHeader>
 
                     <CardContent className="p-0">
-                        <div className="divide-y">
-                            {dummyRecentBookings.map((booking) => (
-                                <div
-                                    key={booking.id}
-                                    className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-muted/30 transition-colors"
-                                >
-                                    <div className="space-y-1">
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-bold text-sm text-foreground">
-                                                {booking.title}
-                                            </span>
-                                            <Badge
-                                                variant={booking.status === "PENDING" ? "outline" : "default"}
-                                                className={`text-[10px] uppercase font-bold ${
-                                                    booking.status === "PENDING"
-                                                        ? "border-amber-500/40 text-amber-600 bg-amber-50 dark:bg-amber-950/40"
-                                                        : "bg-emerald-600 text-white"
-                                                }`}
-                                            >
-                                                {booking.status === "PENDING" ? "En attente" : "Confirmé"}
-                                            </Badge>
-                                        </div>
-                                        <p className="text-xs text-muted-foreground">
-                                            {booking.client} • {booking.date}
-                                        </p>
-                                    </div>
+                        {/* État de chargement */}
+                        {isLoading && (
+                            <div className="p-8 flex flex-col items-center justify-center gap-2 text-muted-foreground">
+                                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                                <span className="text-xs font-medium">Chargement des réserves récentes...</span>
+                            </div>
+                        )}
 
-                                    <div className="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-0 pt-2 sm:pt-0">
-                                        <span className="font-extrabold text-sm text-foreground">
-                                            {booking.amount}
-                                        </span>
-                                        <Button asChild variant="outline" size="sm" className="h-8 rounded-xl text-xs font-semibold">
-                                            <Link href={`/partner/bookings/${booking.id}`}>
-                                                Gérer
-                                            </Link>
-                                        </Button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                        {/* État d'erreur */}
+                        {isError && !isLoading && (
+                            <div className="p-8 flex flex-col items-center justify-center gap-2 text-destructive">
+                                <AlertCircle className="h-6 w-6" />
+                                <p className="text-xs font-semibold">
+                                    {(error as Error)?.message ?? "Erreur lors du chargement des réservations."}
+                                </p>
+                                <Button variant="outline" size="sm" onClick={() => refetch()} className="mt-2 text-xs">
+                                    Réessayer
+                                </Button>
+                            </div>
+                        )}
+
+                        {/* Liste vide */}
+                        {!isLoading && !isError && recentBookings.length === 0 && (
+                            <div className="p-8 text-center text-xs text-muted-foreground">
+                                Aucune réservation enregistrée pour le moment.
+                            </div>
+                        )}
+
+                        {/* Liste des réservations réelles */}
+                        {!isLoading && !isError && recentBookings.length > 0 && (
+                            <div className="divide-y">
+                                {recentBookings.map((booking) => {
+                                    const primaryTraveler = booking.travelers?.[0];
+                                    const travelerName = primaryTraveler
+                                        ? `${primaryTraveler.fullName}`
+                                        : booking.contactEmail;
+
+                                    return (
+                                        <div
+                                            key={booking.id}
+                                            className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-muted/30 transition-colors"
+                                        >
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-mono font-bold text-sm text-foreground">
+                            {booking.id}
+                          </span>
+                                                    <OfferTypeBadge offerType={booking.offerType} />
+                                                    <StatusBadge status={booking.status} />
+                                                </div>
+                                                <p className="text-xs text-muted-foreground">
+                                                    <strong className="text-foreground">{travelerName}</strong> •{" "}
+                                                    {formatDateTime(booking.createdAt, locale)}
+                                                </p>
+                                            </div>
+
+                                            <div className="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-0 pt-2 sm:pt-0">
+                        <span className="font-mono font-extrabold text-sm text-foreground">
+                          {formatMoney(booking.price, locale)}
+                        </span>
+                                                <Button asChild variant="outline" size="sm" className="h-8 rounded-xl text-xs font-semibold">
+                                                    <Link href={`/partner/bookings/${booking.id}`}>
+                                                        Gérer
+                                                    </Link>
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 

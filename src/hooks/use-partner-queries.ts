@@ -4,7 +4,27 @@ import * as partnerApi from "@/lib/api/partner";
 import {HotelFormData} from "../types/hotel-form";
 import {createFlight, createHotel} from "../lib/api/partner";
 import {RoomTypeRequestPayload} from "../components/partner/rooms/RoomForm";
-import {AvailabilityFormData, FareFormData, FlightFormData, PropertyFormData, RoomAvailabilityFormData} from "../lib/api/types";
+import {
+    AvailabilityFormData, BookingResponse,
+    FareFormData,
+    FlightFormData,
+    PageResponse, PartnerUpdateRequest,
+    PropertyFormData,
+    RoomAvailabilityFormData, UpdatePartnerDto,
+    VehicleRegistrationRequest
+} from "../lib/api/types";
+import {PartnerRegistrationRequest} from "@/types/partner";
+
+
+
+export function useBookingsQuery(partnerId: string, page: number, size = 20) {
+    return useQuery<PageResponse<BookingResponse>>({
+        queryKey: ["partner-bookings", partnerId, page, size],
+        queryFn: () => partnerApi.getPartnerBookings(partnerId, page, size),
+        enabled: !!partnerId,
+    });
+}
+
 // --- Flights ---
 export function useCreateFlightMutation(partnerId: string) {
     const queryClient = useQueryClient();
@@ -94,6 +114,14 @@ export function useDeleteHotelMutation(partnerId: string) {
 
 // --- Vehicles ---
 
+export function useCreateVehicleMutation(partnerId: string) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (payload: VehicleRegistrationRequest) => partnerApi.createVehicle(partnerId, payload),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["partner-vehicles", partnerId] }),
+    });
+}
+
 export function useVehiclesQuery(partnerId: string, page: number) {
     return useQuery({
         queryKey: ["partner-vehicles", partnerId, page],
@@ -123,6 +151,25 @@ export function useDeleteVehicleMutation(partnerId: string) {
     return useMutation({
         mutationFn: (vehicleId: string) => partnerApi.deleteVehicle(partnerId, vehicleId),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ["partner-vehicles", partnerId] }),
+    });
+}
+
+export function useVehicleQuery(partnerId: string, vehicleId: string) {
+    return useQuery({
+        queryKey: ["partner-vehicle", partnerId, vehicleId],
+        queryFn: () => partnerApi.getVehicle(partnerId, vehicleId),
+        enabled: Boolean(partnerId && vehicleId),
+    });
+}
+
+export function useUpdateVehicleMutation(partnerId: string, vehicleId: string) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (payload: VehicleRegistrationRequest) => partnerApi.updateVehicle(partnerId, vehicleId, payload),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["partner-vehicles", partnerId] });
+            queryClient.invalidateQueries({ queryKey: ["partner-vehicle", partnerId, vehicleId] });
+        },
     });
 }
 
@@ -160,6 +207,25 @@ export function useDeletePropertyMutation(partnerId: string) {
     });
 }
 
+export function usePropertyQuery(partnerId: string, propertyId: string) {
+    return useQuery({
+        queryKey: ["partner-property", partnerId, propertyId],
+        queryFn: () => partnerApi.getPropertyById(partnerId, propertyId),
+        enabled: Boolean(partnerId && propertyId),
+    });
+}
+
+export function useUpdatePropertyMutation(partnerId: string, propertyId: string) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (payload: PropertyFormData) => partnerApi.updateProperty(partnerId, propertyId, payload),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["partner-properties", partnerId] });
+            queryClient.invalidateQueries({ queryKey: ["partner-property", partnerId, propertyId] });
+        },
+    });
+}
+
 export function useCreateHotel() {
     const queryClient = useQueryClient();
 
@@ -173,12 +239,24 @@ export function useCreateHotel() {
         },
     });
 }
-export function usePartnerQuery(partnerId: string | null) {
+export function usePartnerQuery(partnerId: string | null | undefined) {
     return useQuery({
         queryKey: ["partner", partnerId],
         queryFn: () => partnerApi.getPartner(partnerId as string),
         enabled: Boolean(partnerId),
-        staleTime: 1000 * 60 * 5, // Optionnel: garde les données fraîches pendant 5 min
+        staleTime: 1000 * 60 * 5,
+    });
+}
+
+export function useUpdatePartnerMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ partnerId, data }: { partnerId: string; data: PartnerUpdateRequest }) =>
+            partnerApi.updatePartner(partnerId, data),
+        onSuccess: (_, variables) => {
+            // Rafraîchit le profil partenaire affiché (PartnerLayout, page paramètres, etc.)
+            queryClient.invalidateQueries({ queryKey: ["partner", variables.partnerId] });
+        },
     });
 }
 // --- Hotel Rooms ---

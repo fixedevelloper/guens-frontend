@@ -68,7 +68,7 @@ export function HotelFilters({ options, value, onChange }: HotelFiltersProps) {
                 {t("maxPrice") ?? "Budget maximum"}
               </Label>
               <span className="text-sm font-black text-foreground tracking-tight bg-slate-50 dark:bg-zinc-900/50 border border-border/40 px-2.5 py-0.5 rounded-md">
-              {formatMoney({ amount: currentMax, currency: "EUR" }, locale)}
+              {formatMoney({ amount: currentMax, currency: value.currency }, locale)}
             </span>
             </div>
             <Slider
@@ -80,8 +80,8 @@ export function HotelFilters({ options, value, onChange }: HotelFiltersProps) {
                 className="py-1"
             />
             <div className="flex justify-between text-[10px] text-muted-foreground/60 font-semibold tracking-wide">
-              <span>{formatMoney({ amount: options.minPrice, currency: "EUR" }, locale)}</span>
-              <span>{formatMoney({ amount: options.maxPrice, currency: "EUR" }, locale)}</span>
+              <span>{formatMoney({ amount: options.minPrice, currency: value.currency }, locale)}</span>
+              <span>{formatMoney({ amount: options.maxPrice, currency: value.currency }, locale)}</span>
             </div>
           </div>
 

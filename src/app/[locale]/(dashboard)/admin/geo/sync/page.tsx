@@ -89,6 +89,12 @@ export default function GeoSyncAdminPage() {
                         <Clock className="size-3.5 mr-1" />
                         Auto-Sync 30j
                     </Badge>
+                    <Button variant="outline" size="sm" asChild className="rounded-xl font-bold text-xs h-9">
+                        <Link href="/admin/geo/cities">
+                            <Building2 className="size-4 mr-1.5" />
+                            Gérer les villes
+                        </Link>
+                    </Button>
                 </div>
             </div>
 

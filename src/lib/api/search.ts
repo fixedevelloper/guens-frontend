@@ -2,13 +2,14 @@ import { apiClient } from "./client";
 import type {
   FlightSearchParams,
   HarmonizedFlightOffer,
-  HarmonizedHotelOffer, HotelDetail,
+  HarmonizedHotelOffer, HarmonizedPropertyOffer, HarmonizedVehicleOffer, HotelDetail,
   HotelSearchParams,
   MultiCityFlightSearchParams,
-  MultiCityItinerary,
+  MultiCityItinerary, PropertySearchParams,
   RoomOffer,
-  SeatMapResponse,
+  SeatMapResponse, VehicleSearchParams,
 } from "./types";
+import {useQuery} from "@tanstack/react-query";
 
 export async function searchFlights(params: FlightSearchParams) {
   const { data } = await apiClient.get<HarmonizedFlightOffer[]>("/api/search/flights", { params });
@@ -37,3 +38,16 @@ export async function getHotelRooms(offerId: string) {
   const { data } = await apiClient.get<RoomOffer[]>("/api/search/hotels/get-rooms", { params: { offerId } });
   return data;
 }
+
+
+export async function searchVehicles(params: VehicleSearchParams) {
+  const { data } = await apiClient.get<HarmonizedVehicleOffer[]>("/api/search/vehicles", { params });
+  return data;
+}
+// Ajout dans hooks/use-search.ts, sur exactement le modèle de useVehicleSearch
+
+export async function searchProperties(params: PropertySearchParams) {
+  const { data } = await apiClient.get<HarmonizedPropertyOffer[]>("/api/search/properties", { params });
+  return data;
+}
+

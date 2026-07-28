@@ -1,7 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import * as adminApi from "@/lib/api/admin";
-import type { PartnerStatus, ResellerApprovalRequest, ResellerStatus, UpdateCommissionPayload } from "@/lib/api/types";
+import type {
+  HotelCityUpsertRequest,
+  PartnerStatus,
+  ResellerApprovalRequest,
+  ResellerStatus,
+  UpdateCommissionPayload,
+} from "@/lib/api/types";
 
 export function useAdminBookingsQuery() {
   return useQuery({
@@ -62,6 +68,45 @@ export function useSyncAirportsMutation() {
 export function useSyncCitiesMutation() {
   return useMutation({
     mutationFn: () => adminApi.syncCities(),
+  });
+}
+
+export function useAdminCitiesQuery(page: number, query: adminApi.AdminCitiesQuery = {}) {
+  return useQuery({
+    queryKey: ["admin-cities", page, query.q, query.sort],
+    queryFn: () => adminApi.getAdminCities(page, 20, query),
+    placeholderData: (previousData) => previousData,
+  });
+}
+
+export function useCreateCityMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: HotelCityUpsertRequest) => adminApi.createCity(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-cities"] });
+    },
+  });
+}
+
+export function useUpdateCityMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: HotelCityUpsertRequest }) =>
+      adminApi.updateCity(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-cities"] });
+    },
+  });
+}
+
+export function useDeleteCityMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => adminApi.deleteCity(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-cities"] });
+    },
   });
 }
 export const resellerKeys = {

@@ -64,6 +64,7 @@ export function filterFlightOffers(
 
 export interface HotelFilterState {
   maxPrice: number | null;
+  currency: string;
   providers: ProviderType[];
   minRating: number;
   roomTypes: string[];
@@ -71,6 +72,7 @@ export interface HotelFilterState {
 
 export const DEFAULT_HOTEL_FILTERS: HotelFilterState = {
   maxPrice: null,
+  currency: 'XAF',
   providers: [],
   minRating: 0,
   roomTypes: [],
