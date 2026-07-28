@@ -64,7 +64,7 @@ export function MobileNav() {
 
     return (
         <nav className="fixed bottom-0 left-0 right-0 z-50 flex w-full items-center justify-around border-t border-border/40 bg-background/95 px-2 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] backdrop-blur-xl sm:hidden shadow-2xl">
-            {/* 1. Accueil */}
+
             <Link
                 href="/"
                 className={`flex flex-1 min-w-0 flex-col items-center justify-center gap-1 text-[10px] font-medium transition-all active:scale-95 ${
@@ -78,7 +78,7 @@ export function MobileNav() {
                         isHomeActive ? "bg-primary/10 text-primary" : ""
                     }`}
                 >
-                    <HomeIcon className="size-4" />car-rental/car-rental-form
+                    <HomeIcon className="size-4" />
                 </div>
                 <span className="truncate max-w-[54px] text-center">{t("home")}</span>
             </Link>
