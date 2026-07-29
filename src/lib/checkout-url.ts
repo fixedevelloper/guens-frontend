@@ -1,4 +1,11 @@
-import type { HarmonizedFlightOffer, HarmonizedHotelOffer, MultiCityItinerary, ProviderQuote } from "@/lib/api/types";
+import type {
+  HarmonizedFlightOffer,
+  HarmonizedHotelOffer,
+  HarmonizedPropertyOffer,
+  HarmonizedVehicleOffer,
+  MultiCityItinerary,
+  ProviderQuote,
+} from "@/lib/api/types";
 
 /**
  * The backend's checkout endpoint only needs an offerId + offerType (it resolves the rest
@@ -35,7 +42,7 @@ export function checkoutUrlForMultiCityItinerary(itinerary: MultiCityItinerary) 
   return `/checkout?${qs.toString()}`;
 }
 
-export function checkoutUrlForHotel(offer: HarmonizedHotelOffer, offerId: string) {
+export function checkoutUrlForHotel(offer: HarmonizedHotelOffer, offerId: string, quantity = 1) {
   const quote = offer.quotes.find((q) => q.offerId === offerId) as ProviderQuote;
   const qs = new URLSearchParams({
     offerId,
@@ -48,9 +55,46 @@ export function checkoutUrlForHotel(offer: HarmonizedHotelOffer, offerId: string
     providerType: quote.providerType,
     amount: String(quote.price.amount),
     currency: quote.price.currency,
+    quantity: String(quantity),
   });
   return `/checkout?${qs.toString()}`;
 }
+export function checkoutUrlForVehicle(offer: HarmonizedVehicleOffer, offerId: string) {
+  const quote = offer.quotes.find((q) => q.offerId === offerId) as ProviderQuote;
+  const qs = new URLSearchParams({
+    offerId,
+    offerType: "CAR_RENTAL",
+    brand: offer.brand,
+    model: offer.model,
+    category: offer.category,
+    pickupCity: offer.pickupCity,
+    dropoffCity: offer.dropoffCity,
+    rentalStart: offer.rentalStart,
+    rentalEnd: offer.rentalEnd,
+    providerType: quote.providerType,
+    amount: String(quote.price.amount),
+    currency: quote.price.currency,
+  });
+  return `/checkout?${qs.toString()}`;
+}
+
+export function checkoutUrlForProperty(offer: HarmonizedPropertyOffer, offerId: string) {
+  const quote = offer.quotes.find((q) => q.offerId === offerId) as ProviderQuote;
+  const qs = new URLSearchParams({
+    offerId,
+    offerType: "FURNISHED_RENTAL",
+    title: offer.title,
+    propertyType: offer.propertyType,
+    city: offer.city,
+    checkIn: offer.checkIn,
+    checkOut: offer.checkOut,
+    providerType: quote.providerType,
+    amount: String(quote.price.amount),
+    currency: quote.price.currency,
+  });
+  return `/checkout?${qs.toString()}`;
+}
+
 export function resellerCheckoutUrlForFlight(offer: HarmonizedFlightOffer, offerId: string) {
   const quote = offer.quotes.find((q) => q.offerId === offerId) as ProviderQuote;
   const qs = new URLSearchParams({
@@ -83,5 +127,5 @@ export function resellerCheckoutUrlForHotel(offer: HarmonizedHotelOffer, offerId
     amount: String(quote.price.amount),
     currency: quote.price.currency,
   });
-  return `/dashboard/reseller/checkout?${qs.toString()}`;
+  return `/dashboard/reseller/hotels/checkout?${qs.toString()}`;
 }

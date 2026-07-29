@@ -47,8 +47,7 @@ export function MobileNav() {
     const isBecomeHostActive = pathname.startsWith("/become-host");
     const isDashboardActive =
         pathname.startsWith("/dashboard") ||
-        pathname.startsWith("/admin") ||
-        pathname.startsWith("/account");
+        pathname.startsWith("/admin");
 
     // Indique si l'un des sous-menus du menu "Plus" est actif
     const isMoreActive =
@@ -64,7 +63,7 @@ export function MobileNav() {
 
     return (
         <nav className="fixed bottom-0 left-0 right-0 z-50 flex w-full items-center justify-around border-t border-border/40 bg-background/95 px-2 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] backdrop-blur-xl sm:hidden shadow-2xl">
-
+            {/* 1. Accueil */}
             <Link
                 href="/"
                 className={`flex flex-1 min-w-0 flex-col items-center justify-center gap-1 text-[10px] font-medium transition-all active:scale-95 ${
@@ -78,7 +77,7 @@ export function MobileNav() {
                         isHomeActive ? "bg-primary/10 text-primary" : ""
                     }`}
                 >
-                    <HomeIcon className="size-4" />
+                    <HomeIcon className="size-4" />car-rental/car-rental-form
                 </div>
                 <span className="truncate max-w-[54px] text-center">{t("home")}</span>
             </Link>
@@ -297,7 +296,7 @@ export function MobileNav() {
                             )}
 
                             <Link
-                                href="/account"
+                                href="/dashboard"
                                 onClick={() => setOpen(false)}
                                 className="flex items-center justify-between p-3.5 rounded-2xl hover:bg-muted/70 active:bg-muted transition-colors text-sm font-medium"
                             >

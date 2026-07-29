@@ -150,7 +150,7 @@ export default function PropertyImagesPage({ params }: PageProps) {
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                     <Button variant="outline" size="icon" asChild className="rounded-xl size-9 shrink-0">
-                        <Link href="/partner/listings">
+                        <Link href={`/partner/listings/properties/${id}`}>
                             <ArrowLeft className="size-4" />
                         </Link>
                     </Button>

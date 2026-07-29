@@ -8,7 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Link } from "@/i18n/navigation";
 import { formatMoney } from "@/lib/format";
+import { checkoutUrlForProperty } from "@/lib/checkout-url";
 import { usePropertyStore } from "@/store/use-property-store";
 import type { HarmonizedPropertyOffer } from "@/lib/api/types";
 
@@ -109,6 +111,7 @@ function PropertyOfferCard({ offer }: { offer: HarmonizedPropertyOffer }) {
                     {cheapestQuote && (
                         <Button
                             size="sm"
+                            asChild
                             onClick={() => handleSelect(
                                 cheapestQuote.offerId,
                                 Number(cheapestQuote.price.amount),
@@ -116,8 +119,10 @@ function PropertyOfferCard({ offer }: { offer: HarmonizedPropertyOffer }) {
                             )}
                             className="rounded-xl font-bold text-xs gap-1"
                         >
-                            {t("select") ?? "Choisir"}
-                            <ChevronRight className="size-3.5" />
+                            <Link href={checkoutUrlForProperty(offer, cheapestQuote.offerId)}>
+                                {t("select") ?? "Choisir"}
+                                <ChevronRight className="size-3.5" />
+                            </Link>
                         </Button>
                     )}
                 </div>
@@ -128,14 +133,15 @@ function PropertyOfferCard({ offer }: { offer: HarmonizedPropertyOffer }) {
                             {sortedQuotes.length - 1} autre{sortedQuotes.length > 2 ? "s" : ""} option{sortedQuotes.length > 2 ? "s" : ""}
                         </p>
                         {sortedQuotes.slice(1).map((quote) => (
-                            <div
+                            <Link
                                 key={quote.offerId}
+                                href={checkoutUrlForProperty(offer, quote.offerId)}
                                 onClick={() => handleSelect(quote.offerId, Number(quote.price.amount), quote.price.currency)}
                                 className="flex items-center justify-between p-1.5 rounded-lg bg-muted/30 hover:bg-muted/60 cursor-pointer transition-colors text-xs"
                             >
                                 <span className="text-muted-foreground font-semibold">{quote.providerType}</span>
                                 <span className="font-bold text-foreground">{formatMoney(quote.price, locale)}</span>
-                            </div>
+                            </Link>
                         ))}
                     </div>
                 )}

@@ -82,7 +82,12 @@ function CheckoutPageContent() {
       );
     } else {
       checkoutMutation.mutate(
-          { ...partial, offerId: offer.offerId, offerType: offer.offerType },
+          {
+            ...partial,
+            offerId: offer.offerId,
+            offerType: offer.offerType,
+            quantity: offer.offerType === "HOTEL" ? offer.quantity : undefined,
+          },
           callbacks
       );
     }
@@ -96,7 +101,7 @@ function CheckoutPageContent() {
             <AlertTitle className="text-base font-bold mb-1.5">{t("priceExpired")}</AlertTitle>
             <AlertDescription className="space-y-4">
               <p className="text-sm opacity-90 leading-relaxed">
-                L'offre sélectionnée n'est plus disponible ou votre session a expiré. Veuillez relancer une recherche.
+                L&apos;offre sélectionnée n&apos;est plus disponible ou votre session a expiré. Veuillez relancer une recherche.
               </p>
               <Button
                   variant="outline"

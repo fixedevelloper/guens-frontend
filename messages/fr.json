@@ -212,6 +212,9 @@
     "fullName": "Nom complet",
     "dateOfBirth": "Date de naissance",
     "passportNumber": "Numéro de passeport",
+    "nationality": "Nationalité",
+    "passportIssueCountry": "Pays de délivrance du passeport",
+    "passportExpiryDate": "Date d'expiration du passeport",
     "passengerType": "Type",
     "adult": "Adulte",
     "child": "Enfant",
@@ -523,9 +526,73 @@
         "viewAll": "Tout voir",
         "empty": "Aucune demande de réservation pour le moment."
       }
+    },
+    "header": {
+      "status": {
+        "PENDING_REVIEW": "En attente",
+        "APPROVED": "Approuvé",
+        "REJECTED": "Rejeté"
+      }
+    },
+    "sidebar": {
+      "brandLabel": "Guen's travel",
+      "dashboard": "Tableau de bord",
+      "listings": "Annonces",
+      "bookings": "Réservations",
+      "settings": "Paramètres",
+      "logout": "Se déconnecter"
     }
   },
-  
+  "HotelImages": {
+    "title": "Galerie de l'établissement",
+    "hotelId": "ID Hôtel :",
+    "changeCover": "Sélectionner la couverture",
+    "photoCount": "{count, plural, =0 {0 photo} =1 {1 photo} other {# photos}}",
+    "uploadTitle": "Ajoutez des visuels pour cet hôtel",
+    "uploadDescription": "Mettez en valeur la façade, la réception, le restaurant et les équipements extérieurs.",
+    "openGallery": "Ouvrir la médiathèque",
+    "loadingGallery": "Chargement de la galerie...",
+    "errorLoadImages": "Impossible de charger les images de cet établissement.",
+    "sectionTitle": "Photos de l'hôtel",
+    "primaryImageHelp": "La photo marquée \"Couverture\" apparaîtra dans les résultats de recherche.",
+    "primaryBadge": "Couverture",
+    "setPrimaryTooltip": "Définir comme couverture de l'hôtel",
+    "deleteTooltip": "Supprimer la photo",
+    "imageAlt": "Photo de l'hôtel",
+    "modalTitle": "Sélectionner la couverture de l'hôtel",
+    "errorAddImage": "Impossible d'ajouter cette image à la galerie.",
+    "errorSetPrimary": "Impossible de définir cette image comme couverture.",
+    "errorDeleteImage": "Impossible de supprimer cette image."
+  },
+  "VehicleImages": {
+    "title": "Galerie du véhicule",
+    "changeCover": "Sélectionner la couverture",
+    "uploadTitle": "Ajoutez des visuels pour ce véhicule",
+    "openGallery": "Ouvrir la médiathèque",
+    "sectionTitle": "Photos du véhicule"
+  },
+  "PropertiesImages": {
+    "title": "Galerie du logement",
+    "changeCover": "Sélectionner la couverture",
+    "uploadTitle": "Ajoutez des visuels pour ce logement",
+    "openGallery": "Ouvrir la médiathèque",
+    "sectionTitle": "Photos du logement",
+    "noImages": "Aucune photo ajoutée pour le moment."
+  },
+  "CarRentalSearch": {
+    "error": "Une erreur est survenue lors de la recherche de véhicules.",
+    "missingParams": "Veuillez renseigner vos critères de recherche.",
+    "title": "Véhicules disponibles",
+    "select": "Choisir",
+    "noResults": "Aucun véhicule disponible pour ces critères."
+  },
+  "FurnishedRentalSearch": {
+    "error": "Une erreur est survenue lors de la recherche de logements.",
+    "missingParams": "Veuillez renseigner vos critères de recherche.",
+    "title": "Logements disponibles",
+    "select": "Choisir",
+    "noResults": "Aucun logement disponible pour ces critères."
+  },
   "ErrorPage": {
     "title": "Une erreur est survenue",
     "description": "Nous n'avons pas pu charger cette page. Un problème temporaire est survenu.",

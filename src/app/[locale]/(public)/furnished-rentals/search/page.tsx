@@ -8,7 +8,7 @@ import { Home } from "lucide-react";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {usePropertySearch, useVehicleSearch} from "@/hooks/use-search"; // ⚠️ placeholder, remplacer par usePropertySearch (voir note)
+import { usePropertySearch } from "@/hooks/use-search";
 import { usePropertyStore } from "@/store/use-property-store";
 import { parsePropertySearchParams } from "@/lib/search-params";
 import { PropertyResultsList } from "@/components/search/property-results";

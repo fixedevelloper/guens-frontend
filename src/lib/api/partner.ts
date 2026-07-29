@@ -8,9 +8,10 @@ import type {
     FlightFormData,
     FlightResponse,
     HotelResponse,
-    PageResponse, PartnerUpdateRequest, PropertyFormData,
+    PageResponse, PartnerUpdateRequest, PropertyAvailabilityFormData, PropertyAvailabilityResponse, PropertyFormData,
     PropertyResponse, RoomAvailabilityFormData, RoomAvailabilityResponse,
     RoomTypeResponse,
+    VehicleAvailabilityFormData, VehicleAvailabilityResponse,
     VehicleRegistrationRequest,
     VehicleResponse,
 } from "./types";
@@ -105,6 +106,18 @@ export async function deleteHotel(partnerId: string, hotelId: string) {
 export async function getHotel(partnerId: string, hotelId: string): Promise<HotelResponse> {
     const { data } = await apiClient.get<HotelResponse>(
         `/api/partners/${partnerId}/hotels/${hotelId}`
+    );
+    return data;
+}
+
+export async function updateHotel(
+    partnerId: string,
+    hotelId: string,
+    payload: HotelFormData
+): Promise<HotelResponse> {
+    const { data } = await apiClient.put<HotelResponse>(
+        `/api/partners/${partnerId}/hotels/${hotelId}`,
+        payload
     );
     return data;
 }
@@ -209,6 +222,31 @@ export async function updateVehicle(
     return data;
 }
 
+export async function getVehicleAvailability(
+    partnerId: string,
+    vehicleId: string,
+    from: string,
+    to: string
+) {
+    const { data } = await apiClient.get<VehicleAvailabilityResponse[]>(
+        `/api/partners/${partnerId}/vehicles/${vehicleId}/availability`,
+        { params: { from, to } }
+    );
+    return data;
+}
+
+export async function upsertVehicleAvailability(
+    partnerId: string,
+    vehicleId: string,
+    payload: VehicleAvailabilityFormData
+) {
+    const { data } = await apiClient.put<VehicleAvailabilityResponse>(
+        `/api/partners/${partnerId}/vehicles/${vehicleId}/availability`,
+        payload
+    );
+    return data;
+}
+
 // --- Properties (Locations Meublées) ---
 
 export async function getPartnerProperties(partnerId: string, page: number, size = 20) {
@@ -259,6 +297,31 @@ export async function updateProperty(
 ): Promise<PropertyResponse> {
     const { data } = await apiClient.put<PropertyResponse>(
         `/api/partners/${partnerId}/properties/${propertyId}`,
+        payload
+    );
+    return data;
+}
+
+export async function getPropertyAvailability(
+    partnerId: string,
+    propertyId: string,
+    from: string,
+    to: string
+) {
+    const { data } = await apiClient.get<PropertyAvailabilityResponse[]>(
+        `/api/partners/${partnerId}/properties/${propertyId}/availability`,
+        { params: { from, to } }
+    );
+    return data;
+}
+
+export async function upsertPropertyAvailability(
+    partnerId: string,
+    propertyId: string,
+    payload: PropertyAvailabilityFormData
+) {
+    const { data } = await apiClient.put<PropertyAvailabilityResponse>(
+        `/api/partners/${partnerId}/properties/${propertyId}/availability`,
         payload
     );
     return data;

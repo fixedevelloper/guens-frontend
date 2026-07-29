@@ -16,7 +16,6 @@ import {
   Copy,
   Check,
   RefreshCw,
-  Plus,
 } from "lucide-react";
 
 import { Link, useRouter } from "@/i18n/navigation";
@@ -97,7 +96,7 @@ export default function ResellerDashboardPage() {
                 {t("resellerDashboard") ?? "Tableau de bord Revendeur"}
               </h1>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Vue d'ensemble de vos performances commercialisations et revenus
+                Vue d&apos;ensemble de vos performances commercialisations et revenus
               </p>
             </div>
           </div>
@@ -149,7 +148,7 @@ export default function ResellerDashboardPage() {
               Réserver un vol
             </Link>
             <Link
-              href="/dashboard/hotels"
+              href="/dashboard/reseller/hotels"
               className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs font-semibold text-blue-900 shadow-sm transition-all hover:bg-blue-50"
             >
               <Building2 className="h-4 w-4 text-blue-600" />
@@ -233,9 +232,6 @@ export default function ResellerDashboardPage() {
           </div>
           <div className="mt-3 flex items-center justify-between text-xs border-t border-slate-100 pt-3 dark:border-slate-800">
             <span className="text-slate-500">Clients rattachés</span>
-            <Link href="/dashboard/reseller/customers" className="flex items-center gap-0.5 font-medium text-blue-600 hover:underline dark:text-blue-400">
-              Répertoire <ArrowUpRight className="h-3 w-3" />
-            </Link>
           </div>
         </div>
       </div>
@@ -255,7 +251,7 @@ export default function ResellerDashboardPage() {
             href="/dashboard/reseller/bookings"
             className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
           >
-            Voir l'historique complet
+            Voir l&apos;historique complet
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>

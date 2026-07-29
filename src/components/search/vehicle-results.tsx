@@ -8,7 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Link } from "@/i18n/navigation";
 import { formatMoney } from "@/lib/format";
+import { checkoutUrlForVehicle } from "@/lib/checkout-url";
 import { useVehicleStore } from "@/store/use-vehicle-store";
 import type { HarmonizedVehicleOffer } from "@/lib/api/types";
 
@@ -112,6 +114,7 @@ function VehicleOfferCard({ offer }: { offer: HarmonizedVehicleOffer }) {
                     {cheapestQuote && (
                         <Button
                             size="sm"
+                            asChild
                             onClick={() => handleSelect(
                                 cheapestQuote.offerId,
                                 Number(cheapestQuote.price.amount),
@@ -119,8 +122,10 @@ function VehicleOfferCard({ offer }: { offer: HarmonizedVehicleOffer }) {
                             )}
                             className="rounded-xl font-bold text-xs gap-1"
                         >
-                            {t("select") ?? "Choisir"}
-                            <ChevronRight className="size-3.5" />
+                            <Link href={checkoutUrlForVehicle(offer, cheapestQuote.offerId)}>
+                                {t("select") ?? "Choisir"}
+                                <ChevronRight className="size-3.5" />
+                            </Link>
                         </Button>
                     )}
                 </div>
@@ -131,14 +136,15 @@ function VehicleOfferCard({ offer }: { offer: HarmonizedVehicleOffer }) {
                             {sortedQuotes.length - 1} autre{sortedQuotes.length > 2 ? "s" : ""} option{sortedQuotes.length > 2 ? "s" : ""}
                         </p>
                         {sortedQuotes.slice(1).map((quote) => (
-                            <div
+                            <Link
                                 key={quote.offerId}
+                                href={checkoutUrlForVehicle(offer, quote.offerId)}
                                 onClick={() => handleSelect(quote.offerId, Number(quote.price.amount), quote.price.currency)}
                                 className="flex items-center justify-between p-1.5 rounded-lg bg-muted/30 hover:bg-muted/60 cursor-pointer transition-colors text-xs"
                             >
                                 <span className="text-muted-foreground font-semibold">{quote.providerType}</span>
                                 <span className="font-bold text-foreground">{formatMoney(quote.price, locale)}</span>
-                            </div>
+                            </Link>
                         ))}
                     </div>
                 )}

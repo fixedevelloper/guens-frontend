@@ -13,7 +13,6 @@ import {
     Download,
     Send,
     ShieldCheck,
-    CheckCircle2,
     XCircle,
     Clock,
     AlertTriangle,
@@ -35,7 +34,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDate, formatMoney, providerLabel } from "@/lib/format";
-import { useBookingQuery, useUpdateBookingStatusMutation } from "@/hooks/use-booking";
+import { useBookingQuery, useCancelBookingMutation } from "@/hooks/use-booking";
 
 interface AdminBookingDetailPageProps {
     params: Promise<{ id: string }>;
@@ -48,7 +47,7 @@ export default function AdminBookingDetailPage({ params }: AdminBookingDetailPag
 
     // Récupération des données et mutation de statut
     const { data: booking, isLoading, isError, refetch } = useBookingQuery(id);
-    const updateStatusMutation = useUpdateBookingStatusMutation();
+    const cancelMutation = useCancelBookingMutation(id);
 
     if (isLoading) {
         return <AdminBookingDetailSkeleton />;
@@ -75,20 +74,11 @@ export default function AdminBookingDetailPage({ params }: AdminBookingDetailPag
     const isHotel = booking.offerType === "HOTEL";
 
 
-    const handleStatusUpdate = (newStatus: "CONFIRMED" | "CANCELLED") => {
-        updateStatusMutation.mutate(
-            { bookingId: booking.id, status: newStatus },
-            {
-                onSuccess: () => {
-                    toast.success(`Statut mis à jour : ${newStatus}`);
-                    // refetch() n'est même plus strictement nécessaire si setQueryData a mis à jour le cache,
-                    // mais tu peux le garder si tu veux forcer une revalidation.
-                },
-                onError: () => {
-                    toast.error("Erreur lors de la mise à jour du statut");
-                },
-            }
-        );
+    const handleCancel = () => {
+        cancelMutation.mutate(undefined, {
+            onSuccess: () => toast.success("Réservation annulée."),
+            onError: () => toast.error("Erreur lors de l'annulation de la réservation."),
+        });
     };
 
     return (
@@ -167,7 +157,7 @@ export default function AdminBookingDetailPage({ params }: AdminBookingDetailPag
                 <div className="rounded-2xl border border-destructive/40 bg-destructive/10 p-4 text-destructive flex items-start gap-3">
                     <BadgeAlert className="size-5 shrink-0 mt-0.5" />
                     <div className="space-y-1 text-xs sm:text-sm">
-                        <span className="font-bold block">Motif de l'échec système :</span>
+                        <span className="font-bold block">Motif de l&apos;échec système :</span>
                         <p>{booking.failureReason}</p>
                     </div>
                 </div>
@@ -241,7 +231,7 @@ export default function AdminBookingDetailPage({ params }: AdminBookingDetailPag
                             {isHotel ? (
                                 <div className="grid sm:grid-cols-2 gap-4">
                                     <div>
-                                        <span className="text-muted-foreground block text-xs">Nom de l'établissement</span>
+                                        <span className="text-muted-foreground block text-xs">Nom de l&apos;établissement</span>
                                         <span className="font-extrabold text-foreground capitalize text-base">
                                             {booking.hotelName || "Non renseigné"}
                                         </span>
@@ -408,7 +398,7 @@ export default function AdminBookingDetailPage({ params }: AdminBookingDetailPag
                                     <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-2.5 text-xs text-amber-700 dark:text-amber-400 flex items-start gap-2">
                                         <Clock className="size-4 shrink-0 mt-0.5" />
                                         <div>
-                                            <span className="font-bold block">Date limite d'émission :</span>
+                                            <span className="font-bold block">Date limite d&apos;émission :</span>
                                             <span>{formatDate(booking.ticketingDeadline, locale)}</span>
                                         </div>
                                     </div>
@@ -427,24 +417,16 @@ export default function AdminBookingDetailPage({ params }: AdminBookingDetailPag
                         </CardHeader>
                         <CardContent className="pt-4 space-y-3">
                             <p className="text-xs text-muted-foreground">
-                                Forcer le changement d'état de cette réservation dans le système.
+                                La confirmation d&apos;une réservation est automatique (paiement et/ou
+                                fournisseur) ; seule l&apos;annulation peut être forcée manuellement.
                             </p>
                             <div className="flex flex-col gap-2">
                                 <Button
                                     size="sm"
-                                    className="w-full rounded-xl gap-2 font-semibold bg-emerald-600 hover:bg-emerald-700 text-white"
-                                    disabled={updateStatusMutation.isPending || booking.status === "CONFIRMED"}
-                                    onClick={() => handleStatusUpdate("CONFIRMED")}
-                                >
-                                    <CheckCircle2 className="size-4" />
-                                    Confirmer la réservation
-                                </Button>
-                                <Button
-                                    size="sm"
                                     variant="destructive"
                                     className="w-full rounded-xl gap-2 font-semibold"
-                                    disabled={updateStatusMutation.isPending || booking.status === "CANCELLED"}
-                                    onClick={() => handleStatusUpdate("CANCELLED")}
+                                    disabled={cancelMutation.isPending || booking.status === "CANCELLED"}
+                                    onClick={handleCancel}
                                 >
                                     <XCircle className="size-4" />
                                     Annuler la réservation

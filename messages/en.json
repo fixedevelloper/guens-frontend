@@ -213,6 +213,9 @@
     "fullName": "Full name",
     "dateOfBirth": "Date of birth",
     "passportNumber": "Passport number",
+    "nationality": "Nationality",
+    "passportIssueCountry": "Passport issuing country",
+    "passportExpiryDate": "Passport expiry date",
     "passengerType": "Type",
     "adult": "Adult",
     "child": "Child",
@@ -520,7 +523,72 @@
         "viewAll": "View all",
         "empty": "No booking requests at the moment."
       }
+    },
+    "header": {
+      "status": {
+        "PENDING_REVIEW": "Pending",
+        "APPROVED": "Approved",
+        "REJECTED": "Rejected"
+      }
+    },
+    "sidebar": {
+      "brandLabel": "Guen's travel",
+      "dashboard": "Dashboard",
+      "listings": "Listings",
+      "bookings": "Bookings",
+      "settings": "Settings",
+      "logout": "Sign out"
     }
+  },
+  "HotelImages": {
+    "title": "Hotel gallery",
+    "hotelId": "Hotel ID:",
+    "changeCover": "Select cover photo",
+    "photoCount": "{count, plural, =0 {0 photos} =1 {1 photo} other {# photos}}",
+    "uploadTitle": "Add visuals for this hotel",
+    "uploadDescription": "Showcase the facade, reception, restaurant, and outdoor amenities.",
+    "openGallery": "Open media library",
+    "loadingGallery": "Loading gallery...",
+    "errorLoadImages": "Unable to load this hotel's images.",
+    "sectionTitle": "Hotel photos",
+    "primaryImageHelp": "The photo marked \"Cover\" will appear in search results.",
+    "primaryBadge": "Cover",
+    "setPrimaryTooltip": "Set as hotel cover photo",
+    "deleteTooltip": "Delete photo",
+    "imageAlt": "Hotel photo",
+    "modalTitle": "Select the hotel's cover photo",
+    "errorAddImage": "Unable to add this image to the gallery.",
+    "errorSetPrimary": "Unable to set this image as the cover photo.",
+    "errorDeleteImage": "Unable to delete this image."
+  },
+  "VehicleImages": {
+    "title": "Vehicle gallery",
+    "changeCover": "Select cover photo",
+    "uploadTitle": "Add visuals for this vehicle",
+    "openGallery": "Open media library",
+    "sectionTitle": "Vehicle photos"
+  },
+  "PropertiesImages": {
+    "title": "Property gallery",
+    "changeCover": "Select cover photo",
+    "uploadTitle": "Add visuals for this property",
+    "openGallery": "Open media library",
+    "sectionTitle": "Property photos",
+    "noImages": "No photos added yet."
+  },
+  "CarRentalSearch": {
+    "error": "An error occurred while searching for vehicles.",
+    "missingParams": "Please provide your search criteria.",
+    "title": "Available vehicles",
+    "select": "Select",
+    "noResults": "No vehicles available for these criteria."
+  },
+  "FurnishedRentalSearch": {
+    "error": "An error occurred while searching for properties.",
+    "missingParams": "Please provide your search criteria.",
+    "title": "Available properties",
+    "select": "Select",
+    "noResults": "No properties available for these criteria."
   },
   "ErrorPage": {
     "title": "Something went wrong",

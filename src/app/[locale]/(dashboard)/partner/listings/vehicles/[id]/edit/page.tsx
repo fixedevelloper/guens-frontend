@@ -19,6 +19,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { PickupLocationsInput } from "@/components/partner/pickup-locations-input";
+import { VehicleAvailabilityManager } from "@/components/partner/vehicles/vehicle-availability-manager";
 
 import { useAuth } from "@/context/auth-context";
 import { useUpdateVehicleMutation, useVehicleQuery } from "@/hooks/use-partner-queries";
@@ -341,6 +342,9 @@ export default function EditVehiclePage({ params }: PageProps) {
                     </form>
                 </CardContent>
             </Card>
+
+            {/* Disponibilité */}
+            <VehicleAvailabilityManager partnerId={partnerId} vehicleId={id} />
         </div>
     );
 }

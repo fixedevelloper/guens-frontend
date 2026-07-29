@@ -9,8 +9,10 @@ import {
     FareFormData,
     FlightFormData,
     PageResponse, PartnerUpdateRequest,
+    PropertyAvailabilityFormData,
     PropertyFormData,
     RoomAvailabilityFormData, UpdatePartnerDto,
+    VehicleAvailabilityFormData,
     VehicleRegistrationRequest
 } from "../lib/api/types";
 import {PartnerRegistrationRequest} from "@/types/partner";
@@ -112,6 +114,25 @@ export function useDeleteHotelMutation(partnerId: string) {
     });
 }
 
+export function useHotelQuery(partnerId: string, hotelId: string) {
+    return useQuery({
+        queryKey: ["partner-hotel", partnerId, hotelId],
+        queryFn: () => partnerApi.getHotel(partnerId, hotelId),
+        enabled: Boolean(partnerId && hotelId),
+    });
+}
+
+export function useUpdateHotelMutation(partnerId: string, hotelId: string) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (payload: HotelFormData) => partnerApi.updateHotel(partnerId, hotelId, payload),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["partner-hotels", partnerId] });
+            queryClient.invalidateQueries({ queryKey: ["partner-hotel", partnerId, hotelId] });
+        },
+    });
+}
+
 // --- Vehicles ---
 
 export function useCreateVehicleMutation(partnerId: string) {
@@ -173,6 +194,24 @@ export function useUpdateVehicleMutation(partnerId: string, vehicleId: string) {
     });
 }
 
+export function useVehicleAvailabilityQuery(partnerId: string, vehicleId: string, from: string, to: string) {
+    return useQuery({
+        queryKey: ["partner-vehicle-availability", partnerId, vehicleId, from, to],
+        queryFn: () => partnerApi.getVehicleAvailability(partnerId, vehicleId, from, to),
+        enabled: Boolean(partnerId && vehicleId),
+    });
+}
+
+export function useUpsertVehicleAvailabilityMutation(partnerId: string, vehicleId: string) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (data: VehicleAvailabilityFormData) =>
+            partnerApi.upsertVehicleAvailability(partnerId, vehicleId, data),
+        onSuccess: () =>
+            queryClient.invalidateQueries({ queryKey: ["partner-vehicle-availability", partnerId, vehicleId] }),
+    });
+}
+
 // --- Properties ---
 
 export function usePropertiesQuery(partnerId: string, page: number) {
@@ -223,6 +262,24 @@ export function useUpdatePropertyMutation(partnerId: string, propertyId: string)
             queryClient.invalidateQueries({ queryKey: ["partner-properties", partnerId] });
             queryClient.invalidateQueries({ queryKey: ["partner-property", partnerId, propertyId] });
         },
+    });
+}
+
+export function usePropertyAvailabilityQuery(partnerId: string, propertyId: string, from: string, to: string) {
+    return useQuery({
+        queryKey: ["partner-property-availability", partnerId, propertyId, from, to],
+        queryFn: () => partnerApi.getPropertyAvailability(partnerId, propertyId, from, to),
+        enabled: Boolean(partnerId && propertyId),
+    });
+}
+
+export function useUpsertPropertyAvailabilityMutation(partnerId: string, propertyId: string) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (data: PropertyAvailabilityFormData) =>
+            partnerApi.upsertPropertyAvailability(partnerId, propertyId, data),
+        onSuccess: () =>
+            queryClient.invalidateQueries({ queryKey: ["partner-property-availability", partnerId, propertyId] }),
     });
 }
 

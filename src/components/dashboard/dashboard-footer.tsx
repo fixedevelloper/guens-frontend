@@ -21,13 +21,10 @@ export function DashboardFooter() {
 
                 {/* Liens de support */}
                 <div className="flex items-center gap-4 text-xs font-semibold">
-                    <Link href="/support" className="hover:text-foreground transition-colors">
-                        Support
-                    </Link>
-                    <Link href="/terms" className="hover:text-foreground transition-colors">
+                    <Link href="/legal/terms" className="hover:text-foreground transition-colors">
                         CGU
                     </Link>
-                    <Link href="/privacy" className="hover:text-foreground transition-colors">
+                    <Link href="/legal/privacy" className="hover:text-foreground transition-colors">
                         Confidentialité
                     </Link>
                 </div>

@@ -142,7 +142,7 @@ export default function PartnerDashboardPage() {
                         size="lg"
                         className="bg-[#7bcd4f] hover:bg-[#6ab840] text-slate-950 font-extrabold shadow-lg shadow-emerald-900/30 shrink-0"
                     >
-                        <Link href="/partner/listings/new">
+                        <Link href="/partner/listings">
                             <PlusCircle className="mr-2 h-5 w-5" />
                             {t("addListing")}
                         </Link>
@@ -318,20 +318,6 @@ export default function PartnerDashboardPage() {
                                 <div className="flex items-center gap-2.5">
                                     <CalendarClock className="h-4 w-4 text-amber-500" />
                                     <span>{t("quickActions.viewBookings")}</span>
-                                </div>
-                                <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
-                            </Link>
-                        </Button>
-
-                        <Button
-                            asChild
-                            variant="outline"
-                            className="w-full justify-between h-12 rounded-xl border-border/80 hover:border-primary/50 hover:bg-primary/5 font-semibold text-sm"
-                        >
-                            <Link href="/partner/payouts">
-                                <div className="flex items-center gap-2.5">
-                                    <Wallet className="h-4 w-4 text-emerald-500" />
-                                    <span>{t("quickActions.payouts")}</span>
                                 </div>
                                 <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
                             </Link>

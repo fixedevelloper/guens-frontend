@@ -175,7 +175,7 @@ export default function NewFlightPage() {
                             asChild
                             className="size-8 rounded-xl border-border/60"
                         >
-                            <Link href="/dashboard/flights">
+                            <Link href="/partner/listings">
                                 <ArrowLeft className="size-4" />
                             </Link>
                         </Button>
@@ -392,7 +392,7 @@ export default function NewFlightPage() {
                                 asChild
                                 className="rounded-xl text-xs font-bold h-10 px-5"
                             >
-                                <Link href="/dashboard/flights">Annuler</Link>
+                                <Link href="/partner/listings">Annuler</Link>
                             </Button>
 
                             <Button

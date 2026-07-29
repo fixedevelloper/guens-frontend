@@ -2,7 +2,7 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { Building2, Plane, Calendar, CreditCard, Clock3 } from "lucide-react";
+import { Building2, Plane, Calendar, CreditCard, Clock3, Car, Home, MapPin } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -110,7 +110,7 @@ export function OfferSummaryCard({
               </div>
           )}
 
-          {offer.offerType !== "FLIGHT" && offer.offerType !== "MULTI_CITY_FLIGHT" && (
+          {offer.offerType === "HOTEL" && (
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
                   <div className="p-2 rounded-xl bg-primary/10 text-primary shrink-0">
@@ -120,6 +120,57 @@ export function OfferSummaryCard({
                     <h4 className="text-sm font-bold text-foreground leading-tight">{offer.hotelName}</h4>
                     <p className="text-xs text-muted-foreground">
                       {offer.cityCode} • {offer.roomType}
+                      {offer.quantity > 1 ? ` • ${offer.quantity} chambres` : ""}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 bg-background/50 border border-border/40 p-2.5 rounded-xl text-xs text-muted-foreground">
+                  <Calendar className="size-3.5 text-primary shrink-0" />
+                  <span>
+                Du <strong className="text-foreground">{formatDate(offer.checkIn, locale)}</strong> au <strong className="text-foreground">{formatDate(offer.checkOut, locale)}</strong>
+              </span>
+                </div>
+              </div>
+          )}
+
+          {offer.offerType === "CAR_RENTAL" && (
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-xl bg-primary/10 text-primary shrink-0">
+                    <Car className="size-4" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <h4 className="text-sm font-bold text-foreground leading-tight">
+                      {offer.brand} {offer.model}
+                    </h4>
+                    <p className="text-xs text-muted-foreground">
+                      {offer.category} • {offer.pickupCity}
+                      {offer.dropoffCity !== offer.pickupCity ? ` → ${offer.dropoffCity}` : ""}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 bg-background/50 border border-border/40 p-2.5 rounded-xl text-xs text-muted-foreground">
+                  <Calendar className="size-3.5 text-primary shrink-0" />
+                  <span>
+                Du <strong className="text-foreground">{formatDate(offer.rentalStart, locale)}</strong> au <strong className="text-foreground">{formatDate(offer.rentalEnd, locale)}</strong>
+              </span>
+                </div>
+              </div>
+          )}
+
+          {offer.offerType === "FURNISHED_RENTAL" && (
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-xl bg-primary/10 text-primary shrink-0">
+                    <Home className="size-4" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <h4 className="text-sm font-bold text-foreground leading-tight">{offer.title}</h4>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <MapPin className="size-3 shrink-0" />
+                      {offer.city} • {offer.propertyType}
                     </p>
                   </div>
                 </div>

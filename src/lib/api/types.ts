@@ -175,6 +175,12 @@ export interface TravelerRequest {
   passportNumber?: string;
   type: PassengerType;
   seatNumber?: string;
+  /** ISO 3166-1 alpha-2 nationality; required by some providers' flight booking APIs (e.g. Travelopro). */
+  nationality?: string;
+  /** ISO 3166-1 alpha-2 passport-issuing country; optional, requested by some flight booking APIs. */
+  passportIssueCountry?: string;
+  /** Passport expiry date; optional, requested by some flight booking APIs. */
+  passportExpiryDate?: string;
 }
 export interface CheckoutRequest {
   offerId: string;
@@ -238,6 +244,24 @@ export interface BookingResponse {
   checkIn: string | null;
   checkOut: string | null;
   fareClass: string | null;
+  vehicleBrand: string | null;
+  vehicleModel: string | null;
+  vehicleCategory: string | null;
+  vehicleTransmission: string | null;
+  vehicleSeats: number | null;
+  pickupCity: string | null;
+  dropoffCity: string | null;
+  rentalStart: string | null;
+  pickupTime: string | null;
+  rentalEnd: string | null;
+  dropoffTime: string | null;
+  withDriver: boolean | null;
+  propertyTitle: string | null;
+  propertyType: string | null;
+  country: string | null;
+  bedrooms: number | null;
+  maxGuests: number | null;
+  entirePlace: boolean | null;
   createdAt: string;
 }
 export interface BookingTravelerResponse {
@@ -402,10 +426,16 @@ export interface HotelImageResponse {
 
 export interface HotelResponse {
   id: string;
+  partnerId: string;
   name: string;
+  address: string;
   city: string;
   country: string;
   starRating: number | null;
+  description: string | null;
+  amenities: string[];
+  checkInTime: string | null;
+  checkOutTime: string | null;
   status: "ACTIVE" | "SUSPENDED";
   coverImageUrl: string | null;
   images: HotelImageResponse[];
@@ -456,6 +486,18 @@ export interface VehicleRegistrationRequest {
   pickupLocations: string[];
 }
 
+export interface VehicleAvailabilityResponse {
+  id: string;
+  rentDate: string; // "YYYY-MM-DD"
+  unitsAvailable: number;
+  priceOverride: number | null;
+}
+
+export interface VehicleAvailabilityFormData {
+  rentDate: string;
+  unitsAvailable: number;
+}
+
 // ---------- Partner: Properties ----------
 
 export type PropertyType = "APARTMENT" | "VILLA" | "STUDIO" | "HOUSE";
@@ -503,6 +545,18 @@ export interface PropertyResponse extends PropertyFormData {
   images: PropertyImageResponse[];
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface PropertyAvailabilityResponse {
+  id: string;
+  stayDate: string; // "YYYY-MM-DD"
+  isAvailable: boolean;
+  priceOverride: number | null;
+}
+
+export interface PropertyAvailabilityFormData {
+  stayDate: string;
+  isAvailable: boolean;
 }
 
 /**

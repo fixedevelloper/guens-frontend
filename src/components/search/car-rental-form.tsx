@@ -13,7 +13,7 @@ import {
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { carSearchParamsToQuery } from "@/lib/search-params";
-import { searchAirportSuggestions } from "@/lib/api/geo";
+import {searchAirportSuggestions, searchCitySuggestions} from "@/lib/api/geo";
 import { PickLocationAutocomplete } from "@/components/search/pick-location-autocomplete";
 
 interface CarRentalFormProps {
@@ -140,7 +140,7 @@ export function CarRentalForm({ className = "", onSearch }: CarRentalFormProps) 
                         hintLabel={t("locationHint")}
                         noResultsLabel={t("locationNoResults")}
                         initialLabel=""
-                        fetchOptions={searchAirportSuggestions}
+                        fetchOptions={searchCitySuggestions}
                         onSelect={(option) => setPickupLocation(option.code)}
                     />
                 </div>
@@ -156,7 +156,7 @@ export function CarRentalForm({ className = "", onSearch }: CarRentalFormProps) 
                             hintLabel={t("locationHint")}
                             noResultsLabel={t("locationNoResults")}
                             initialLabel=""
-                            fetchOptions={searchAirportSuggestions}
+                            fetchOptions={searchCitySuggestions}
                             onSelect={(option) => setDropoffLocation(option.code)}
                         />
                     </div>

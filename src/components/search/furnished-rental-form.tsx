@@ -14,7 +14,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { furnishedRentalSearchParamsToQuery } from "@/lib/search-params";
 import { PickLocationAutocomplete } from "@/components/search/pick-location-autocomplete";
-import { searchAirportSuggestions } from "@/lib/api/geo";
+import {searchAirportSuggestions, searchCitySuggestions} from "@/lib/api/geo";
 
 interface FurnishedRentalFormProps {
     className?: string;
@@ -143,7 +143,7 @@ export function FurnishedRentalForm({
                             hintLabel={t("locationHint")}
                             noResultsLabel={t("locationNoResults")}
                             initialLabel=""
-                            fetchOptions={searchAirportSuggestions}
+                            fetchOptions={searchCitySuggestions}
                             onSelect={(option) => setLocation(option.code)}
                         />
                     </div>

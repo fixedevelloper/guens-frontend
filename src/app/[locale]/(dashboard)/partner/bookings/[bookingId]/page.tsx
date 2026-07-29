@@ -1,32 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useLocale } from "next-intl";
 import {
     AlertCircle,
     ArrowLeft,
     Building,
-    Building2,
-    Calendar,
     Car,
-    Clock,
     CreditCard,
-    Download,
-    FileText,
     Home,
-    Key,
     Loader2,
     Mail,
     MapPin,
-    Phone,
     Plane,
     Printer,
     ShieldCheck,
-    Ticket,
-    User,
     Users,
-    Utensils,
     XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -37,88 +26,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { StatusBadge } from "@/components/tracking/status-badge";
-import { airlineLabel, formatDateTime, formatMoney } from "@/lib/format";
+import { useBookingQuery, useCancelBookingMutation } from "@/hooks/use-booking";
+import { normalizeApiError } from "@/lib/api/client";
+import { airlineLabel, formatDate, formatDateTime, formatMoney } from "@/lib/format";
+import type { OfferType } from "@/lib/api/types";
 
-// --- TYPES ALIGNÉS AVEC LE BACKEND ---
-
-export type BookingStatus =
-    | "PENDING_PAYMENT"
-    | "PAID"
-    | "CONFIRMED"
-    | "CANCELLED"
-    | "FAILED"
-    | string;
-
-export type OfferType = "AIRLINE" | "HOTEL" | "CAR_RENTAL" | "FURNISHED_RENTAL" | string;
-export type ProviderType = "AMADEUS" | "TRAVELPORT" | "SABRE" | "DIRECT" | string;
-
-export interface Money {
-    amount: number;
-    currency: string;
-}
-
-export interface PaymentPlan {
-    type?: string;
-    installments?: number;
-}
-
-export interface BookingFlightLeg {
-    legIndex?: number;
-    airline: string;
-    flightNumber: string;
-    origin: string;
-    destination: string;
-    departureTime: string;
-    arrivalTime: string;
-    cabinClass?: string;
-}
-
-export interface BookingTravelerResponse {
-    id?: string;
-    firstName: string;
-    lastName: string;
-    email?: string;
-    phone?: string;
-    passportNumber?: string;
-    ticketNumber?: string;
-}
-
-export interface BookingResponse {
-    id: string;
-    status: BookingStatus;
-    offerType: OfferType;
-    providerType: ProviderType;
-    contactEmail: string;
-    price: Money;
-    paymentPlan: PaymentPlan;
-    reservationFee: Money | null;
-    amountDue: Money;
-    ticketingDeadline: string | null;
-    providerConfirmationNumber: string | null;
-    eTicketNumbers: string[];
-    itineraryLegs: BookingFlightLeg[];
-    failureReason: string | null;
-    travelers: BookingTravelerResponse[];
-    airline: string | null;
-    flightNumber: string | null;
-    origin: string | null;
-    destination: string | null;
-    departureTime: string | null;
-    arrivalTime: string | null;
-    hotelName: string | null;
-    cityCode: string | null;
-    checkIn: string | null;
-    checkOut: string | null;
-    fareClass: string | null;
-    createdAt: string;
-}
-
-// Fonction de récupération API exemple
-async function getBooking(bookingId: string): Promise<BookingResponse> {
-    const res = await fetch(`/api/bookings/${bookingId}`);
-    if (!res.ok) throw new Error("Erreur lors de la récupération du dossier");
-    return res.json();
-}
+const TYPE_CONFIG: Record<OfferType, { label: string; icon: typeof Plane; color: string }> = {
+    FLIGHT: { label: "Vol", icon: Plane, color: "bg-blue-500/10 text-blue-600 dark:text-blue-400" },
+    HOTEL: { label: "Hôtel", icon: Building, color: "bg-purple-500/10 text-purple-600 dark:text-purple-400" },
+    CAR_RENTAL: { label: "Location Véhicule", icon: Car, color: "bg-amber-500/10 text-amber-600 dark:text-amber-400" },
+    FURNISHED_RENTAL: { label: "Résidence Meublée", icon: Home, color: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" },
+};
 
 export default function PartnerBookingDetailPage() {
     const params = useParams<{ bookingId: string }>();
@@ -126,53 +44,15 @@ export default function PartnerBookingDetailPage() {
     const locale = useLocale();
     const router = useRouter();
 
-    const [booking, setBooking] = useState<BookingResponse | null>(null);
-    const [isLoading, setIsLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string | null>(null);
-    const [isProcessing, setIsProcessing] = useState<boolean>(false);
+    const { data: booking, isLoading, isError } = useBookingQuery(bookingId);
+    const cancelMutation = useCancelBookingMutation(bookingId);
 
-    useEffect(() => {
-        if (!bookingId) return;
-
-        setIsLoading(true);
-        getBooking(bookingId)
-            .then((data) => {
-                setBooking(data);
-                setError(null);
-            })
-            .catch((err) => {
-                console.error(err);
-                setError("Impossible de charger les détails de cette réservation.");
-            })
-            .finally(() => {
-                setIsLoading(false);
-            });
-    }, [bookingId]);
-
-    function handleConfirmAction() {
-        if (!booking) return;
-        setIsProcessing(true);
-        setTimeout(() => {
-            setIsProcessing(false);
-            toast.success(`Action exécutée avec succès pour le dossier ${booking.id}`);
-        }, 1500);
+    function handleCancel() {
+        cancelMutation.mutate(undefined, {
+            onSuccess: () => toast.success("Réservation annulée."),
+            onError: (error) => toast.error(normalizeApiError(error).message),
+        });
     }
-
-    // Configuration visuelle dynamique selon l'OfferType
-    const getTypeConfig = (type: OfferType) => {
-        switch (type) {
-            case "AIRLINE":
-                return { label: "Vol", icon: Plane, color: "bg-blue-500/10 text-blue-600 dark:text-blue-400" };
-            case "HOTEL":
-                return { label: "Hôtel", icon: Building, color: "bg-purple-500/10 text-purple-600 dark:text-purple-400" };
-            case "CAR_RENTAL":
-                return { label: "Location Véhicule", icon: Car, color: "bg-amber-500/10 text-amber-600 dark:text-amber-400" };
-            case "FURNISHED_RENTAL":
-                return { label: "Résidence Meublée", icon: Home, color: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" };
-            default:
-                return { label: type, icon: Ticket, color: "bg-muted text-muted-foreground" };
-        }
-    };
 
     if (isLoading) {
         return (
@@ -183,12 +63,12 @@ export default function PartnerBookingDetailPage() {
         );
     }
 
-    if (error || !booking) {
+    if (isError || !booking) {
         return (
             <div className="mx-auto max-w-xl py-12 px-4 text-center space-y-4">
                 <AlertCircle className="size-12 text-destructive mx-auto" />
                 <h2 className="text-xl font-bold">Dossier introuvable</h2>
-                <p className="text-sm text-muted-foreground">{error ?? "Aucune donnée disponible pour cet identifiant."}</p>
+                <p className="text-sm text-muted-foreground">Aucune donnée disponible pour cet identifiant.</p>
                 <Button variant="outline" onClick={() => router.push("/partner/bookings")}>
                     Retour aux réservations
                 </Button>
@@ -196,27 +76,13 @@ export default function PartnerBookingDetailPage() {
         );
     }
 
-    const currentType = getTypeConfig(booking.offerType);
+    const currentType = TYPE_CONFIG[booking.offerType];
     const TypeIcon = currentType.icon;
-
-    // Calcul d'affichage d'un itinéraire unifié si disponible
-    const legs = booking.itineraryLegs?.length > 0 ? booking.itineraryLegs : (
-        booking.airline && booking.origin && booking.destination ? [{
-            airline: booking.airline,
-            flightNumber: booking.flightNumber ?? "",
-            origin: booking.origin,
-            destination: booking.destination,
-            departureTime: booking.departureTime ?? "",
-            arrivalTime: booking.arrivalTime ?? "",
-            cabinClass: booking.fareClass ?? "ECONOMY"
-        }] : []
-    );
-
+    const canCancel = booking.status !== "CANCELLED" && booking.status !== "FAILED";
     const primaryTraveler = booking.travelers?.[0];
 
     return (
         <div className="mx-auto max-w-6xl px-4 py-8 space-y-6">
-
             {/* BARRE D'ACTIONS RETOUR / IMPRESSION */}
             <div className="flex items-center justify-between">
                 <Button
@@ -229,16 +95,10 @@ export default function PartnerBookingDetailPage() {
                     Retour au tableau de bord
                 </Button>
 
-                <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" className="rounded-xl gap-2">
-                        <Printer className="size-4" />
-                        Imprimer
-                    </Button>
-                    <Button variant="outline" size="sm" className="rounded-xl gap-2">
-                        <Download className="size-4" />
-                        Voucher B2B
-                    </Button>
-                </div>
+                <Button variant="outline" size="sm" className="rounded-xl gap-2" onClick={() => window.print()}>
+                    <Printer className="size-4" />
+                    Imprimer
+                </Button>
             </div>
 
             {/* HEADER DE LA RÉSERVATION */}
@@ -284,102 +144,86 @@ export default function PartnerBookingDetailPage() {
                 <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm flex items-start gap-3">
                     <AlertCircle className="size-5 shrink-0 mt-0.5" />
                     <div>
-                        <p className="font-bold">Motif de l'échec :</p>
+                        <p className="font-bold">Motif de l&apos;échec :</p>
                         <p className="text-xs opacity-90">{booking.failureReason}</p>
                     </div>
                 </div>
             )}
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
                 {/* COLONNE PRINCIPALE (2/3) */}
                 <div className="lg:col-span-2 space-y-6">
-
-                    {/* SECTEUR VOL (AIRLINE) */}
-                    {booking.offerType === "AIRLINE" && (
-                        <>
-                            {legs.length > 0 && (
-                                <Card className="rounded-2xl border-border/60 shadow-xs">
-                                    <CardHeader className="p-5 border-b border-border/40 bg-slate-50/50 dark:bg-zinc-900/10">
-                                        <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                                            <Plane className="size-4 text-primary" />
-                                            Itinéraire Aérien
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="p-5 space-y-4">
-                                        {legs.map((leg, idx) => (
-                                            <div key={idx} className="rounded-xl border border-border/50 p-4 bg-background space-y-3">
-                                                <div className="flex items-center justify-between text-xs">
-                          <span className="font-mono font-bold bg-muted px-2 py-0.5 rounded text-foreground">
-                            {leg.airline} {leg.flightNumber} ({airlineLabel(leg.airline)})
-                          </span>
-                                                    {leg.cabinClass && (
-                                                        <span className="font-medium text-muted-foreground">
-                              Classe: <strong className="text-foreground">{leg.cabinClass}</strong>
-                            </span>
-                                                    )}
-                                                </div>
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div className="space-y-1">
-                                                        <span className="text-[10px] uppercase font-bold text-muted-foreground">Départ</span>
-                                                        <p className="text-sm font-bold text-foreground">{leg.origin}</p>
-                                                        <p className="text-xs text-muted-foreground">{leg.departureTime ? formatDateTime(leg.departureTime, locale) : "N/A"}</p>
-                                                    </div>
-                                                    <div className="space-y-1">
-                                                        <span className="text-[10px] uppercase font-bold text-muted-foreground">Arrivée</span>
-                                                        <p className="text-sm font-bold text-foreground">{leg.destination}</p>
-                                                        <p className="text-xs text-muted-foreground">{leg.arrivalTime ? formatDateTime(leg.arrivalTime, locale) : "N/A"}</p>
-                                                    </div>
-                                                </div>
+                    {/* SECTEUR VOL */}
+                    {booking.offerType === "FLIGHT" && booking.itineraryLegs.length > 0 && (
+                        <Card className="rounded-2xl border-border/60 shadow-xs">
+                            <CardHeader className="p-5 border-b border-border/40 bg-slate-50/50 dark:bg-zinc-900/10">
+                                <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                                    <Plane className="size-4 text-primary" />
+                                    Itinéraire Aérien
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-5 space-y-4">
+                                {booking.itineraryLegs.map((leg) => (
+                                    <div key={leg.legIndex} className="rounded-xl border border-border/50 p-4 bg-background space-y-3">
+                                        <div className="flex items-center justify-between text-xs">
+                                            <span className="font-mono font-bold bg-muted px-2 py-0.5 rounded text-foreground">
+                                                {leg.airline} {leg.flightNumber} ({airlineLabel(leg.airline)})
+                                            </span>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-1">
+                                                <span className="text-[10px] uppercase font-bold text-muted-foreground">Départ</span>
+                                                <p className="text-sm font-bold text-foreground">{leg.origin}</p>
+                                                <p className="text-xs text-muted-foreground">{formatDateTime(leg.departureTime, locale)}</p>
                                             </div>
-                                        ))}
-                                    </CardContent>
-                                </Card>
-                            )}
-
-                            {/* LISTE DES PASSAGERS */}
-                            {booking.travelers?.length > 0 && (
-                                <Card className="rounded-2xl border-border/60 shadow-xs">
-                                    <CardHeader className="p-5 border-b border-border/40 bg-slate-50/50 dark:bg-zinc-900/10">
-                                        <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                                            <Users className="size-4 text-primary" />
-                                            Passagers & Billets
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="p-5 divide-y divide-border/40">
-                                        {booking.travelers.map((t, idx) => {
-                                            const eTicket = t.ticketNumber || booking.eTicketNumbers?.[idx];
-                                            return (
-                                                <div key={t.id ?? idx} className="py-3 first:pt-0 last:pb-0 flex items-center justify-between">
-                                                    <div>
-                                                        <p className="text-sm font-bold text-foreground">{t.firstName} {t.lastName}</p>
-                                                        {t.passportNumber && (
-                                                            <p className="text-xs text-muted-foreground font-mono">Passeport: {t.passportNumber}</p>
-                                                        )}
-                                                    </div>
-                                                    <span className={`font-mono text-xs px-2.5 py-1 rounded-md font-bold ${
-                                                        eTicket
-                                                            ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
-                                                            : "text-muted-foreground bg-muted"
-                                                    }`}>
-                            {eTicket ? `e-Ticket: ${eTicket}` : "Billet non émis"}
-                          </span>
-                                                </div>
-                                            );
-                                        })}
-                                    </CardContent>
-                                </Card>
-                            )}
-                        </>
+                                            <div className="space-y-1">
+                                                <span className="text-[10px] uppercase font-bold text-muted-foreground">Arrivée</span>
+                                                <p className="text-sm font-bold text-foreground">{leg.destination}</p>
+                                                <p className="text-xs text-muted-foreground">{formatDateTime(leg.arrivalTime, locale)}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </CardContent>
+                        </Card>
                     )}
 
-                    {/* SECTEUR HÔTEL (HOTEL) */}
+                    {/* LISTE DES VOYAGEURS */}
+                    {booking.travelers.length > 0 && (
+                        <Card className="rounded-2xl border-border/60 shadow-xs">
+                            <CardHeader className="p-5 border-b border-border/40 bg-slate-50/50 dark:bg-zinc-900/10">
+                                <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                                    <Users className="size-4 text-primary" />
+                                    Voyageurs & Billets
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-5 divide-y divide-border/40">
+                                {booking.travelers.map((t, idx) => {
+                                    const eTicket = booking.eTicketNumbers?.[idx];
+                                    return (
+                                        <div key={idx} className="py-3 first:pt-0 last:pb-0 flex items-center justify-between">
+                                            <p className="text-sm font-bold text-foreground">{t.fullName}</p>
+                                            <span className={`font-mono text-xs px-2.5 py-1 rounded-md font-bold ${
+                                                eTicket
+                                                    ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
+                                                    : "text-muted-foreground bg-muted"
+                                            }`}>
+                                                {eTicket ? `e-Ticket: ${eTicket}` : "Billet non émis"}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {/* SECTEUR HÔTEL */}
                     {booking.offerType === "HOTEL" && (
                         <Card className="rounded-2xl border-border/60 shadow-xs">
                             <CardHeader className="p-5 border-b border-border/40 bg-slate-50/50 dark:bg-zinc-900/10">
                                 <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                                     <Building className="size-4 text-purple-600" />
-                                    Détails de l'Hôtel
+                                    Détails de l&apos;Hôtel
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="p-5 space-y-4">
@@ -388,27 +232,108 @@ export default function PartnerBookingDetailPage() {
                                     {booking.cityCode && (
                                         <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                                             <MapPin className="size-3.5 shrink-0 text-muted-foreground" />
-                                            Code Ville / Destination: <strong className="text-foreground font-mono">{booking.cityCode}</strong>
+                                            Ville: <strong className="text-foreground font-mono">{booking.cityCode}</strong>
                                         </p>
                                     )}
                                 </div>
-
                                 <Separator />
-
                                 <div className="grid grid-cols-2 gap-4 text-sm">
                                     <div>
                                         <span className="text-xs text-muted-foreground block">Arrivée (Check-in)</span>
                                         <span className="font-bold text-foreground">
-                      {booking.checkIn ? formatDateTime(booking.checkIn, locale) : "Non spécifié"}
-                    </span>
+                                            {booking.checkIn ? formatDate(booking.checkIn, locale) : "Non spécifié"}
+                                        </span>
                                     </div>
                                     <div>
                                         <span className="text-xs text-muted-foreground block">Départ (Check-out)</span>
                                         <span className="font-bold text-foreground">
-                      {booking.checkOut ? formatDateTime(booking.checkOut, locale) : "Non spécifié"}
-                    </span>
+                                            {booking.checkOut ? formatDate(booking.checkOut, locale) : "Non spécifié"}
+                                        </span>
                                     </div>
                                 </div>
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {/* SECTEUR VÉHICULE */}
+                    {booking.offerType === "CAR_RENTAL" && (
+                        <Card className="rounded-2xl border-border/60 shadow-xs">
+                            <CardHeader className="p-5 border-b border-border/40 bg-slate-50/50 dark:bg-zinc-900/10">
+                                <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                                    <Car className="size-4 text-amber-600" />
+                                    Détails du Véhicule
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-5 space-y-4">
+                                <h3 className="text-lg font-bold text-foreground">
+                                    {booking.vehicleBrand} {booking.vehicleModel}
+                                    {booking.vehicleCategory ? ` · ${booking.vehicleCategory}` : ""}
+                                </h3>
+                                <Separator />
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <span className="text-xs text-muted-foreground block">Prise en charge</span>
+                                        <span className="font-bold text-foreground">
+                                            {booking.pickupCity ?? "—"}
+                                            {booking.rentalStart ? ` · ${formatDate(booking.rentalStart, locale)}` : ""}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <span className="text-xs text-muted-foreground block">Restitution</span>
+                                        <span className="font-bold text-foreground">
+                                            {booking.dropoffCity ?? "—"}
+                                            {booking.rentalEnd ? ` · ${formatDate(booking.rentalEnd, locale)}` : ""}
+                                        </span>
+                                    </div>
+                                </div>
+                                {booking.withDriver && (
+                                    <Badge variant="outline" className="rounded-md text-[10px] font-bold border-emerald-500/30 text-emerald-600">
+                                        Avec chauffeur
+                                    </Badge>
+                                )}
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {/* SECTEUR LOGEMENT MEUBLÉ */}
+                    {booking.offerType === "FURNISHED_RENTAL" && (
+                        <Card className="rounded-2xl border-border/60 shadow-xs">
+                            <CardHeader className="p-5 border-b border-border/40 bg-slate-50/50 dark:bg-zinc-900/10">
+                                <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                                    <Home className="size-4 text-emerald-600" />
+                                    Détails du Logement
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-5 space-y-4">
+                                <div>
+                                    <h3 className="text-lg font-bold text-foreground">{booking.propertyTitle ?? "Logement"}</h3>
+                                    <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                                        <MapPin className="size-3.5 shrink-0 text-muted-foreground" />
+                                        {booking.cityCode}{booking.country ? `, ${booking.country}` : ""}
+                                        {booking.propertyType ? ` · ${booking.propertyType}` : ""}
+                                    </p>
+                                </div>
+                                <Separator />
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <span className="text-xs text-muted-foreground block">Arrivée</span>
+                                        <span className="font-bold text-foreground">
+                                            {booking.checkIn ? formatDate(booking.checkIn, locale) : "Non spécifié"}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <span className="text-xs text-muted-foreground block">Départ</span>
+                                        <span className="font-bold text-foreground">
+                                            {booking.checkOut ? formatDate(booking.checkOut, locale) : "Non spécifié"}
+                                        </span>
+                                    </div>
+                                </div>
+                                {booking.bedrooms != null && booking.maxGuests != null && (
+                                    <p className="text-xs text-muted-foreground">
+                                        {booking.bedrooms} chambre(s) · {booking.maxGuests} personne(s) max
+                                        {booking.entirePlace ? " · Logement entier" : ""}
+                                    </p>
+                                )}
                             </CardContent>
                         </Card>
                     )}
@@ -420,36 +345,26 @@ export default function PartnerBookingDetailPage() {
                                 Coordonnées du Contact
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="p-5 grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+                        <CardContent className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                             <div>
                                 <span className="text-xs text-muted-foreground block">Client principal</span>
                                 <span className="font-semibold text-foreground">
-                  {primaryTraveler ? `${primaryTraveler.firstName} ${primaryTraveler.lastName}` : "Non spécifié"}
-                </span>
+                                    {primaryTraveler ? primaryTraveler.fullName : "Non spécifié"}
+                                </span>
                             </div>
                             <div>
                                 <span className="text-xs text-muted-foreground block">Email de contact</span>
                                 <span className="font-semibold text-foreground flex items-center gap-1">
-                  <Mail className="size-3 text-muted-foreground" />
+                                    <Mail className="size-3 text-muted-foreground" />
                                     {booking.contactEmail}
-                </span>
+                                </span>
                             </div>
-                            {primaryTraveler?.phone && (
-                                <div>
-                                    <span className="text-xs text-muted-foreground block">Téléphone</span>
-                                    <span className="font-semibold text-foreground flex items-center gap-1">
-                    <Phone className="size-3 text-muted-foreground" />
-                                        {primaryTraveler.phone}
-                  </span>
-                                </div>
-                            )}
                         </CardContent>
                     </Card>
                 </div>
 
                 {/* COLONNE DROITE (1/3) : COMPTABILITÉ & ACTIONS */}
                 <div className="space-y-6">
-
                     {/* ACTIONS PAR PARTENAIRE */}
                     <Card className="rounded-2xl border-primary/20 bg-primary/[0.01] shadow-xs">
                         <CardHeader className="p-5 border-b border-border/40">
@@ -459,32 +374,28 @@ export default function PartnerBookingDetailPage() {
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-5 space-y-3">
-                            <Button
-                                size="lg"
-                                className="w-full rounded-xl font-bold gap-2 bg-primary hover:bg-primary/95 text-primary-foreground"
-                                onClick={handleConfirmAction}
-                                disabled={isProcessing || booking.status === "CANCELLED"}
-                            >
-                                {isProcessing ? (
-                                    <Loader2 className="size-4 animate-spin" />
-                                ) : (
-                                    <Ticket className="size-4" />
-                                )}
-                                {booking.offerType === "AIRLINE" ? "Émettre les e-Tickets" : "Confirmer la Réservation"}
-                            </Button>
-
+                            <p className="text-xs text-muted-foreground">
+                                La confirmation d&apos;une réservation est automatique (paiement et/ou
+                                fournisseur) ; seule l&apos;annulation peut être forcée manuellement.
+                            </p>
                             <Button
                                 variant="outline"
                                 size="lg"
                                 className="w-full rounded-xl font-bold gap-2 border-destructive/30 text-destructive hover:bg-destructive/10"
+                                onClick={handleCancel}
+                                disabled={!canCancel || cancelMutation.isPending}
                             >
-                                <XCircle className="size-4" />
+                                {cancelMutation.isPending ? (
+                                    <Loader2 className="size-4 animate-spin" />
+                                ) : (
+                                    <XCircle className="size-4" />
+                                )}
                                 Annuler le dossier
                             </Button>
                         </CardContent>
                     </Card>
 
-                    {/* DÉTAIL FINANCIER ISSU DE BookingResponse */}
+                    {/* DÉTAIL FINANCIER */}
                     <Card className="rounded-2xl border-border/60 shadow-xs">
                         <CardHeader className="p-5 border-b border-border/40 bg-slate-50/50 dark:bg-zinc-900/10">
                             <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
@@ -494,36 +405,34 @@ export default function PartnerBookingDetailPage() {
                         </CardHeader>
                         <CardContent className="p-5 space-y-3.5 text-sm">
                             <div className="flex justify-between items-center text-muted-foreground">
-                                <span>Prix TotalOffre</span>
+                                <span>Prix Total</span>
                                 <span className="font-mono font-bold text-foreground">
-                  {formatMoney(booking.price, locale)}
-                </span>
+                                    {formatMoney(booking.price, locale)}
+                                </span>
                             </div>
 
                             {booking.reservationFee && (
                                 <div className="flex justify-between items-center text-muted-foreground">
                                     <span>Frais de Réservation</span>
                                     <span className="font-mono">
-                    +{formatMoney(booking.reservationFee, locale)}
-                  </span>
+                                        +{formatMoney(booking.reservationFee, locale)}
+                                    </span>
                                 </div>
                             )}
 
                             <Separator className="my-2" />
 
                             <div className="flex justify-between items-center text-base font-black text-foreground">
-                                <span>Reste à Payer (Due)</span>
+                                <span>Reste à Payer</span>
                                 <span className="font-mono text-primary">
-                  {formatMoney(booking.amountDue ?? 0, locale)}
-                </span>
+                                    {formatMoney(booking.amountDue, locale)}
+                                </span>
                             </div>
 
-                            {booking.paymentPlan?.type && (
-                                <div className="p-3 rounded-xl bg-muted/60 text-xs text-muted-foreground flex justify-between items-center">
-                                    <span>Plan de Paiement :</span>
-                                    <strong className="text-foreground uppercase font-mono">{booking.paymentPlan.type}</strong>
-                                </div>
-                            )}
+                            <div className="p-3 rounded-xl bg-muted/60 text-xs text-muted-foreground flex justify-between items-center">
+                                <span>Plan de Paiement :</span>
+                                <strong className="text-foreground uppercase font-mono">{booking.paymentPlan}</strong>
+                            </div>
                         </CardContent>
                     </Card>
                 </div>

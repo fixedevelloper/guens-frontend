@@ -4,13 +4,13 @@
 import { useLocale, useTranslations } from "next-intl";
 import { BedDouble, ChevronRight, Check, Users, ShieldAlert } from "lucide-react";
 import { Minus, Plus, ShoppingCart } from "lucide-react";
-import { useRouter } from "@/i18n/navigation";
+import { Link } from "@/i18n/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatMoney } from "@/lib/format";
 import { useHotelStore } from "@/store/useHotelStore";
-import { HarmonizedHotelOffer, RoomOffer } from "@/lib/api/types";
+import { RoomOffer } from "@/lib/api/types";
 import {
     checkoutUrlForHotel,
     resellerCheckoutUrlForHotel,
@@ -57,15 +57,6 @@ export function HotelRoomList({ offerId, roomOffers = [], nights = 1, isReseller
         </div>
     );
 }
-
-// components/hotel-detail/hotel-room-list.tsx — uniquement RoomCard modifié
-
-
-
-
-// ... imports existants inchangés (BedDouble, ChevronRight, Check, Users, ShieldAlert, useRouter,
-// Badge, Button, Card, CardContent, formatMoney, HarmonizedHotelOffer, RoomOffer, checkoutUrlForHotel,
-// resellerCheckoutUrlForHotel — conservés tels quels)
 
 function RoomCard({
                       offerId,
@@ -159,7 +150,7 @@ function RoomCard({
 
                     {room.facilities && room.facilities.length > 0 && (
                         <div className="flex flex-wrap gap-x-4 gap-y-1 pt-1">
-                            {room.facilities.slice(0, 4).map((facility: any, idx: number) => (
+                            {room.facilities.slice(0, 4).map((facility: string, idx: number) => (
                                 <span key={idx} className="inline-flex items-center gap-1 text-xs text-muted-foreground/80 font-medium">
                   <Check className="size-3 text-emerald-500 shrink-0" />
                                     {facility}
@@ -189,26 +180,51 @@ function RoomCard({
                             {t("addToCart") ?? "Ajouter"}
                         </Button>
                     ) : (
-                        <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-muted/30 p-1">
-                            <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={handleDecrement}
-                                className="size-8 rounded-lg"
-                                aria-label={t("decrease") ?? "Diminuer"}
-                            >
-                                <Minus className="size-3.5" />
-                            </Button>
-                            <span className="w-6 text-center text-sm font-black tabular-nums">{quantity}</span>
-                            <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={handleIncrement}
-                                className="size-8 rounded-lg"
-                                aria-label={t("increase") ?? "Augmenter"}
-                            >
-                                <Plus className="size-3.5" />
-                            </Button>
+                        <div className="flex flex-col items-end gap-2">
+                            <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-muted/30 p-1">
+                                <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    onClick={handleDecrement}
+                                    className="size-8 rounded-lg"
+                                    aria-label={t("decrease") ?? "Diminuer"}
+                                >
+                                    <Minus className="size-3.5" />
+                                </Button>
+                                <span className="w-6 text-center text-sm font-black tabular-nums">{quantity}</span>
+                                <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    onClick={handleIncrement}
+                                    className="size-8 rounded-lg"
+                                    aria-label={t("increase") ?? "Augmenter"}
+                                >
+                                    <Plus className="size-3.5" />
+                                </Button>
+                            </div>
+
+                            {selectedOffer ? (
+                                <Button
+                                    asChild
+                                    size="sm"
+                                    className="rounded-xl font-bold text-xs gap-1.5 py-4.5 px-5 group active:scale-97 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                >
+                                    <Link
+                                        href={
+                                            isReseller
+                                                ? resellerCheckoutUrlForHotel(selectedOffer, offerId)
+                                                : checkoutUrlForHotel(selectedOffer, offerId, quantity)
+                                        }
+                                    >
+                                        {t("bookNow") ?? "Réserver"}
+                                        <ChevronRight className="size-3.5" />
+                                    </Link>
+                                </Button>
+                            ) : (
+                                <p className="text-[10px] text-muted-foreground max-w-[160px] text-right">
+                                    Relancez la recherche pour finaliser votre réservation.
+                                </p>
+                            )}
                         </div>
                     )}
                 </div>

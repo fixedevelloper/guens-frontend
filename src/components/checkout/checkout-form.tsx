@@ -19,26 +19,34 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { CountrySelect } from "@/components/checkout/country-select";
 import type { CheckoutRequest, PassengerType } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
-const travelerSchema = z.object({
+// Vols uniquement : Travelopro (et les GDS en général) exigent date de naissance et nationalité
+// pour chaque passager - confirmé par des tests réels ("PassengerNationality details is required
+// for this airline"). Optionnel pour les autres types d'offre (hôtel/véhicule/logement), qui n'en
+// ont pas besoin.
+const travelerSchema = (isFlight: boolean) => z.object({
   fullName: z.string().trim().min(1, ""),
-  dateOfBirth: z.string().optional(),
+  dateOfBirth: isFlight ? z.string().trim().min(1, "") : z.string().optional(),
   passportNumber: z.string().optional(),
   type: z.enum(["ADULT", "CHILD", "INFANT"]),
   seatNumber: z.string().optional(),
+  nationality: isFlight ? z.string().trim().min(1, "") : z.string().optional(),
+  passportIssueCountry: z.string().optional(),
+  passportExpiryDate: z.string().optional(),
 });
 
-const schema = z.object({
+const buildSchema = (isFlight: boolean) => z.object({
   contactEmail: z.string().trim().email(""),
   contactFullName: z.string().trim().min(1, ""),
   contactPhone: z.string().optional(),
-  travelers: z.array(travelerSchema).min(1),
+  travelers: z.array(travelerSchema(isFlight)).min(1),
   paymentPlan: z.enum(["PAY_NOW", "PAY_LATER"]),
 });
 
-export type CheckoutFormValues = z.infer<typeof schema>;
+export type CheckoutFormValues = z.infer<ReturnType<typeof buildSchema>>;
 export type PaymentPlanValue = "PAY_NOW" | "PAY_LATER";
 
 interface CheckoutFormProps {
@@ -47,13 +55,15 @@ interface CheckoutFormProps {
   isSubmitting: boolean;
   /** Remonte le choix PAY_NOW/PAY_LATER au parent, pour que OfferSummaryCard puisse afficher le bon montant. */
   onPaymentPlanChange?: (plan: PaymentPlanValue) => void;
+  /** Rend date de naissance et nationalité obligatoires par voyageur - requis par les fournisseurs de vols. */
+  isFlight?: boolean;
 }
 
-export function CheckoutForm({ selectedSeats, onSubmit, isSubmitting, onPaymentPlanChange }: CheckoutFormProps) {
+export function CheckoutForm({ selectedSeats, onSubmit, isSubmitting, onPaymentPlanChange, isFlight = false }: CheckoutFormProps) {
   const t = useTranslations("Checkout");
 
   const form = useForm<CheckoutFormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(buildSchema(isFlight)),
     defaultValues: {
       contactEmail: "",
       contactFullName: "",
@@ -66,8 +76,14 @@ export function CheckoutForm({ selectedSeats, onSubmit, isSubmitting, onPaymentP
                 passportNumber: "",
                 type: "ADULT" as const,
                 seatNumber,
+                nationality: "",
+                passportIssueCountry: "",
+                passportExpiryDate: "",
               }))
-              : [{ fullName: "", dateOfBirth: "", passportNumber: "", type: "ADULT" }],
+              : [{
+                fullName: "", dateOfBirth: "", passportNumber: "", type: "ADULT",
+                nationality: "", passportIssueCountry: "", passportExpiryDate: "",
+              }],
       paymentPlan: "PAY_NOW",
     },
   });
@@ -91,6 +107,9 @@ export function CheckoutForm({ selectedSeats, onSubmit, isSubmitting, onPaymentP
         passportNumber: traveler.passportNumber || undefined,
         type: traveler.type,
         seatNumber: traveler.seatNumber || undefined,
+        nationality: traveler.nationality || undefined,
+        passportIssueCountry: traveler.passportIssueCountry || undefined,
+        passportExpiryDate: traveler.passportExpiryDate || undefined,
       })),
       paymentPlan: values.paymentPlan,
     });
@@ -282,12 +301,64 @@ export function CheckoutForm({ selectedSeats, onSubmit, isSubmitting, onPaymentP
                           control={form.control}
                           name={`travelers.${index}.passportNumber`}
                           render={({ field }) => (
-                              <FormItem className="sm:col-span-2">
+                              <FormItem className="col-span-1">
                                 <FormLabel className="text-xs font-bold text-muted-foreground/90">{t("passportNumber")}</FormLabel>
                                 <FormControl>
                                   <Input
                                       placeholder="N° de document"
                                       className="h-11 sm:h-10 rounded-xl border-border/80 bg-background focus-visible:ring-primary/20 text-sm uppercase"
+                                      {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                          )}
+                      />
+
+                      <FormField
+                          control={form.control}
+                          name={`travelers.${index}.nationality`}
+                          render={({ field }) => (
+                              <FormItem className="col-span-1">
+                                <FormLabel className="text-xs font-bold text-muted-foreground/90">{t("nationality")}</FormLabel>
+                                <FormControl>
+                                  <CountrySelect
+                                      value={field.value || undefined}
+                                      onChange={(iso2) => field.onChange(iso2)}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                          )}
+                      />
+
+                      <FormField
+                          control={form.control}
+                          name={`travelers.${index}.passportIssueCountry`}
+                          render={({ field }) => (
+                              <FormItem className="col-span-1">
+                                <FormLabel className="text-xs font-bold text-muted-foreground/90">{t("passportIssueCountry")}</FormLabel>
+                                <FormControl>
+                                  <CountrySelect
+                                      value={field.value || undefined}
+                                      onChange={(iso2) => field.onChange(iso2)}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                          )}
+                      />
+
+                      <FormField
+                          control={form.control}
+                          name={`travelers.${index}.passportExpiryDate`}
+                          render={({ field }) => (
+                              <FormItem className="col-span-1">
+                                <FormLabel className="text-xs font-bold text-muted-foreground/90">{t("passportExpiryDate")}</FormLabel>
+                                <FormControl>
+                                  <Input
+                                      type="date"
+                                      className="h-11 sm:h-10 rounded-xl border-border/80 bg-background focus-visible:ring-primary/20 text-sm"
                                       {...field}
                                   />
                                 </FormControl>
@@ -304,7 +375,10 @@ export function CheckoutForm({ selectedSeats, onSubmit, isSubmitting, onPaymentP
                   variant="outline"
                   size="sm"
                   className="w-full sm:w-auto justify-center h-11 sm:h-9 mt-1 gap-1.5 rounded-xl sm:rounded-full border-dashed border-border/80 hover:border-primary/40 hover:bg-primary/5 text-xs px-4"
-                  onClick={() => append({ fullName: "", dateOfBirth: "", passportNumber: "", type: "ADULT" })}
+                  onClick={() => append({
+                    fullName: "", dateOfBirth: "", passportNumber: "", type: "ADULT",
+                    nationality: "", passportIssueCountry: "", passportExpiryDate: "",
+                  })}
               >
                 <Plus className="size-4 sm:size-3.5" />
                 Ajouter un voyageur

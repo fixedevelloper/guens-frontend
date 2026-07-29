@@ -13,6 +13,7 @@ import {
     ImageIcon,
     Home,
     Building2,
+    Eye,
 } from "lucide-react";
 
 import {
@@ -163,6 +164,19 @@ export function PropertyListings({ partnerId }: { partnerId: string }) {
 
                                             <TableCell className="text-right">
                                                 <div className="flex items-center justify-end gap-1.5">
+                                                    {/* Lien Détails */}
+                                                    <Button
+                                                        size="icon"
+                                                        variant="ghost"
+                                                        asChild
+                                                        className="size-8 rounded-xl"
+                                                        title="Détails"
+                                                    >
+                                                        <Link href={`/partner/listings/properties/${property.id}`}>
+                                                            <Eye className="size-4 text-muted-foreground" />
+                                                        </Link>
+                                                    </Button>
+
                                                     {/* Lien Médiathèque */}
                                                     <Button
                                                         size="icon"
