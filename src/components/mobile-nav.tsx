@@ -77,7 +77,7 @@ export function MobileNav() {
                         isHomeActive ? "bg-primary/10 text-primary" : ""
                     }`}
                 >
-                    <HomeIcon className="size-4" />car-rental/car-rental-form
+                    <HomeIcon className="size-4" />
                 </div>
                 <span className="truncate max-w-[54px] text-center">{t("home")}</span>
             </Link>

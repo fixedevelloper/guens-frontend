@@ -129,11 +129,22 @@ function HotelOfferCard({
         <div className="flex flex-col sm:flex-row h-full">
 
           <div
-              className="relative flex h-32 items-center justify-center text-white/80 sm:h-auto sm:w-44 sm:shrink-0 transition-opacity duration-300"
+              className="relative flex h-32 items-center justify-center overflow-hidden text-white/80 sm:h-auto sm:w-44 sm:shrink-0 transition-opacity duration-300"
               style={{ background: `linear-gradient(135deg, hsl(${hue} 55% 44%), hsl(${(hue + 35) % 360} 55% 30%))` }}
           >
-            <div className="absolute inset-0 bg-radial-gradient from-white/10 to-transparent pointer-events-none" />
-            <Building2 className="size-9 stroke-[1.5] drop-shadow-xs animate-pulse duration-4000" />
+            {offer.coverImageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                    src={offer.coverImageUrl}
+                    alt={offer.hotelName}
+                    className="absolute inset-0 size-full object-cover"
+                />
+            ) : (
+                <>
+                  <div className="absolute inset-0 bg-radial-gradient from-white/10 to-transparent pointer-events-none" />
+                  <Building2 className="size-9 stroke-[1.5] drop-shadow-xs animate-pulse duration-4000" />
+                </>
+            )}
           </div>
 
           <div className="flex flex-1 flex-col justify-between gap-4 p-5 sm:flex-row sm:items-stretch">

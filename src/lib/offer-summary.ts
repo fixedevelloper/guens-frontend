@@ -124,10 +124,13 @@ export function parseOfferSummary(sp: URLSearchParams): OfferSummary | null {
   if (offerType === "HOTEL") {
     const hotelName = sp.get("hotelName");
     const cityCode = sp.get("cityCode");
+    // Certains providers (Travelport, Sabre) ne connaissent le type de chambre qu'à l'étape
+    // disponibilité, pas à la recherche : roomType est alors une chaîne vide et non absente,
+    // donc on vérifie sa présence (=== null) plutôt que sa vérité pour ne pas invalider l'offre.
     const roomType = sp.get("roomType");
     const checkIn = sp.get("checkIn");
     const checkOut = sp.get("checkOut");
-    if (!hotelName || !cityCode || !roomType || !checkIn || !checkOut) return null;
+    if (!hotelName || !cityCode || roomType === null || !checkIn || !checkOut) return null;
     const quantityRaw = Number(sp.get("quantity"));
     return {
       offerType: "HOTEL",

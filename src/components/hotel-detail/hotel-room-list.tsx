@@ -1,6 +1,7 @@
 // components/hotel-detail/hotel-room-list.tsx
 "use client";
 
+import { useMemo } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { BedDouble, ChevronRight, Check, Users, ShieldAlert } from "lucide-react";
 import { Minus, Plus, ShoppingCart } from "lucide-react";
@@ -15,6 +16,14 @@ import {
     checkoutUrlForHotel,
     resellerCheckoutUrlForHotel,
 } from "@/lib/checkout-url";
+
+function hashString(value: string): number {
+    let hash = 0;
+    for (let i = 0; i < value.length; i++) {
+        hash = (hash * 31 + value.charCodeAt(i)) >>> 0;
+    }
+    return hash;
+}
 
 interface HotelRoomListProps {
     offerId: string;
@@ -86,6 +95,21 @@ function RoomCard({
     const cartItem = cartItems.find((item) => item.roomCode === roomCode);
     const quantity = cartItem?.quantity ?? 0;
 
+    // Travelport (entre autres) ne renvoie pas de photos par chambre : on retombe sur une photo
+    // de l'hôtel plutôt que de laisser la vignette vide. L'index est dérivé du code de chambre
+    // (et non de Math.random) pour rester stable d'un rendu à l'autre tout en variant par chambre.
+    const hotelImages = hotelDetail?.hotelImages;
+    const roomImageUrl = useMemo(() => {
+        if (room.roomImages && room.roomImages.length > 0) {
+            return room.roomImages[0];
+        }
+        if (hotelImages && hotelImages.length > 0) {
+            const index = hashString(roomCode) % hotelImages.length;
+            return hotelImages[index].url;
+        }
+        return null;
+    }, [room.roomImages, hotelImages, roomCode]);
+
     function handleAdd() {
         addToCart({
             roomCode,
@@ -126,6 +150,15 @@ function RoomCard({
             </div>
 
             <CardContent className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-5">
+                {roomImageUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                        src={roomImageUrl}
+                        alt={room.roomType || "Chambre"}
+                        className="h-32 w-full shrink-0 rounded-xl object-cover md:h-24 md:w-32"
+                    />
+                )}
+
                 <div className="space-y-3 flex-1">
                     {room.description && (
                         <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
@@ -139,14 +172,17 @@ function RoomCard({
                                 {room.boardType}
                             </Badge>
                         )}
-
-                        {room.cancellationPolicy && (
-                            <Badge variant="outline" className="rounded-md text-[11px] border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-50/30 dark:bg-emerald-950/20 gap-1">
-                                <ShieldAlert className="size-3" />
-                                {room.cancellationPolicy}
-                            </Badge>
-                        )}
                     </div>
+
+                    {room.cancellationPolicy && (
+                        <Badge
+                            variant="outline"
+                            className="h-auto w-fit items-start gap-1 whitespace-normal rounded-md py-1 text-left text-[11px] border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-50/30 dark:bg-emerald-950/20"
+                        >
+                            <ShieldAlert className="size-3 mt-0.5 shrink-0" />
+                            {room.cancellationPolicy}
+                        </Badge>
+                    )}
 
                     {room.facilities && room.facilities.length > 0 && (
                         <div className="flex flex-wrap gap-x-4 gap-y-1 pt-1">

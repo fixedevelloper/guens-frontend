@@ -154,6 +154,7 @@ export interface HarmonizedHotelOffer {
   checkIn: string;
   checkOut: string;
   rating: number;
+  coverImageUrl: string | null;
   bestOfferId: string;
   quotes: ProviderQuote[];
 }
