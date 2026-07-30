@@ -199,7 +199,8 @@
    
     "totalStay": "Total stay",
     "night": "night",
-    "nights": "nights"
+    "nights": "nights",
+    "addToCart": "Add"
   },
   "Checkout": {
     "title": "Complete your booking",

@@ -198,7 +198,8 @@
     },
     "totalStay": "Total séjour",
     "night": "nuit",
-    "nights": "nuits"
+    "nights": "nuits",
+    "addToCart": "Ajouter"
   },
   "Checkout": {
     "title": "Finaliser la réservation",
