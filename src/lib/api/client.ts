@@ -34,9 +34,26 @@ apiClient.interceptors.response.use(
   }
 );
 
+function isApiError(value: unknown): value is ApiError {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "status" in value &&
+    "message" in value &&
+    "error" in value
+  );
+}
+
 /** Normalizes any axios failure into the backend's ApiError shape, falling back to a
- *  generic message for network errors that never reached the GlobalExceptionHandler. */
+ *  generic message for network errors that never reached the GlobalExceptionHandler.
+ *  Idempotent: the axios interceptor above already rejects with a normalized ApiError,
+ *  so call sites that call this again on that value (a plain object, neither an AxiosError
+ *  nor an Error instance) must get it back unchanged instead of falling through to the
+ *  "Unknown error" fallback. */
 export function normalizeApiError(error: unknown): ApiError {
+  if (isApiError(error)) {
+    return error;
+  }
   if (axios.isAxiosError(error)) {
     if (error.response?.data && typeof error.response.data === "object") {
       return error.response.data as ApiError;
@@ -45,7 +62,9 @@ export function normalizeApiError(error: unknown): ApiError {
       timestamp: new Date().toISOString(),
       status: error.response?.status ?? 0,
       error: error.response ? "Request Failed" : "Network Error",
-      message: error.message,
+      message: error.response
+        ? "Le serveur a répondu de façon inattendue. Veuillez réessayer."
+        : "Impossible de contacter le serveur. Vérifiez votre connexion et réessayez.",
       details: [],
     };
   }

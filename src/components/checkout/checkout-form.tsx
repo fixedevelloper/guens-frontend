@@ -28,21 +28,27 @@ import { cn } from "@/lib/utils";
 // for this airline"). Optionnel pour les autres types d'offre (hôtel/véhicule/logement), qui n'en
 // ont pas besoin.
 const travelerSchema = (isFlight: boolean) => z.object({
-  fullName: z.string().trim().min(1, ""),
-  dateOfBirth: isFlight ? z.string().trim().min(1, "") : z.string().optional(),
+  fullName: z.string().trim().min(1, "Le nom du voyageur est requis"),
+  dateOfBirth: isFlight
+    ? z.string().trim().min(1, "La date de naissance est requise")
+    : z.string().optional(),
   passportNumber: z.string().optional(),
   type: z.enum(["ADULT", "CHILD", "INFANT"]),
   seatNumber: z.string().optional(),
-  nationality: isFlight ? z.string().trim().min(1, "") : z.string().optional(),
+  nationality: isFlight
+    ? z.string().trim().min(1, "La nationalité est requise")
+    : z.string().optional(),
   passportIssueCountry: z.string().optional(),
   passportExpiryDate: z.string().optional(),
 });
 
 const buildSchema = (isFlight: boolean) => z.object({
-  contactEmail: z.string().trim().email(""),
-  contactFullName: z.string().trim().min(1, ""),
+  contactEmail: z.string().trim()
+    .min(1, "L'email de contact est requis")
+    .email("Format d'email invalide"),
+  contactFullName: z.string().trim().min(1, "Le nom du contact est requis"),
   contactPhone: z.string().optional(),
-  travelers: z.array(travelerSchema(isFlight)).min(1),
+  travelers: z.array(travelerSchema(isFlight)).min(1, "Au moins un voyageur est requis"),
   paymentPlan: z.enum(["PAY_NOW", "PAY_LATER"]),
 });
 

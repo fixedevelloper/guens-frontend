@@ -340,6 +340,8 @@
     "navBookings": "Réservations",
     "navUsers": "Utilisateurs",
     "navCommission": "Commissions",
+    "navShareholders": "Actionnaires",
+    "navPaymentProviders": "Fournisseurs de paiement",
     "totalBookings": "Réservations totales",
     "totalRevenue": "Chiffre d'affaires",
     "totalUsers": "Utilisateurs totaux",
@@ -424,7 +426,14 @@
     "registerFeature1": "Accès gratuit et instantané aux offres",
     "registerFeature2": "Comparateur multi-fournisseurs en temps réel",
     "registerFeature3": "Support dédié et suivi de vos dossiers",
-    "copyright": "© 2026 Guen's Travel. Tous droits réservés."
+    "copyright": "© 2026 Guen's Travel. Tous droits réservés.",
+    "orContinueWith": "Ou continuer avec",
+    "continueWithGoogle": "Continuer avec Google",
+    "continueWithFacebook": "Continuer avec Facebook",
+    "socialLoginFinalizing": "Connexion en cours...",
+    "socialLoginFailed": "La connexion a échoué. Veuillez réessayer.",
+    "socialLoginNoEmail": "Aucune adresse e-mail fournie par ce fournisseur.",
+    "socialLoginBackToLogin": "Retour à la connexion"
   },
   "Errors": {
     "generic": "Une erreur inattendue est survenue. Merci de réessayer.",

@@ -80,7 +80,7 @@ export default function BookingTrackingPage() {
     }
   }, [bookingId]);
 
-  // 2. Nettoyage du sessionStorage dès que le statut passe à un état final ou confirmé
+  // 2. Nettoyage du sessionStorage (et de l'état) dès que le statut passe à un état final ou confirmé
   useEffect(() => {
     if (tracking.isTerminal) {
       bookingQuery.refetch();
@@ -89,6 +89,11 @@ export default function BookingTrackingPage() {
     if (status && status !== "PENDING_PAYMENT") {
       const storageKey = `payment_result_${bookingId}`;
       sessionStorage.removeItem(storageKey);
+      // recentPayment.status ne change jamais une fois lu depuis sessionStorage : sans ce reset,
+      // la bannière "Validation du paiement en cours..." (basée sur recentPayment?.status ===
+      // "PENDING") resterait affichée indéfiniment même une fois la réservation CONFIRMED et les
+      // billets émis.
+      setRecentPayment(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tracking.isTerminal, status, bookingId]);
@@ -288,8 +293,9 @@ export default function BookingTrackingPage() {
               </div>
             </div>
 
-            {/* APPEL À L'ACTION : PAIEMENT EN ATTENTE OU SOLDE */}
-            {needsPayment && (
+            {/* APPEL À L'ACTION : PAIEMENT EN ATTENTE OU SOLDE - masqué tant qu'un paiement est
+                déjà en cours de validation, pour ne pas inciter à relancer un paiement en double */}
+            {needsPayment && !isPaymentPending && (
                 <Button
                     size="lg"
                     className="w-full sm:w-auto rounded-xl font-bold gap-2 bg-primary hover:bg-primary/95 text-primary-foreground py-6 px-6 transition-transform active:scale-97 shadow-xs"
@@ -299,6 +305,18 @@ export default function BookingTrackingPage() {
                   {status === "DEPOSIT_PAID"
                       ? (t("payBalanceAction") ?? "Payer le solde restant")
                       : (t("payNowAction") ?? "Procéder au paiement")}
+                </Button>
+            )}
+
+            {needsPayment && isPaymentPending && (
+                <Button
+                    size="lg"
+                    variant="outline"
+                    className="w-full sm:w-auto rounded-xl font-bold gap-2 py-6 px-6 transition-transform active:scale-97"
+                    onClick={() => router.push("/dashboard")}
+                >
+                  {t("goToAccount") ?? "Aller à mon compte"}
+                  <ChevronRight className="size-4 shrink-0" />
                 </Button>
             )}
 

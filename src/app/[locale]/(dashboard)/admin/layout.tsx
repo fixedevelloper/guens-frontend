@@ -2,7 +2,7 @@
 
 import React, { useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { Banknote, LayoutDashboard, Receipt, Users, Building2, Database, Store } from "lucide-react";
+import { Banknote, LayoutDashboard, Receipt, Users, Building2, Database, Store, PieChart, CreditCard } from "lucide-react";
 
 import { useRouter } from "@/i18n/navigation";
 import { useAuth } from "@/context/auth-context";
@@ -31,6 +31,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: "/admin/partners", label: t("navPartners") ?? "Partenaires", icon: Building2 },
     { href: "/admin/resellers", label: t("navResellers") ?? "Revendeurs", icon: Store },
     { href: "/admin/commission", label: t("navCommission") ?? "Commissions", icon: Banknote },
+    { href: "/admin/shareholders", label: t("navShareholders") ?? "Actionnaires", icon: PieChart },
+    { href: "/admin/payment-providers", label: t("navPaymentProviders") ?? "Fournisseurs de paiement", icon: CreditCard },
     { href: "/admin/geo/sync", label: t("navGeo") ?? "Données Géo", icon: Database },
   ];
 

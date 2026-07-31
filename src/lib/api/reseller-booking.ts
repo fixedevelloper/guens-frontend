@@ -25,15 +25,18 @@ export interface ResellerTicketResponse {
 
 export async function createBookingtHold(payload: ResellerBookingCheckout) {
     const { data } = await apiClient.post<ResellerBookingResponse>(
-        "/api/reseller/bookings/checkout",
-        payload
+        "/api/reseller/bookings",
+        {
+            checkoutRequest: payload.checkout,
+            customAmount: payload.customAmount,
+        }
     );
     return data;
 }
 export async function createBookingMultiCityHold(payload: ResellerBookingCheckoutMultiCity) {
     const { data } = await apiClient.post<ResellerBookingResponse>(
-        "/api/reseller/bookings/checkout",
-        payload
+        "/api/reseller/bookings/multi-city",
+        payload.checkout
     );
     return data;
 }

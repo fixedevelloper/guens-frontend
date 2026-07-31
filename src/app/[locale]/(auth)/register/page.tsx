@@ -15,6 +15,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { SocialLoginButtons } from "@/components/auth/social-login-buttons";
 
 export default function RegisterPage() {
     const t = useTranslations("Auth");
@@ -279,6 +280,8 @@ export default function RegisterPage() {
                             </Button>
                         </form>
                     </Form>
+
+                    <SocialLoginButtons />
 
                     {/* LIEN DE CONNEXION */}
                     <div className="text-center text-xs sm:text-sm text-muted-foreground/90 font-medium pt-2">

@@ -20,7 +20,9 @@ export type BookingStatus =
   | "FAILED"
   | "CANCELLED";
 
-export type PaymentStatus = "PENDING" | "SUCCEEDED" | "FAILED";
+export type PaymentStatus = "PENDING" | "PENDING_AUTHORIZATION" | "SUCCEEDED" | "FAILED";
+
+export type PaymentAuthorizationType = "PIN" | "AVS" | "REDIRECT" | "OTP";
 
 export type CabinClass = "ECONOMY" | "PREMIUM_ECONOMY" | "BUSINESS" | "FIRST";
 
@@ -314,12 +316,35 @@ export type BookingPaymentRequest =
     | WalletPaymentRequest;
 
 export interface PaymentResponse {
-  paymentId: string;
+  id: string;
   bookingId: string;
   amount: Money;
   paymentMethod: PaymentMethod;
   status: PaymentStatus;
+  /** Set only while status is PENDING_AUTHORIZATION - which card challenge is outstanding. */
+  authorizationType: PaymentAuthorizationType | null;
+  /** Set only when authorizationType is REDIRECT - where to send the payer to complete 3DS. */
+  authorizationRedirectUrl: string | null;
   failureReason: string | null;
+}
+
+// ---------- Admin: payment provider routing ----------
+
+export interface PaymentProviderRouteResponse {
+  id: string;
+  /** null = default rule applied to every country not covered by a more specific one. */
+  countryCode: string | null;
+  paymentMethod: PaymentMethod;
+  providerName: string;
+  active: boolean;
+}
+
+/** countryCode/paymentMethod are only read on create; omit them (or send unchanged) on update. */
+export interface PaymentProviderRouteRequest {
+  countryCode?: string | null;
+  paymentMethod?: PaymentMethod;
+  providerName?: string;
+  active?: boolean;
 }
 
 // ---------- Ticketing ----------
@@ -375,6 +400,23 @@ export interface AdminUserResponse {
 export interface CommissionWalletBalanceResponse {
   balances: Money[];
   entryCount: number;
+}
+
+// Actionnaire : part fixe (en %) de chaque commission gagnée, indépendante de tout compte
+// utilisateur/revendeur/partenaire.
+export interface ShareholderResponse {
+  id: string;
+  name: string;
+  percentage: string | number;
+  active: boolean;
+  balance: Money[];
+}
+
+// Champs omis (undefined) lors d'une mise à jour partielle - seuls les champs fournis changent.
+export interface ShareholderRequest {
+  name?: string;
+  percentage?: number;
+  active?: boolean;
 }
 // ---------- Pagination ----------
 

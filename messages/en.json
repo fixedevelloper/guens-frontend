@@ -339,8 +339,10 @@
     "adminSubtitle": "Platform activity at a glance.",
     "navOverview": "Overview",
     "navBookings": "Bookings",
+    "navPaymentProviders": "Payment Providers",
     "navUsers": "Users",
     "navCommission": "Commission",
+    "navShareholders": "Shareholders",
     "totalBookings": "Total bookings",
     "totalRevenue": "Revenue",
     "totalUsers": "Total users",
@@ -426,7 +428,14 @@
     "registerFeature1": "Instant and free access to exclusive deals",
     "registerFeature2": "Real-time multi-provider comparison",
     "registerFeature3": "Dedicated support and itinerary tracking",
-    "copyright": "© 2026 Guen's Travel. All rights reserved."
+    "copyright": "© 2026 Guen's Travel. All rights reserved.",
+    "orContinueWith": "Or continue with",
+    "continueWithGoogle": "Continue with Google",
+    "continueWithFacebook": "Continue with Facebook",
+    "socialLoginFinalizing": "Signing you in...",
+    "socialLoginFailed": "Login failed. Please try again.",
+    "socialLoginNoEmail": "No email address was provided by this provider.",
+    "socialLoginBackToLogin": "Back to login"
   },
   "Errors": {
     "generic": "Something went wrong. Please try again.",

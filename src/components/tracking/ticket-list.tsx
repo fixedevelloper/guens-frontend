@@ -1,4 +1,4 @@
-// components/checkout/ticket-list.tsx
+// components/tracking/ticket-list.tsx
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";

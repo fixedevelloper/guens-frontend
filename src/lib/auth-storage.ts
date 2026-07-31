@@ -29,6 +29,13 @@ export function getStoredToken(): string | null {
   return window.localStorage.getItem(TOKEN_KEY);
 }
 
+/** Stores the token alone, ahead of knowing the full profile - used right after a social login
+ *  redirect, so the very next API call (fetching the profile) already carries it as a Bearer token. */
+export function setStoredToken(token: string) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(TOKEN_KEY, token);
+}
+
 export function getStoredProfile(): StoredProfile | null {
   if (typeof window === "undefined") return null;
   const raw = window.localStorage.getItem(PROFILE_KEY);

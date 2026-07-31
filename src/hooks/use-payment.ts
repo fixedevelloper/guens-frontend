@@ -11,3 +11,12 @@ export function usePaymentMutation(
     ...options,
   });
 }
+
+export function useCardAuthorizationMutation(
+    options?: UseMutationOptions<PaymentResponse, Error, { paymentId: string; pin: string }>
+) {
+  return useMutation({
+    mutationFn: ({ paymentId, pin }) => paymentApi.completeCardAuthorization(paymentId, pin),
+    ...options,
+  });
+}

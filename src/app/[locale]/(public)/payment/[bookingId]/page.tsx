@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import { toast } from "sonner";
@@ -10,12 +10,13 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CardPinDialog } from "@/components/checkout/card-pin-dialog";
 import { PaymentForm, type PaymentFormValues } from "@/components/checkout/payment-form";
 import { useBookingQuery } from "@/hooks/use-booking";
 import { usePaymentMutation } from "@/hooks/use-payment";
 import { normalizeApiError } from "@/lib/api/client";
 import { formatDate, formatMoney } from "@/lib/format";
-import {BookingPaymentRequest} from "@/lib/api/types";
+import {BookingPaymentRequest, PaymentResponse} from "@/lib/api/types";
 
 export default function PaymentPage() {
   const params = useParams<{ bookingId: string }>();
@@ -26,8 +27,16 @@ export default function PaymentPage() {
 
   const bookingQuery = useBookingQuery(bookingId);
   const paymentMutation = usePaymentMutation();
+  // Non-null uniquement le temps que la banque demande le code PIN de la carte.
+  const [pinChallengePaymentId, setPinChallengePaymentId] = useState<string | null>(null);
 
   const booking = bookingQuery.data;
+
+  function proceedToBookingTracking(payment: PaymentResponse) {
+    toast.success(t("success"));
+    sessionStorage.setItem(`payment_result_${bookingId}`, JSON.stringify(payment));
+    router.push(`/bookings/${bookingId}`);
+  }
 
   // Redirection sécurisée hors du rendu
   useEffect(() => {
@@ -97,16 +106,15 @@ export default function PaymentPage() {
         paymentMutation.mutate(payload, {
             onSuccess: (payment) => {
                 if (payment.status === "PENDING" || payment.status === "SUCCEEDED") {
-                    toast.success(t("success"));
-
-                    sessionStorage.setItem(
-                        `payment_result_${bookingId}`,
-                        JSON.stringify(payment)
-                    );
-
-                    router.push(`/bookings/${bookingId}`);
+                    proceedToBookingTracking(payment);
+                } else if (payment.status === "PENDING_AUTHORIZATION" && payment.authorizationType === "PIN") {
+                    setPinChallengePaymentId(payment.id);
+                } else if (payment.status === "PENDING_AUTHORIZATION"
+                    && payment.authorizationType === "REDIRECT" && payment.authorizationRedirectUrl) {
+                    // 3DS : la confirmation se fait via webhook une fois le payeur revenu de sa banque.
+                    window.location.href = payment.authorizationRedirectUrl;
                 } else {
-                    toast.error(t("failure", { reason: payment.failureReason ?? "" }));
+                    toast.error(payment.failureReason ?? t("failure", { reason: "" }));
                 }
             },
             onError: (error) => {
@@ -248,6 +256,17 @@ export default function PaymentPage() {
             />
           </div>
         </div>
+
+        {pinChallengePaymentId && (
+            <CardPinDialog
+                paymentId={pinChallengePaymentId}
+                onSuccess={(payment) => {
+                  setPinChallengePaymentId(null);
+                  proceedToBookingTracking(payment);
+                }}
+                onCancel={() => setPinChallengePaymentId(null)}
+            />
+        )}
       </div>
   );
 }

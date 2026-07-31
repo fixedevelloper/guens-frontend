@@ -4,8 +4,10 @@ import * as adminApi from "@/lib/api/admin";
 import type {
   HotelCityUpsertRequest,
   PartnerStatus,
+  PaymentProviderRouteRequest,
   ResellerApprovalRequest,
   ResellerStatus,
+  ShareholderRequest,
   UpdateCommissionPayload,
 } from "@/lib/api/types";
 
@@ -20,6 +22,69 @@ export function useAdminUsersQuery() {
   return useQuery({
     queryKey: ["admin-users"],
     queryFn: () => adminApi.getAdminUsers(),
+  });
+}
+
+export function useShareholdersQuery() {
+  return useQuery({
+    queryKey: ["shareholders"],
+    queryFn: () => adminApi.getShareholders(),
+  });
+}
+
+export function useCreateShareholderMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: ShareholderRequest) => adminApi.createShareholder(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["shareholders"] });
+    },
+  });
+}
+
+export function useUpdateShareholderMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: ShareholderRequest }) =>
+      adminApi.updateShareholder(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["shareholders"] });
+    },
+  });
+}
+
+export function usePaymentProviderRoutesQuery() {
+  return useQuery({
+    queryKey: ["payment-provider-routes"],
+    queryFn: () => adminApi.getPaymentProviderRoutes(),
+  });
+}
+
+export function useAvailablePaymentProvidersQuery() {
+  return useQuery({
+    queryKey: ["payment-provider-routes", "available-providers"],
+    queryFn: () => adminApi.getAvailablePaymentProviders(),
+  });
+}
+
+export function useCreatePaymentProviderRouteMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: PaymentProviderRouteRequest) => adminApi.createPaymentProviderRoute(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["payment-provider-routes"] });
+    },
+  });
+}
+
+export function useUpdatePaymentProviderRouteMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: PaymentProviderRouteRequest }) =>
+      adminApi.updatePaymentProviderRoute(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["payment-provider-routes"] });
+    },
   });
 }
 

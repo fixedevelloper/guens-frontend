@@ -9,6 +9,7 @@ import {
   getStoredProfile,
   getStoredToken,
   saveAuthSession,
+  setStoredToken,
   type StoredProfile,
 } from "@/lib/auth-storage";
 
@@ -28,6 +29,7 @@ interface AuthContextValue {
   isHydrated: boolean;
   login: (request: LoginRequest) => Promise<StoredProfile>;
   register: (request: RegisterRequest) => Promise<StoredProfile>;
+  completeSocialLogin: (token: string) => Promise<StoredProfile>;
   logout: () => void;
 }
 
@@ -77,6 +79,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             partnerId: response.partnerId,
           };
           saveAuthSession(response.token, profile);
+          setUser(profile);
+          return profile;
+        },
+        /**
+         * Finishes a Google/Facebook login: the backend redirect only carried the JWT (see
+         * /auth/callback), so the token is stored first - the very next call (fetching the
+         * profile) needs it as a Bearer header - then the full profile is fetched and saved
+         * exactly like a classic login.
+         */
+        async completeSocialLogin(token) {
+          setStoredToken(token);
+          const response = await authApi.me();
+          const profile = {
+            id: response.userId,
+            email: response.email,
+            fullName: response.fullName,
+            role: response.role,
+            partnerId: response.partnerId,
+          };
+          saveAuthSession(token, profile);
           setUser(profile);
           return profile;
         },

@@ -12,6 +12,7 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { useAuth } from "@/context/auth-context";
 import { normalizeApiError } from "@/lib/api/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { SocialLoginButtons } from "@/components/auth/social-login-buttons";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -224,6 +225,8 @@ export default function LoginPage() {
                             </Button>
                         </form>
                     </Form>
+
+                    <SocialLoginButtons />
 
                     {/* LIEN D'INSCRIPTION */}
                     <div className="text-center text-xs sm:text-sm text-muted-foreground/90 font-medium pt-2">
