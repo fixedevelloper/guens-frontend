@@ -34,6 +34,14 @@ export async function cancelBooking(bookingId: string) {
   return data;
 }
 
+/** Resubmits the provider hold for a FAILED booking that never got a provider confirmation. */
+export async function retryBooking(bookingId: string) {
+  const { data } = await apiClient.post<BookingResponse>(`/api/bookings/${bookingId}/retry`, null, {
+    params: { email: getRememberedContactEmail() ?? undefined },
+  });
+  return data;
+}
+
 /** Base URL for the SSE tracking stream - consumed directly with EventSource, not axios. */
 export function bookingTrackUrl(bookingId: string) {
   const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";

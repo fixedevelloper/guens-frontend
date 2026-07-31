@@ -43,3 +43,13 @@ export function useCancelBookingMutation(bookingId: string) {
     },
   });
 }
+
+export function useRetryBookingMutation(bookingId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => bookingApi.retryBooking(bookingId),
+    onSuccess: (data) => {
+      queryClient.setQueryData(["booking", bookingId], data);
+    },
+  });
+}

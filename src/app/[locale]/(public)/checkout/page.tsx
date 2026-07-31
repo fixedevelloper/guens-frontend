@@ -68,7 +68,10 @@ function CheckoutPageContent() {
 
     const callbacks = {
       onSuccess: (booking: { id: string }) => {
-        router.push(`/payment/${booking.id}`);
+        // Checkout now returns immediately with the provider hold still in progress
+        // (status PENDING_HOLD) - the tracking page shows a "finalizing..." state and
+        // auto-redirects here to /payment once the hold completes.
+        router.push(`/bookings/${booking.id}`);
       },
       onError: (error: unknown) => {
         toast.error(normalizeApiError(error).message);

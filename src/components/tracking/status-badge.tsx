@@ -10,6 +10,10 @@ const STATUS_CONFIG: Record<
       className?: string;
     }
 > = {
+  PENDING_HOLD: {
+    variant: "outline",
+    className: "bg-blue-500/10 text-blue-600 border-blue-500/20 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800/40 font-bold animate-pulse",
+  },
   PENDING_PAYMENT: {
     variant: "secondary",
     className: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700",

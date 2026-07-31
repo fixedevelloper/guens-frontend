@@ -292,6 +292,7 @@
     "payNowAction": "Pay now",
     "payBalanceAction": "Pay balance",
     "status": {
+      "PENDING_HOLD": "Finalizing...",
       "PENDING_PAYMENT": "Pending Payment",
       "DEPOSIT_PAID": "Deposit Paid",
       "PAID": "Paid",
@@ -301,6 +302,7 @@
       "CANCELLED": "Cancelled"
     },
     "statusDescription": {
+      "PENDING_HOLD": "We're finalizing your reservation with the provider, this takes a moment.",
       "PENDING_PAYMENT": "Your seat is held, awaiting your payment.",
       "DEPOSIT_PAID": "Deposit received, the booking is held until the balance is paid.",
       "PAID": "Payment received, forwarding to the provider.",
@@ -313,7 +315,9 @@
     "cancelConfirm": "Confirm cancellation",
     "cancelling": "Cancelling…",
     "viewTickets": "View my tickets",
-    "failureReason": "Reason: {reason}"
+    "failureReason": "Reason: {reason}",
+    "retryAction": "Retry",
+    "searchAgainAction": "Search again"
   },
   "Tickets": {
     "title": "Your e-tickets",

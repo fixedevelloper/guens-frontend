@@ -4,6 +4,7 @@ import { Plane, Building2, Ticket, Eye, Calendar, User } from 'lucide-react';
 export type OfferType = 'FLIGHT' | 'HOTEL';
 
 export type BookingStatus =
+  | 'PENDING_HOLD'
   | 'PENDING_PAYMENT'
   | 'DEPOSIT_PAID'
   | 'PAID'
@@ -51,6 +52,10 @@ const STATUS_CONFIG: Record<
   },
   CONFIRMING: {
     label: 'Confirmation en cours',
+    className: 'bg-sky-50 text-sky-700 ring-sky-600/20 dark:bg-sky-500/10 dark:text-sky-400',
+  },
+  PENDING_HOLD: {
+    label: 'Finalisation en cours',
     className: 'bg-sky-50 text-sky-700 ring-sky-600/20 dark:bg-sky-500/10 dark:text-sky-400',
   },
   PENDING_PAYMENT: {

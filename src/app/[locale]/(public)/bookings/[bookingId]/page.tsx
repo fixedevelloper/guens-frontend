@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import {
@@ -15,7 +15,9 @@ import {
   Calendar,
   Ticket,
   CheckCircle2,
-  Clock
+  Clock,
+  RotateCw,
+  Search
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -27,7 +29,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/tracking/status-badge";
 import { TicketList } from "@/components/tracking/ticket-list";
-import { useBookingQuery, useCancelBookingMutation } from "@/hooks/use-booking";
+import { useBookingQuery, useCancelBookingMutation, useRetryBookingMutation } from "@/hooks/use-booking";
 import { useBookingTracking } from "@/hooks/use-booking-tracking";
 import { normalizeApiError } from "@/lib/api/client";
 import { airlineLabel, formatDateTime, formatMoney } from "@/lib/format";
@@ -42,7 +44,7 @@ interface PaymentSessionData {
   failureReason?: string;
 }
 
-const IN_PROGRESS_STATUSES: BookingStatus[] = ["PENDING_PAYMENT", "PAID", "CONFIRMING"];
+const IN_PROGRESS_STATUSES: BookingStatus[] = ["PENDING_HOLD", "PENDING_PAYMENT", "PAID", "CONFIRMING"];
 
 export default function BookingTrackingPage() {
   const params = useParams<{ bookingId: string }>();
@@ -53,15 +55,21 @@ export default function BookingTrackingPage() {
   const locale = useLocale();
   const router = useRouter();
   const [confirmingCancel, setConfirmingCancel] = useState(false);
+  // Incrémenté après un "Réessayer" réussi pour rouvrir le flux SSE, fermé côté client dès
+  // qu'un statut FAILED est reçu (terminal) - sans ça, la tentative relancée ne recevrait
+  // jamais sa propre mise à jour de statut en direct.
+  const [resubscribeKey, setResubscribeKey] = useState(0);
 
   // État pour stocker la réponse de paiement récupérée depuis le sessionStorage
   const [recentPayment, setRecentPayment] = useState<PaymentSessionData | null>(null);
 
   const bookingQuery = useBookingQuery(bookingId);
-  const tracking = useBookingTracking(bookingId);
+  const tracking = useBookingTracking(bookingId, resubscribeKey);
   const cancelMutation = useCancelBookingMutation(bookingId);
+  const retryMutation = useRetryBookingMutation(bookingId);
 
   const status = tracking.liveStatus ?? bookingQuery.data?.status;
+  const previousStatusRef = useRef<BookingStatus | undefined>(undefined);
 
   // 1. Récupération des données du paiement dans le sessionStorage au montage
   useEffect(() => {
@@ -98,9 +106,27 @@ export default function BookingTrackingPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tracking.isTerminal, status, bookingId]);
 
+  // 3. Redirection automatique vers le paiement dès que le hold fournisseur (asynchrone,
+  // déclenché juste après le checkout) aboutit - uniquement sur une transition constatée en
+  // direct dans cette page (PENDING_HOLD -> PENDING_PAYMENT), jamais au premier chargement
+  // d'une réservation déjà en PENDING_PAYMENT (l'utilisateur doit alors cliquer "Payer" lui-même).
+  useEffect(() => {
+    if (previousStatusRef.current === "PENDING_HOLD" && status === "PENDING_PAYMENT") {
+      router.replace(`/payment/${bookingId}`);
+    }
+    previousStatusRef.current = status;
+  }, [status, bookingId, router]);
+
   function handleCancel() {
     cancelMutation.mutate(undefined, {
       onSuccess: () => setConfirmingCancel(false),
+      onError: (error) => toast.error(normalizeApiError(error).message),
+    });
+  }
+
+  function handleRetry() {
+    retryMutation.mutate(undefined, {
+      onSuccess: () => setResubscribeKey((key) => key + 1),
       onError: (error) => toast.error(normalizeApiError(error).message),
     });
   }
@@ -130,7 +156,7 @@ export default function BookingTrackingPage() {
     );
   }
 
-  const canCancel = status !== "CANCELLED" && status !== "FAILED";
+  const canCancel = status !== "CANCELLED" && status !== "FAILED" && status !== "PENDING_HOLD";
   const inProgress = IN_PROGRESS_STATUSES.includes(status) && !tracking.connectionError;
   const needsPayment = status === "PENDING_PAYMENT" || status === "DEPOSIT_PAID";
 
@@ -217,8 +243,37 @@ export default function BookingTrackingPage() {
             {status === "FAILED" && booking.failureReason && (
                 <Alert variant="destructive" className="rounded-xl border-destructive/20 bg-destructive/[0.02]">
                   <AlertTriangle className="size-4 text-destructive" />
-                  <AlertDescription className="text-xs font-semibold text-destructive">
-                    {t("failureReason", { reason: booking.failureReason })}
+                  <AlertDescription className="space-y-3">
+                    <p className="text-xs font-semibold text-destructive">
+                      {t("failureReason", { reason: booking.failureReason })}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {booking.retryable && (
+                          <Button
+                              size="sm"
+                              variant="destructive"
+                              className="rounded-xl font-bold gap-1.5"
+                              onClick={handleRetry}
+                              disabled={retryMutation.isPending}
+                          >
+                            {retryMutation.isPending ? (
+                                <Loader2 className="size-3.5 animate-spin" />
+                            ) : (
+                                <RotateCw className="size-3.5" />
+                            )}
+                            {t("retryAction") ?? "Réessayer"}
+                          </Button>
+                      )}
+                      <Button
+                          size="sm"
+                          variant="outline"
+                          className="rounded-xl font-bold gap-1.5 border-destructive/30 text-destructive hover:bg-destructive/[0.04]"
+                          onClick={() => router.push("/")}
+                      >
+                        <Search className="size-3.5" />
+                        {t("searchAgainAction") ?? "Recommencer la recherche"}
+                      </Button>
+                    </div>
                   </AlertDescription>
                 </Alert>
             )}

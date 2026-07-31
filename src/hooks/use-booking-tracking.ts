@@ -13,13 +13,16 @@ const TERMINAL_STATUSES: BookingStatus[] = ["CONFIRMED", "FAILED", "CANCELLED"];
  * has nothing left to replay and no event ever arrives - callers should fall back to their
  * own REST-fetched status in that case rather than trust a stale seed here forever.
  */
-export function useBookingTracking(bookingId: string | null) {
+export function useBookingTracking(bookingId: string | null, resubscribeKey: number = 0) {
   const [liveStatus, setLiveStatus] = useState<BookingStatus | undefined>(undefined);
   const [connectionError, setConnectionError] = useState(false);
 
   useEffect(() => {
     if (!bookingId) return;
 
+    // A previous subscription may have closed on a terminal status (e.g. FAILED); bumping
+    // resubscribeKey after a retry re-runs this effect to open a fresh stream for the new attempt.
+    setLiveStatus(undefined);
     const source = new EventSource(bookingTrackUrl(bookingId));
     setConnectionError(false);
 
@@ -42,7 +45,7 @@ export function useBookingTracking(bookingId: string | null) {
     return () => {
       source.close();
     };
-  }, [bookingId]);
+  }, [bookingId, resubscribeKey]);
 
   return {
     liveStatus,

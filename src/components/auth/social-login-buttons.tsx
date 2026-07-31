@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl";
  */
 export function SocialLoginButtons() {
   const t = useTranslations("Auth");
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/";
 
   return (
     <div className="space-y-3">

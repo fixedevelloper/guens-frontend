@@ -12,6 +12,7 @@ export type PassengerType = "ADULT" | "CHILD" | "INFANT";
 export type OfferType = "FLIGHT" | "HOTEL"| "CAR_RENTAL"| "FURNISHED_RENTAL";
 
 export type BookingStatus =
+  | "PENDING_HOLD"
   | "PENDING_PAYMENT"
   | "DEPOSIT_PAID"
   | "PAID"
@@ -235,6 +236,8 @@ export interface BookingResponse {
   eTicketNumbers: string[];
   itineraryLegs: BookingFlightLeg[];
   failureReason: string | null;
+  /** True only when FAILED and the provider hold never got a confirmation number - safe to retry. */
+  retryable: boolean;
   travelers: BookingTravelerResponse[];
   airline: string | null;
   flightNumber: string | null;

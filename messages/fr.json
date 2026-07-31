@@ -291,6 +291,7 @@
     "payNowAction": "Payer maintenant",
     "payBalanceAction": "Payer le solde",
     "status": {
+      "PENDING_HOLD": "Finalisation en cours...",
       "PENDING_PAYMENT": "Paiement en attente",
       "DEPOSIT_PAID": "Acompte payé",
       "PAID": "Payé",
@@ -300,6 +301,7 @@
       "CANCELLED": "Annulé"
     },
     "statusDescription": {
+      "PENDING_HOLD": "Nous finalisons votre réservation auprès du fournisseur, cela prend quelques instants.",
       "PENDING_PAYMENT": "Votre place est retenue, en attente de votre paiement.",
       "DEPOSIT_PAID": "Acompte reçu, la réservation est retenue jusqu'au paiement du solde.",
       "PAID": "Paiement reçu, transmission au fournisseur en cours.",
@@ -312,7 +314,9 @@
     "cancelConfirm": "Confirmer l'annulation",
     "cancelling": "Annulation en cours…",
     "viewTickets": "Voir mes billets",
-    "failureReason": "Motif : {reason}"
+    "failureReason": "Motif : {reason}",
+    "retryAction": "Réessayer",
+    "searchAgainAction": "Recommencer la recherche"
   },
   "Tickets": {
     "title": "Vos billets électroniques",
