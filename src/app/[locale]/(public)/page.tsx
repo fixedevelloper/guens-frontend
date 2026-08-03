@@ -18,10 +18,13 @@ import {
 
 import { useRouter, Link } from "@/i18n/navigation";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FlightSearchForm } from "@/components/search/flight-search-form";
 import { HotelSearchForm } from "@/components/search/hotel-search-form";
 import { flightSearchParamsToQuery, hotelSearchParamsToQuery, multiCitySearchParamsToQuery } from "@/lib/search-params";
+import { useFeaturedDestinationsQuery } from "@/hooks/use-destinations";
+import { pickFallbackDestinationImage } from "@/lib/destination-fallback-images";
 import type { FlightSearchParams, HotelSearchParams, MultiCityFlightSearchParams } from "@/lib/api/types";
 import {AppPromo} from "../../../components/AppPromo";
 
@@ -34,19 +37,11 @@ const HERO_CONFIGS = {
   }
 };
 
-const DESTINATIONS = [
-  { key: "destinationParis", image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=800&q=80" },
-  { key: "destinationNewYork", image: "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&w=800&q=80" },
-  { key: "destinationDubai", image: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=800&q=80" },
-  { key: "destinationBali", image: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=800&q=80" },
-  { key: "destinationTokyo", image: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=800&q=80" },
-  { key: "destinationMarrakech", image: "https://images.unsplash.com/photo-1489749798305-4fea3ae63d43?auto=format&fit=crop&w=800&q=80" },
-] as const;
-
 export default function HomePage() {
   const t = useTranslations("Home");
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"flights" | "hotels">("flights");
+  const destinationsQuery = useFeaturedDestinationsQuery();
 
   function handleFlightSearch(params: FlightSearchParams) {
     router.push(`/flights?${flightSearchParamsToQuery(params)}`);
@@ -192,49 +187,62 @@ export default function HomePage() {
       </section>
 
       {/* DESTINATIONS POPULAIRES */}
-      <section className="py-16 sm:py-24" aria-label={t("destinationsTitle")}>
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
-            <div>
-              <span className="text-xs font-semibold uppercase tracking-wide text-primary">
-                {t("destinationsEyebrow")}
-              </span>
-              <h2 className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">{t("destinationsTitle")}</h2>
-              <p className="mt-3 text-sm text-muted-foreground sm:text-base">{t("destinationsSubtitle")}</p>
-            </div>
-            <Link
-              href="/flights"
-              className="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-primary transition-colors hover:text-primary/80"
-            >
-              {t("exploreAllFlights")}
-              <ArrowRight className="size-4" />
-            </Link>
-          </div>
-
-          <div className="mt-10 grid grid-cols-2 gap-3 sm:mt-14 sm:gap-5 md:grid-cols-3">
-            {DESTINATIONS.map(({ key, image }) => (
-              <Link
-                key={key}
-                href="/flights"
-                className="group relative aspect-[4/5] overflow-hidden rounded-2xl border border-border/40 shadow-sm transition-all duration-300 hover:shadow-lg sm:aspect-[3/4]"
-              >
-                <div
-                  className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
-                  style={{ backgroundImage: `url('${image}')` }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
-                <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
-                  <p className="text-sm font-bold text-white drop-shadow sm:text-base">{t(key)}</p>
-                  <span className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-white/80 opacity-0 transition-opacity group-hover:opacity-100 sm:text-xs">
-                    {t("exploreFlightsAction")}
-                    <ArrowRight className="size-3" />
+      {(destinationsQuery.isLoading || (destinationsQuery.data?.length ?? 0) > 0) && (
+          <section className="py-16 sm:py-24" aria-label={t("destinationsTitle")}>
+            <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+              <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
+                <div>
+                  <span className="text-xs font-semibold uppercase tracking-wide text-primary">
+                    {t("destinationsEyebrow")}
                   </span>
+                  <h2 className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">{t("destinationsTitle")}</h2>
+                  <p className="mt-3 text-sm text-muted-foreground sm:text-base">{t("destinationsSubtitle")}</p>
                 </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
+                <Link
+                    href="/flights"
+                    className="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-primary transition-colors hover:text-primary/80"
+                >
+                  {t("exploreAllFlights")}
+                  <ArrowRight className="size-4" />
+                </Link>
+              </div>
+
+              <div className="mt-10 grid grid-cols-2 gap-3 sm:mt-14 sm:gap-5 md:grid-cols-3">
+                {destinationsQuery.isLoading
+                    ? Array.from({ length: 6 }).map((_, i) => (
+                        <Skeleton key={i} className="aspect-[4/5] w-full rounded-2xl sm:aspect-[3/4]" />
+                    ))
+                    : destinationsQuery.data?.map((destination) => (
+                        <Link
+                            key={`${destination.cityName}-${destination.countryName}`}
+                            href={destination.destinationCode
+                                ? `/flights?destination=${encodeURIComponent(destination.destinationCode)}`
+                                : "/flights"}
+                            className="group relative aspect-[4/5] overflow-hidden rounded-2xl border border-border/40 bg-muted shadow-sm transition-all duration-300 hover:shadow-lg sm:aspect-[3/4]"
+                        >
+                          <div
+                              className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
+                              style={{
+                                backgroundImage: `url('${destination.imageUrl
+                                    ?? pickFallbackDestinationImage(`${destination.cityName}-${destination.countryName}`)}')`,
+                              }}
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+                          <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
+                            <p className="text-sm font-bold text-white drop-shadow sm:text-base">
+                              {destination.cityName}
+                            </p>
+                            <span className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-white/80 opacity-0 transition-opacity group-hover:opacity-100 sm:text-xs">
+                        {t("exploreFlightsAction")}
+                              <ArrowRight className="size-3" />
+                      </span>
+                          </div>
+                        </Link>
+                    ))}
+              </div>
+            </div>
+          </section>
+      )}
       <AppPromo />
     </div>
   );

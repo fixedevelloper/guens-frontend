@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import * as adminApi from "@/lib/api/admin";
 import type {
+  FeaturedDestinationUpsertRequest,
   HotelCityUpsertRequest,
   PartnerStatus,
   PaymentProviderRouteRequest,
@@ -171,6 +172,56 @@ export function useDeleteCityMutation() {
     mutationFn: (id: number) => adminApi.deleteCity(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-cities"] });
+    },
+  });
+}
+
+// --- Destinations mises en avant ---
+
+export function useAdminDestinationsQuery() {
+  return useQuery({
+    queryKey: ["admin-destinations"],
+    queryFn: () => adminApi.getAdminDestinations(),
+  });
+}
+
+export function useCreateDestinationMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: FeaturedDestinationUpsertRequest) => adminApi.createDestination(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-destinations"] });
+    },
+  });
+}
+
+export function useUpdateDestinationMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: FeaturedDestinationUpsertRequest }) =>
+      adminApi.updateDestination(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-destinations"] });
+    },
+  });
+}
+
+export function useDeleteDestinationMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => adminApi.deleteDestination(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-destinations"] });
+    },
+  });
+}
+
+export function useRefreshDestinationsFromBookingsMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => adminApi.refreshDestinationsFromBookings(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-destinations"] });
     },
   });
 }

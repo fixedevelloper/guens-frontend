@@ -14,7 +14,9 @@ import {
   Bell,
   CheckCircle2,
   ShieldCheck,
-  Building2
+  Building2,
+  Loader2,
+  ChevronDown
 } from "lucide-react";
 
 import { useRouter } from "@/i18n/navigation";
@@ -26,7 +28,7 @@ import { HotelSearchForm } from "@/components/search/hotel-search-form";
 import { HotelResultsList } from "@/components/search/hotel-results";
 import { HotelFilters } from "@/components/search/hotel-filters";
 import { HotelMap } from "@/components/search/hotel-map";
-import { useHotelSearch } from "@/hooks/use-search";
+import { useHotelSearchWithLoadMore } from "@/hooks/use-search";
 import { hotelSearchParamsToQuery, parseHotelSearchParams } from "@/lib/search-params";
 import { DEFAULT_HOTEL_FILTERS, computeHotelFilterOptions, filterHotelOffers } from "@/lib/filters";
 import type { HotelSearchParams } from "@/lib/api/types";
@@ -64,12 +66,12 @@ function HotelsPageContent() {
   const [isMapOpen, setIsMapOpen] = useState(false);
 
   const params = useMemo(() => parseHotelSearchParams(searchParams), [searchParams]);
-  const query = useHotelSearch(params);
+  const query = useHotelSearchWithLoadMore(params);
 
-  const filterOptions = useMemo(() => computeHotelFilterOptions(query.data ?? []), [query.data]);
+  const filterOptions = useMemo(() => computeHotelFilterOptions(query.offers), [query.offers]);
   const filteredOffers = useMemo(
-      () => filterHotelOffers(query.data ?? [], filters),
-      [query.data, filters]
+      () => filterHotelOffers(query.offers, filters),
+      [query.offers, filters]
   );
 
   const nights = params
@@ -141,7 +143,7 @@ function HotelsPageContent() {
               <AlertTitle className="font-bold">{t("noResults") ?? "Erreur de chargement"}</AlertTitle>
               <AlertDescription>Une erreur est survenue lors de la récupération des offres d'hébergement. Veuillez réessayer.</AlertDescription>
             </Alert>
-        ) : !query.data || query.data.length === 0 ? (
+        ) : query.offers.length === 0 ? (
             <Alert className="rounded-2xl border-border/80 bg-slate-50/20 py-8 text-center flex flex-col items-center">
               <AlertTitle className="font-extrabold text-lg mb-1">{t("noResults") ?? "Aucun hébergement trouvé"}</AlertTitle>
               <AlertDescription className="text-muted-foreground text-sm max-w-sm">
@@ -215,9 +217,9 @@ function HotelsPageContent() {
                 <main className="space-y-4">
                   <div className="flex items-center justify-between px-0.5">
                     <p className="text-xs font-bold text-muted-foreground/90 tracking-wide">
-                      {filteredOffers.length === query.data.length
-                          ? t("resultsCount", { count: query.data.length }) ?? `${query.data.length} hébergements disponibles`
-                          : tFilters("resultsFiltered", { shown: filteredOffers.length, total: query.data.length }) ?? `${filteredOffers.length} sur ${query.data.length} filtrés`}
+                      {filteredOffers.length === query.offers.length
+                          ? t("resultsCount", { count: query.offers.length }) ?? `${query.offers.length} hébergements disponibles`
+                          : tFilters("resultsFiltered", { shown: filteredOffers.length, total: query.offers.length }) ?? `${filteredOffers.length} sur ${query.offers.length} filtrés`}
                     </p>
 
                     <div className="flex items-center gap-1 text-xs text-muted-foreground font-semibold">
@@ -234,6 +236,24 @@ function HotelsPageContent() {
                         hoveredKey={hoveredKey}
                         onHoverChange={setHoveredKey} isReseller={false}                    />
                   </div>
+
+                  {query.hasMore && (
+                      <div className="flex justify-center pt-2">
+                        <Button
+                            variant="outline"
+                            onClick={query.loadMore}
+                            disabled={query.isLoadingMore}
+                            className="rounded-xl gap-2 font-bold text-xs py-5 px-6 shadow-2xs border-border/80"
+                        >
+                          {query.isLoadingMore ? (
+                              <Loader2 className="size-4 animate-spin" />
+                          ) : (
+                              <ChevronDown className="size-4" />
+                          )}
+                          {query.isLoadingMore ? "Chargement..." : "Charger plus d'hébergements"}
+                        </Button>
+                      </div>
+                  )}
                 </main>
 
                 {/* COLONNE DROITE (DESKTOP) : CARTE INTERACTIVE */}

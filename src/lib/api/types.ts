@@ -131,6 +131,34 @@ export interface HotelCityUpsertRequest {
   longitude: number;
 }
 
+/** Public shape: the homepage's "popular destinations" cards. */
+export interface FeaturedDestination {
+  cityName: string;
+  countryName: string;
+  destinationCode: string | null;
+  imageUrl: string | null;
+}
+
+export interface FeaturedDestinationAdminResponse {
+  id: string;
+  cityName: string;
+  countryName: string;
+  destinationCode: string | null;
+  imageUrl: string | null;
+  displayOrder: number;
+  active: boolean;
+  createdAt: string;
+}
+
+export interface FeaturedDestinationUpsertRequest {
+  cityName: string;
+  countryName: string;
+  destinationCode?: string | null;
+  imageUrl?: string | null;
+  displayOrder: number;
+  active: boolean;
+}
+
 export interface ProviderQuote {
   offerId: string;
   providerType: ProviderType;
@@ -160,6 +188,16 @@ export interface HarmonizedHotelOffer {
   coverImageUrl: string | null;
   bestOfferId: string;
   quotes: ProviderQuote[];
+}
+
+/**
+ * searchId is null when no enabled provider captured a pagination token for this search (e.g. the
+ * only one that supports it, Travelport, was disabled or returned nothing) - hide "load more" in
+ * that case, there's nothing to resume.
+ */
+export interface HotelSearchResult {
+  searchId: string | null;
+  offers: HarmonizedHotelOffer[];
 }
 
 export interface Seat {

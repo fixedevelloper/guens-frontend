@@ -3,6 +3,8 @@ import type {
   AdminUserResponse,
   BookingResponse,
   CommissionWalletBalanceResponse,
+  FeaturedDestinationAdminResponse,
+  FeaturedDestinationUpsertRequest,
   HotelCityAdminResponse,
   HotelCityUpsertRequest,
   PageResponse,
@@ -125,6 +127,32 @@ export async function updateCity(id: number, payload: HotelCityUpsertRequest) {
 
 export async function deleteCity(id: number) {
   await apiClient.delete(`/api/admin/geo/cities/${id}`);
+}
+
+// --- Destinations mises en avant (page d'accueil) ---
+
+export async function getAdminDestinations() {
+  const { data } = await apiClient.get<FeaturedDestinationAdminResponse[]>("/api/admin/destinations");
+  return data;
+}
+
+export async function createDestination(payload: FeaturedDestinationUpsertRequest) {
+  const { data } = await apiClient.post<FeaturedDestinationAdminResponse>("/api/admin/destinations", payload);
+  return data;
+}
+
+export async function updateDestination(id: string, payload: FeaturedDestinationUpsertRequest) {
+  const { data } = await apiClient.put<FeaturedDestinationAdminResponse>(`/api/admin/destinations/${id}`, payload);
+  return data;
+}
+
+export async function deleteDestination(id: string) {
+  await apiClient.delete(`/api/admin/destinations/${id}`);
+}
+
+export async function refreshDestinationsFromBookings() {
+  const { data } = await apiClient.post<{ added: number }>("/api/admin/destinations/refresh-from-bookings");
+  return data;
 }
 
 // Liste paginée des revendeurs avec filtre optionnel par statut

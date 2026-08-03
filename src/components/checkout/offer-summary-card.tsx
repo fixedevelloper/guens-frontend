@@ -9,6 +9,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { airlineLabel, formatDate, formatDateTime, formatMoney, providerLabel } from "@/lib/format";
 import { RESERVATION_FEE_AMOUNT, RESERVATION_FEE_CURRENCY } from "@/lib/api/reservation-fee";
+import { useHotelStore } from "@/store/useHotelStore";
+import { useVehicleStore } from "@/store/use-vehicle-store";
+import { usePropertyStore } from "@/store/use-property-store";
 import type { OfferSummary } from "@/lib/offer-summary";
 import type { PaymentPlanValue } from "@/components/checkout/checkout-form";
 
@@ -22,9 +25,29 @@ export function OfferSummaryCard({
   const t = useTranslations("Checkout");
   const locale = useLocale();
 
+  // The checkout URL denormalizes a price at "book now" time (see lib/checkout-url.ts), but for
+  // hotels that's the property-level search quote, not the specific room the guest actually added
+  // to the cart, and it's never scaled by quantity. The cart populated by "Ajouter" on the room/
+  // offer list is the one place holding the real unit price and quantity for what's actually being
+  // booked, so it wins over the URL's amount whenever it still has a matching line for this offer.
+  const hotelCartItem = useHotelStore((state) =>
+      offer.offerType === "HOTEL" ? state.cartItems.find((item) => item.offerId === offer.offerId) : undefined
+  );
+  const vehicleCartItem = useVehicleStore((state) =>
+      offer.offerType === "CAR_RENTAL" ? state.cartItems.find((item) => item.itemId === offer.offerId) : undefined
+  );
+  const propertyCartItem = usePropertyStore((state) =>
+      offer.offerType === "FURNISHED_RENTAL" ? state.cartItems.find((item) => item.itemId === offer.offerId) : undefined
+  );
+  const cartItem = hotelCartItem ?? vehicleCartItem ?? propertyCartItem;
+
+  const realAmount = cartItem ? cartItem.unitPrice * cartItem.quantity : Number(offer.amount);
+  const realCurrency = cartItem ? cartItem.currency : offer.currency;
+  const roomQuantity = offer.offerType === "HOTEL" ? (hotelCartItem?.quantity ?? offer.quantity) : undefined;
+
   const isPayLater = paymentPlan === "PAY_LATER";
-  const displayedAmount = isPayLater ? RESERVATION_FEE_AMOUNT : offer.amount;
-  const displayedCurrency = isPayLater ? RESERVATION_FEE_CURRENCY : offer.currency;
+  const displayedAmount = isPayLater ? RESERVATION_FEE_AMOUNT : realAmount;
+  const displayedCurrency = isPayLater ? RESERVATION_FEE_CURRENCY : realCurrency;
 
   return (
       <Card className="border-border/60 shadow-sm rounded-2xl overflow-hidden bg-slate-50/50 dark:bg-zinc-900/30 backdrop-blur-xs">
@@ -120,7 +143,7 @@ export function OfferSummaryCard({
                     <h4 className="text-sm font-bold text-foreground leading-tight">{offer.hotelName}</h4>
                     <p className="text-xs text-muted-foreground">
                       {offer.cityCode} • {offer.roomType}
-                      {offer.quantity > 1 ? ` • ${offer.quantity} chambres` : ""}
+                      {(roomQuantity ?? 1) > 1 ? ` • ${roomQuantity} chambres` : ""}
                     </p>
                   </div>
                 </div>
@@ -192,7 +215,7 @@ export function OfferSummaryCard({
                 <Clock3 className="size-3.5 shrink-0 mt-0.5" />
                 <span>
               Ce montant correspond aux frais de réservation. Le solde de{" "}
-                  <strong>{formatMoney({ amount: offer.amount, currency: offer.currency }, locale)}</strong>{" "}
+                  <strong>{formatMoney({ amount: realAmount, currency: realCurrency }, locale)}</strong>{" "}
                   sera à régler ultérieurement.
             </span>
               </div>

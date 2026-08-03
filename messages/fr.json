@@ -55,13 +55,7 @@
     "destinationsTitle": "Les Destinations Préférées de Nos Voyageurs",
     "destinationsSubtitle": "Laissez-vous guider par notre sélection de destinations incontournables au meilleur prix du marché.",
     "exploreAllFlights": "Parcourer les vols",
-    "exploreFlightsAction": "Rechercher un vol",
-    "destinationParis": "Paris, France",
-    "destinationNewYork": "New York, USA",
-    "destinationDubai": "Dubaï, Émirats Arabes Unis",
-    "destinationBali": "Bali, Indonésie",
-    "destinationTokyo": "Tokyo, Japon",
-    "destinationMarrakech": "Marrakech, Maroc"
+    "exploreFlightsAction": "Rechercher un vol"
   },
   "FlightSearch": {
     "origin": "Origine",
@@ -368,6 +362,7 @@
     "navPartners": "Partenaires",
     "navResellers": "Revendeurs",
     "navGeo": "Données Géo",
+    "navDestinations": "Destinations",
     "resellerBookings": "Mes Ventes",
     "resellerDashboard": "Tableau de bord Revendeur",
     "commissions": "Mes Commissions",

@@ -4,6 +4,7 @@ import type {
   HarmonizedFlightOffer,
   HarmonizedHotelOffer, HarmonizedPropertyOffer, HarmonizedVehicleOffer, HotelDetail,
   HotelSearchParams,
+  HotelSearchResult,
   MultiCityFlightSearchParams,
   MultiCityItinerary, PropertySearchParams,
   RoomOffer,
@@ -22,7 +23,15 @@ export async function searchMultiCityFlights(params: MultiCityFlightSearchParams
 }
 
 export async function searchHotels(params: HotelSearchParams) {
-  const { data } = await apiClient.get<HarmonizedHotelOffer[]>("/api/search/hotels", { params });
+  const { data } = await apiClient.get<HotelSearchResult>("/api/search/hotels", { params });
+  return data;
+}
+
+/** Fetches an additional page of an already-run hotel search (see {@link HotelSearchResult.searchId}). */
+export async function loadMoreHotels(searchId: string, pageNumber: number) {
+  const { data } = await apiClient.get<HarmonizedHotelOffer[]>("/api/search/hotels/load-more", {
+    params: { searchId, pageNumber },
+  });
   return data;
 }
 

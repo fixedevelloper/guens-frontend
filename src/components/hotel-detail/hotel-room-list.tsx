@@ -248,8 +248,8 @@ function RoomCard({
                                     <Link
                                         href={
                                             isReseller
-                                                ? resellerCheckoutUrlForHotel(selectedOffer, offerId)
-                                                : checkoutUrlForHotel(selectedOffer, offerId, quantity)
+                                                ? resellerCheckoutUrlForHotel(selectedOffer, offerId, room.netPrice, room.currency, quantity)
+                                                : checkoutUrlForHotel(selectedOffer, offerId, room.netPrice, room.currency, quantity)
                                         }
                                     >
                                         {t("bookNow") ?? "Réserver"}

@@ -55,13 +55,7 @@
     "destinationsTitle": "Most Popular Destinations",
     "destinationsSubtitle": "Get inspired by our curated list of top travel destinations at the best market prices.",
     "exploreAllFlights": "Explore flights",
-    "exploreFlightsAction": "Search flight",
-    "destinationParis": "Paris, France",
-    "destinationNewYork": "New York, USA",
-    "destinationDubai": "Dubai, UAE",
-    "destinationBali": "Bali, Indonesia",
-    "destinationTokyo": "Tokyo, Japan",
-    "destinationMarrakech": "Marrakech, Morocco"
+    "exploreFlightsAction": "Search flight"
   },
   "FlightSearch": {
     "origin": "Origin",
@@ -369,6 +363,7 @@
     "navPartners": "Partners",
     "navResellers": "Resellers",
     "navGeo": "Geo Data",
+    "navDestinations": "Destinations",
     "resellerBookings": "My Sales",
     "resellerDashboard": "Reseller Dashboard",
     "commissions": "My Commissions",

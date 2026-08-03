@@ -42,7 +42,18 @@ export function checkoutUrlForMultiCityItinerary(itinerary: MultiCityItinerary) 
   return `/checkout?${qs.toString()}`;
 }
 
-export function checkoutUrlForHotel(offer: HarmonizedHotelOffer, offerId: string, quantity = 1) {
+/**
+ * unitPrice/currency must be the actual selected room's price (e.g. RoomOffer.netPrice), not
+ * offer.quotes's search-level property quote - the two can be entirely different rooms/prices,
+ * and only the room actually added to the cart is what gets booked and charged.
+ */
+export function checkoutUrlForHotel(
+    offer: HarmonizedHotelOffer,
+    offerId: string,
+    unitPrice: number,
+    currency: string,
+    quantity = 1
+) {
   const quote = offer.quotes.find((q) => q.offerId === offerId) as ProviderQuote;
   const qs = new URLSearchParams({
     offerId,
@@ -53,8 +64,8 @@ export function checkoutUrlForHotel(offer: HarmonizedHotelOffer, offerId: string
     checkIn: offer.checkIn,
     checkOut: offer.checkOut,
     providerType: quote.providerType,
-    amount: String(quote.price.amount),
-    currency: quote.price.currency,
+    amount: String(unitPrice * quantity),
+    currency,
     quantity: String(quantity),
   });
   return `/checkout?${qs.toString()}`;
@@ -113,7 +124,13 @@ export function resellerCheckoutUrlForFlight(offer: HarmonizedFlightOffer, offer
   });
   return `/dashboard/reseller/flights/checkout?${qs.toString()}`;
 }
-export function resellerCheckoutUrlForHotel(offer: HarmonizedHotelOffer, offerId: string) {
+export function resellerCheckoutUrlForHotel(
+    offer: HarmonizedHotelOffer,
+    offerId: string,
+    unitPrice: number,
+    currency: string,
+    quantity = 1
+) {
   const quote = offer.quotes.find((q) => q.offerId === offerId) as ProviderQuote;
   const qs = new URLSearchParams({
     offerId,
@@ -124,8 +141,9 @@ export function resellerCheckoutUrlForHotel(offer: HarmonizedHotelOffer, offerId
     checkIn: offer.checkIn,
     checkOut: offer.checkOut,
     providerType: quote.providerType,
-    amount: String(quote.price.amount),
-    currency: quote.price.currency,
+    amount: String(unitPrice * quantity),
+    currency,
+    quantity: String(quantity),
   });
   return `/dashboard/reseller/hotels/checkout?${qs.toString()}`;
 }
