@@ -43,6 +43,7 @@ import type {
   MultiCityFlightSearchParams,
 } from "@/lib/api/types";
 import DynamicFlightLoader from "@/components/search/dynamic-flight-loader";
+import {MobileDialogSheet} from "@/app/[locale]/(public)/flights/MobileSheeet";
 
 export default function FlightsPage() {
   return (
@@ -287,8 +288,8 @@ function FlightsPageContent() {
         </div>
 
         {isMobileFilterOpen && (
-            <MobileSheet title="Filtres" onClose={closePanels}>
-              <div className="flex-1 overflow-y-auto p-5 pb-20">
+            <MobileDialogSheet title="Filtres" onOpenChange={setIsMobileFilterOpen} open={isMobileFilterOpen}>
+              <div className="flex-1 max-h-[54dvh] overflow-y-auto p-5 pb-20">
                 <FlightFilters options={filterOptions} value={filters} onChange={setFilters} />
               </div>
               <div className="absolute bottom-0 left-0 right-0 border-t bg-background/95 p-4 backdrop-blur-md">
@@ -296,19 +297,19 @@ function FlightsPageContent() {
                   Afficher les résultats ({filteredOffers.length})
                 </Button>
               </div>
-            </MobileSheet>
+            </MobileDialogSheet>
         )}
 
         {editing && (
-            <MobileSheet title="Modifier la recherche" onClose={closePanels}>
-              <div className="flex-1 overflow-y-auto p-5 pb-12">
+            <MobileDialogSheet title="Modifier la recherche"  open={editing} onOpenChange={setEditing}>
+              <div className="flex-1 max-h-[54dvh] overflow-y-auto p-5 pb-18">
                 <FlightSearchForm
                     defaultValues={params ?? undefined}
                     onSearch={handleSearch}
                     onMultiCitySearch={handleMultiCitySearch}
                 />
               </div>
-            </MobileSheet>
+            </MobileDialogSheet>
         )}
       </div>
   );
@@ -324,9 +325,10 @@ function MobileSheet({
   children: React.ReactNode;
 }) {
   return (
-      <div className="fixed inset-0 z-5000 flex items-end justify-center lg:hidden sm:items-center sm:justify-end">
+      <div className="relative z-50 lg:hidden">
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs" onClick={onClose} />
-        <div className="relative z-10 flex h-[88dvh] w-full flex-col overflow-hidden rounded-t-3xl bg-background shadow-2xl animate-in slide-in-from-bottom duration-300 sm:h-[90dvh] sm:w-[480px] sm:rounded-l-3xl sm:rounded-tr-none sm:slide-in-from-right">
+
+        <div className="relative mt-4 flex max-h-[88dvh] w-full flex-col overflow-hidden rounded-t-3xl bg-background shadow-2xl">
           <div className="flex h-14 shrink-0 items-center justify-between border-b bg-muted/30 px-5">
           <span className="text-sm font-bold uppercase tracking-wider text-foreground">
             {title}
@@ -335,7 +337,10 @@ function MobileSheet({
               <X className="size-4" />
             </Button>
           </div>
-          {children}
+
+          <div className="overflow-y-auto overscroll-contain">
+            {children}
+          </div>
         </div>
       </div>
   );

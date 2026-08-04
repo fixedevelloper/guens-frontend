@@ -1,60 +1,47 @@
-import { useEffect } from "react";
-import { X } from "lucide-react";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
 
-interface MobileSheetProps {
+export function MobileDialogSheet({
+                         title,
+                         open,
+                         onOpenChange,
+                         children,
+                     }: {
     title: string;
-    onClose: () => void;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
     children: React.ReactNode;
-}
-
-export function MobileSheet({ title, onClose, children }: MobileSheetProps) {
-    // Empêche le défilement de l'arrière-plan et gère la touche Échap
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "Escape") onClose();
-        };
-
-        document.body.style.overflow = "hidden";
-        window.addEventListener("keydown", handleKeyDown);
-
-        return () => {
-            document.body.style.overflow = "";
-            window.removeEventListener("keydown", handleKeyDown);
-        };
-    }, [onClose]);
-
+}) {
     return (
-        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:justify-end lg:hidden">
-            {/* Overlay / Backdrop */}
-            <div
-                className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
-                onClick={onClose}
-            />
-
-            {/* Conteneur principal */}
-            <div className="relative z-10 flex h-[88dvh] w-full flex-col overflow-hidden rounded-t-3xl bg-background shadow-2xl animate-in slide-in-from-bottom duration-300 sm:h-full sm:max-h-[92dvh] sm:w-[480px] sm:rounded-l-3xl sm:rounded-tr-none sm:slide-in-from-right">
-
-                {/* Tirette mobile */}
-                <div className="flex w-full justify-center pt-2.5 pb-1 sm:hidden">
-                    <div className="h-1.5 w-12 rounded-full bg-muted-foreground/20" />
-                </div>
-
-                {/* En-tête fixe */}
-                <div className="flex h-14 shrink-0 items-center justify-between border-b bg-muted/30 px-5">
-          <span className="text-sm font-bold uppercase tracking-wider text-foreground">
-            {title}
-          </span>
-                    <Button variant="ghost" size="icon" className="size-8 rounded-full" onClick={onClose}>
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent
+                showCloseButton={false}
+                className="fixed inset-x-0 bottom-0 top-auto left-0 z-50 flex max-h-[88dvh] w-full max-w-full translate-x-0 translate-y-0 flex-col gap-0 rounded-t-3xl rounded-b-none border-t p-0 shadow-2xl duration-300 data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom lg:hidden"
+            >
+                <DialogHeader className="flex h-14 shrink-0 flex-row items-center justify-between space-y-0 border-b bg-muted/30 px-5">
+                    <DialogTitle className="text-sm font-bold uppercase tracking-wider text-foreground">
+                        {title}
+                    </DialogTitle>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-8 rounded-full"
+                        onClick={() => onOpenChange(false)}
+                    >
                         <X className="size-4" />
                     </Button>
-                </div>
+                </DialogHeader>
 
-                {/* --- ZONE SCROLLABLE INTEGREE --- */}
-                <div className="flex-1 overflow-y-auto p-5 pb-12 overscroll-contain">
+                <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
                     {children}
                 </div>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 }
