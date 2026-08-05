@@ -17,3 +17,9 @@ export async function me() {
   const { data } = await apiClient.get<AuthResponse>("/api/auth/me");
   return data;
 }
+export async function requestPasswordReset(email: string): Promise<void> {
+  await apiClient.post("/api/auth/forgot-password", { email });
+}
+export async function resetPassword(token: string, newPassword: string): Promise<void> {
+    await apiClient.post("/api/auth/reset-password", { token, newPassword });
+  }

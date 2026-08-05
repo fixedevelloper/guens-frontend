@@ -30,6 +30,8 @@ interface AuthContextValue {
   login: (request: LoginRequest) => Promise<StoredProfile>;
   register: (request: RegisterRequest) => Promise<StoredProfile>;
   completeSocialLogin: (token: string) => Promise<StoredProfile>;
+  requestPasswordReset: (email: string) => Promise<void>;
+    resetPassword: (token: string, newPassword: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -102,6 +104,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(profile);
           return profile;
         },
+        async requestPasswordReset(email) {
+                   await authApi.requestPasswordReset(email);
+                 },
+          async resetPassword(token, newPassword) {
+                       await authApi.resetPassword(token, newPassword);
+                      },
         logout() {
           clearAuthSession();
           setUser(null);
