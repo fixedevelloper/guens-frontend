@@ -490,6 +490,7 @@
     "supportContact": "Contact Us",
     "supportTerms": "Terms & Conditions",
     "supportPrivacy": "Privacy Policy",
+    "cookiePreferences": "Cookie Preferences",
     "paymentTitle": "Payment Methods",
     "securePaymentLabel": "100% Secure & encrypted payment",
     "rights": "All rights reserved."
@@ -517,7 +518,22 @@
     "privacySection3Title": "3. Sharing with providers",
     "privacySection3Body": "The travel information required (name, dates, preferences) is shared with providers (Travelopro, Sabre, Travelport) only to fulfill your booking.",
     "privacySection4Title": "4. Your rights",
-    "privacySection4Body": "In accordance with applicable regulations, you have the right to access, correct, and delete your data by contacting us."
+    "privacySection4Body": "In accordance with applicable regulations, you have the right to access, correct, and delete your data by contacting us.",
+    "privacySection5Title": "5. Cookies",
+    "privacySection5Body": "We only use strictly necessary cookies today: one to keep you signed in, one to protect your account against forged requests (CSRF), and one to remember your language. None of them are used for advertising. If we ever add audience-measurement (analytics) cookies, they will only be set once you opt in via the cookie banner - you can change that choice at any time from the \"Cookie Preferences\" link in the footer."
+  },
+  "CookieConsent": {
+    "title": "We value your privacy",
+    "description": "We use strictly necessary cookies to run this site (sign-in, security, language). With your consent, we may also use analytics cookies to understand how the site is used.",
+    "privacyLinkLabel": "Learn more",
+    "acceptAll": "Accept all",
+    "rejectNonEssential": "Reject non-essential",
+    "customize": "Customize",
+    "save": "Save my choices",
+    "necessaryLabel": "Necessary",
+    "necessaryDescription": "Required for sign-in, security and language - always active.",
+    "analyticsLabel": "Analytics",
+    "analyticsDescription": "Helps us understand how the site is used. Not currently in use, but you can opt in for when it is."
   },
   "AppPromo": {
     "badge": "Mobile Application",

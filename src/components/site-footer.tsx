@@ -5,12 +5,14 @@ import { useTranslations } from "next-intl";
 import { Mail, Phone, MapPin, ShieldCheck, ArrowUpRight } from "lucide-react";
 
 import { Link } from "@/i18n/navigation";
+import { useCookieConsent } from "@/context/cookie-consent-context";
 
 const PAYMENT_BADGES = ["Visa", "Mastercard", "PayPal", "Orange Money", 'Mtn Mobile Money'];
 
 export function SiteFooter() {
   const t = useTranslations("Footer");
   const year = new Date().getFullYear();
+  const { openPreferences } = useCookieConsent();
 
   return (
       <footer className="relative w-full overflow-hidden bg-neutral-950 text-neutral-200 pb-20 sm:pb-0">
@@ -94,6 +96,11 @@ export function SiteFooter() {
                   <li><a href="mailto:contact@guenstravelandtours.com" className="inline-flex items-center gap-1 hover:text-white transition-colors group">{t("supportContact")} <ArrowUpRight className="size-3 opacity-0 group-hover:opacity-100 transition-opacity" /></a></li>
                   <li><Link href="/legal/terms" className="hover:text-white transition-colors">{t("supportTerms")}</Link></li>
                   <li><Link href="/legal/privacy" className="hover:text-white transition-colors">{t("supportPrivacy")}</Link></li>
+                  <li>
+                    <button type="button" onClick={openPreferences} className="hover:text-white transition-colors">
+                      {t("cookiePreferences")}
+                    </button>
+                  </li>
                 </ul>
               </div>
             </div>
@@ -126,6 +133,9 @@ export function SiteFooter() {
             <div className="flex items-center gap-6 font-medium">
               <Link href="/legal/terms" className="hover:text-neutral-300 transition-colors">{t("supportTerms")}</Link>
               <Link href="/legal/privacy" className="hover:text-neutral-300 transition-colors">{t("supportPrivacy")}</Link>
+              <button type="button" onClick={openPreferences} className="hover:text-neutral-300 transition-colors">
+                {t("cookiePreferences")}
+              </button>
             </div>
           </div>
 

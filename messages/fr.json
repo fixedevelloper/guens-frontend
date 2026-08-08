@@ -487,6 +487,7 @@
     "supportContact": "Nous contacter",
     "supportTerms": "Conditions Générales",
     "supportPrivacy": "Confidentialité",
+    "cookiePreferences": "Préférences cookies",
     "paymentTitle": "Modes de paiement",
     "securePaymentLabel": "Paiement 100% sécurisé et chiffré",
     "rights": "Tous droits réservés."
@@ -514,7 +515,22 @@
     "privacySection3Title": "3. Partage avec les fournisseurs",
     "privacySection3Body": "Les informations de voyage nécessaires (nom, dates, préférences) sont transmises aux fournisseurs (Travelopro, Sabre, Travelport) uniquement pour l'exécution de votre réservation.",
     "privacySection4Title": "4. Vos droits",
-    "privacySection4Body": "Conformément à la réglementation applicable, vous disposez d'un droit d'accès, de rectification et de suppression de vos données en nous contactant."
+    "privacySection4Body": "Conformément à la réglementation applicable, vous disposez d'un droit d'accès, de rectification et de suppression de vos données en nous contactant.",
+    "privacySection5Title": "5. Cookies",
+    "privacySection5Body": "Nous n'utilisons aujourd'hui que des cookies strictement nécessaires : un pour vous garder connecté, un pour protéger votre compte contre les requêtes falsifiées (CSRF), et un pour mémoriser votre langue. Aucun n'est utilisé à des fins publicitaires. Si nous ajoutons un jour des cookies de mesure d'audience (analytics), ils ne seront déposés qu'avec votre consentement via le bandeau cookies - vous pouvez modifier ce choix à tout moment depuis le lien \"Préférences cookies\" en pied de page."
+  },
+  "CookieConsent": {
+    "title": "Nous respectons votre vie privée",
+    "description": "Nous utilisons des cookies strictement nécessaires au fonctionnement du site (connexion, sécurité, langue). Avec votre accord, nous pourrions aussi utiliser des cookies de mesure d'audience.",
+    "privacyLinkLabel": "En savoir plus",
+    "acceptAll": "Tout accepter",
+    "rejectNonEssential": "Refuser le non-essentiel",
+    "customize": "Personnaliser",
+    "save": "Enregistrer mes choix",
+    "necessaryLabel": "Nécessaires",
+    "necessaryDescription": "Indispensables à la connexion, la sécurité et la langue - toujours actifs.",
+    "analyticsLabel": "Analytics",
+    "analyticsDescription": "Nous aide à comprendre l'usage du site. Pas encore utilisé, mais vous pouvez l'activer par avance."
   },
   "AppPromo": {
     "badge": "Application Mobile",

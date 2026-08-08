@@ -14,7 +14,7 @@ export default function PrivacyPage() {
     day: "numeric",
   });
 
-  const sections = [1, 2, 3, 4] as const;
+  const sections = [1, 2, 3, 4, 5] as const;
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
