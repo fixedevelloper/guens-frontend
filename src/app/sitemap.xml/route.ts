@@ -1,7 +1,6 @@
 import { routing } from "@/i18n/routing";
 import { getPathname } from "@/i18n/navigation";
-
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+import { getRequestBaseUrl } from "@/lib/site-url";
 
 type ChangeFrequency = "always" | "hourly" | "daily" | "weekly" | "monthly" | "yearly" | "never";
 
@@ -32,15 +31,15 @@ function escapeXml(value: string): string {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-function buildSitemapXml(): string {
+function buildSitemapXml(baseUrl: string): string {
   const lastModified = new Date().toISOString();
 
   const urls = ROUTES.map(({ href, changeFrequency, priority }) => {
-    const loc = `${BASE_URL}${getPathname({ locale: routing.defaultLocale, href })}`;
+    const loc = `${baseUrl}${getPathname({ locale: routing.defaultLocale, href })}`;
     const alternates = [
       ...routing.locales.map(
           (locale) =>
-              `<xhtml:link rel="alternate" hreflang="${locale}" href="${escapeXml(`${BASE_URL}${getPathname({ locale, href })}`)}" />`
+              `<xhtml:link rel="alternate" hreflang="${locale}" href="${escapeXml(`${baseUrl}${getPathname({ locale, href })}`)}" />`
       ),
       `<xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(loc)}" />`,
     ].join("\n");
@@ -65,8 +64,9 @@ ${urls}
 </urlset>`;
 }
 
-export function GET() {
-  return new Response(buildSitemapXml(), {
+export function GET(request: Request) {
+  const baseUrl = getRequestBaseUrl(request.headers);
+  return new Response(buildSitemapXml(baseUrl), {
     headers: {
       "Content-Type": "application/xml",
       "Cache-Control": "public, max-age=0, must-revalidate",
