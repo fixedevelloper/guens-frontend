@@ -23,6 +23,11 @@
     "more": "Plus",
     "services": "Nos services"
   },
+  "Notifications": {
+    "title": "Notifications",
+    "markAllRead": "Tout marquer comme lu",
+    "empty": "Aucune notification pour le moment"
+  },
 "Home": {
   "badgeFlights": "Réservation de Vols au Meilleur Tarif",
     "badgeHotels": "Réservation d'Hôtels & Hébergements",
@@ -717,7 +722,10 @@
         "free": "100% Gratuit",
         "noSpam": "Aucun spam",
         "placeholder": "Entrez votre adresse email...",
-        "button": "Créer mon alerte prix"
+        "button": "Créer mon alerte prix",
+        "subscribing": "Inscription...",
+        "success": "Vous êtes inscrit(e) ! Surveillez votre boîte mail.",
+        "error": "Une erreur est survenue, veuillez réessayer."
       },
       "hotels": {
         "badge": "Réductions exclusives & Ventes flash",
@@ -726,7 +734,10 @@
         "negotiated": "Offres négociées",
         "easyUnsubscribe": "Désinscription facile",
         "placeholder": "Votre adresse email...",
-        "button": "Activer les alertes hôtel"
+        "button": "Activer les alertes hôtel",
+        "subscribing": "Inscription...",
+        "success": "Vous êtes inscrit(e) ! Surveillez votre boîte mail.",
+        "error": "Une erreur est survenue, veuillez réessayer."
       }
     },
   "BecomeHost": {

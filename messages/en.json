@@ -23,6 +23,11 @@
     "more": "More",
     "services": "Our Services"
   },
+  "Notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark all read",
+    "empty": "No notifications yet"
+  },
  "Home": {
    "badgeFlights": "Best Rate Flight Booking",
     "badgeHotels": "Hotel & Accommodation Booking",
@@ -714,7 +719,10 @@
         "free": "100% Free",
         "noSpam": "No spam",
         "placeholder": "Enter your email address...",
-        "button": "Create my price alert"
+        "button": "Create my price alert",
+        "subscribing": "Subscribing...",
+        "success": "You're subscribed! Watch your inbox for deals.",
+        "error": "Something went wrong, please try again."
       },
       "hotels": {
         "badge": "Exclusive discounts & Flash sales",
@@ -723,7 +731,10 @@
         "negotiated": "Negotiated rates",
         "easyUnsubscribe": "Easy unsubscribe",
         "placeholder": "Your email address...",
-        "button": "Activate hotel alerts"
+        "button": "Activate hotel alerts",
+        "subscribing": "Subscribing...",
+        "success": "You're subscribed! Watch your inbox for deals.",
+        "error": "Something went wrong, please try again."
       }
     },
   "BecomeHost": {

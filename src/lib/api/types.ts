@@ -416,7 +416,8 @@ export interface RegisterRequest {
 }
 
 export interface AuthResponse {
-  token: string;
+  /** Always null now - the JWT travels only as an HttpOnly cookie, never in the response body. */
+  token: string | null;
   tokenType: string;
   email: string;
   fullName: string;

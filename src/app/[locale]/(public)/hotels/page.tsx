@@ -10,11 +10,6 @@ import {
   Search,
   Sparkles,
   X,
-  Mail,
-  Bell,
-  CheckCircle2,
-  ShieldCheck,
-  Building2,
   Loader2,
   ChevronDown
 } from "lucide-react";
@@ -28,6 +23,7 @@ import { HotelSearchForm } from "@/components/search/hotel-search-form";
 import { HotelResultsList } from "@/components/search/hotel-results";
 import { HotelFilters } from "@/components/search/hotel-filters";
 import { HotelMap } from "@/components/search/hotel-map";
+import { NewsletterSignup } from "@/components/newsletter-signup";
 import { useHotelSearchWithLoadMore } from "@/hooks/use-search";
 import { hotelSearchParamsToQuery, parseHotelSearchParams } from "@/lib/search-params";
 import { DEFAULT_HOTEL_FILTERS, computeHotelFilterOptions, filterHotelOffers } from "@/lib/filters";
@@ -51,7 +47,6 @@ export default function HotelsPage() {
 
 function HotelsPageContent() {
   const t = useTranslations("SearchResults");
-  const tCta = useTranslations("Cta.hotels");
   const tFilters = useTranslations("Filters");
   const locale = useLocale();
   const searchParams = useSearchParams();
@@ -279,59 +274,7 @@ function HotelsPageContent() {
         )}
 
         {/* CALL TO ACTION : ALERTES HÔTELS & TARIFS SECRETS (Couleurs #15a4e6 et #7bcd4f) */}
-        {/* CALL TO ACTION : ALERTE HÔTELS */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#15a4e6] via-[#128bc3] to-[#0c6b99] p-6 sm:p-10 text-white shadow-xl mt-8">
-          <div className="absolute -top-20 -right-20 size-72 rounded-full bg-[#7bcd4f]/30 blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-20 -left-20 size-72 rounded-full bg-[#7bcd4f]/20 blur-3xl pointer-events-none" />
-
-          <div className="relative z-10 grid gap-8 lg:grid-cols-12 lg:items-center">
-            <div className="lg:col-span-7 space-y-3.5 text-center sm:text-left">
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/15 border border-white/20 px-3.5 py-1 text-xs font-bold text-white backdrop-blur-md">
-                <Building2 className="size-3.5 text-[#7bcd4f]" />
-                <span>{tCta("badge")}</span>
-              </div>
-
-              <h2 className="text-2xl font-black tracking-tight sm:text-3xl lg:text-4xl leading-tight">
-                {tCta("title")}
-              </h2>
-
-              <p className="text-white/90 text-sm sm:text-base max-w-xl leading-relaxed">
-                {tCta("description")}
-              </p>
-
-              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 pt-2 text-xs font-semibold text-white/95">
-                <div className="flex items-center gap-1.5 bg-black/10 rounded-lg px-2.5 py-1 backdrop-blur-xs">
-                  <CheckCircle2 className="size-4 text-[#7bcd4f]" />
-                  <span>{tCta("negotiated")}</span>
-                </div>
-                <div className="flex items-center gap-1.5 bg-black/10 rounded-lg px-2.5 py-1 backdrop-blur-xs">
-                  <ShieldCheck className="size-4 text-[#7bcd4f]" />
-                  <span>{tCta("easyUnsubscribe")}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="lg:col-span-5">
-              <form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-3 bg-white/10 p-3 sm:p-4 rounded-2xl backdrop-blur-md border border-white/20 shadow-inner">
-                <div className="relative">
-                  <Mail className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-white/70" />
-                  <input
-                      type="email"
-                      placeholder={tCta("placeholder")}
-                      className="w-full rounded-xl bg-white/15 pl-10 pr-4 py-3 text-sm text-white placeholder:text-white/70 focus:outline-none focus:ring-2 focus:ring-[#7bcd4f] border border-white/10 transition-all"
-                  />
-                </div>
-                <Button
-                    type="submit"
-                    className="w-full rounded-xl bg-[#7bcd4f] hover:bg-[#6ebd44] py-6 font-bold text-slate-950 active:scale-95 shadow-lg shadow-[#7bcd4f]/25 transition-all duration-200"
-                >
-                  <Bell className="mr-2 size-4" />
-                  {tCta("button")}
-                </Button>
-              </form>
-            </div>
-          </div>
-        </div>
+        <NewsletterSignup source="HOTEL_PAGE" variant="hotels" />
       </div>
   );
 }

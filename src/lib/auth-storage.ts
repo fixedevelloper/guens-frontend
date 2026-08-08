@@ -1,7 +1,8 @@
-// Thin localStorage wrapper for the JWT + user profile. Kept separate from AuthContext so
-// the axios client (which has no React context) can read the token synchronously too.
+// Thin localStorage wrapper for the user profile shown in the UI. The JWT itself never touches
+// this file (or any other JS-reachable storage): it lives only in the HttpOnly `gt_auth` cookie
+// the backend sets on login/register/OAuth2 (see AuthCookieService), so an XSS payload has
+// nothing to read here that would let it impersonate the user against the API.
 
-const TOKEN_KEY = "guentours.token";
 const PROFILE_KEY = "guentours.profile";
 
 export type UserRole =
@@ -24,18 +25,6 @@ export interface StoredProfile {
   resellerId?: string; // 👈 (Optionnel mais recommandé si présent dans le JWT/Session)
 }
 
-export function getStoredToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return window.localStorage.getItem(TOKEN_KEY);
-}
-
-/** Stores the token alone, ahead of knowing the full profile - used right after a social login
- *  redirect, so the very next API call (fetching the profile) already carries it as a Bearer token. */
-export function setStoredToken(token: string) {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(TOKEN_KEY, token);
-}
-
 export function getStoredProfile(): StoredProfile | null {
   if (typeof window === "undefined") return null;
   const raw = window.localStorage.getItem(PROFILE_KEY);
@@ -47,13 +36,14 @@ export function getStoredProfile(): StoredProfile | null {
   }
 }
 
-export function saveAuthSession(token: string, profile: StoredProfile) {
-  window.localStorage.setItem(TOKEN_KEY, token);
+/** Caches the profile for instant UI rendering on next load. Not a credential by itself - actual
+ *  access is always re-checked against the HttpOnly auth cookie on every API call. */
+export function saveProfile(profile: StoredProfile) {
+  if (typeof window === "undefined") return;
   window.localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
 }
 
-export function clearAuthSession() {
+export function clearProfile() {
   if (typeof window === "undefined") return;
-  window.localStorage.removeItem(TOKEN_KEY);
   window.localStorage.removeItem(PROFILE_KEY);
 }

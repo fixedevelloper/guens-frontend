@@ -18,9 +18,9 @@ const PARTNER_ROLES = [
 
 /**
  * Landing page for the Google/Facebook login redirect: the backend (OAuth2LoginSuccessHandler)
- * sends the browser here with either ?token=... (success) or ?error=... (denied/failed). Only
- * the token travels over the URL - the rest of the profile is fetched via completeSocialLogin,
- * exactly like the tail end of a classic email/password login.
+ * already set the HttpOnly auth cookie before sending the browser here, with only ?error=...
+ * appended on denial/failure - nothing sensitive travels over the URL. The profile is fetched via
+ * completeSocialLogin, exactly like the tail end of a classic email/password login.
  */
 export default function SocialLoginCallbackPage() {
   return (
@@ -42,19 +42,14 @@ function SocialLoginCallbackContent() {
     if (ranOnce.current) return;
     ranOnce.current = true;
 
-    const token = searchParams.get("token");
     const providerError = searchParams.get("error");
 
     if (providerError) {
       setError(providerError);
       return;
     }
-    if (!token) {
-      setError(t("socialLoginFailed"));
-      return;
-    }
 
-    completeSocialLogin(token)
+    completeSocialLogin()
         .then((profile) => {
           if (profile.role === "ADMIN") {
             router.replace("/admin");

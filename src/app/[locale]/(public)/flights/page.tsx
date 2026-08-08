@@ -11,12 +11,7 @@ import {
   Calendar,
   Users,
   Filter,
-  PlaneTakeoff,
-  Sparkles,
-  Mail,
-  Bell,
-  CheckCircle2,
-  ShieldCheck
+  PlaneTakeoff
 } from "lucide-react";
 
 import { useRouter } from "@/i18n/navigation";
@@ -26,6 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { FlightSearchForm } from "@/components/search/flight-search-form";
 import { FlightResultsList } from "@/components/search/flight-results";
 import { FlightFilters } from "@/components/search/flight-filters";
+import { NewsletterSignup } from "@/components/newsletter-signup";
 import { useFlightSearch } from "@/hooks/use-search";
 import { useFlightStore } from "@/store/useFlightStore";
 import {
@@ -66,7 +62,6 @@ export default function FlightsPage() {
 
 function FlightsPageContent() {
   const t = useTranslations("SearchResults");
-  const tCta = useTranslations("Cta.flights");
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -246,45 +241,7 @@ function FlightsPageContent() {
               </div>
           )}
 
-          <div className="relative mt-12 overflow-hidden rounded-3xl bg-gradient-to-br from-[#15a4e6] via-[#128bc3] to-[#0c6b99] p-6 text-white shadow-xl sm:p-8 lg:p-10">
-            <div className="relative z-10 grid gap-6 lg:grid-cols-12 lg:items-center">
-              <div className="space-y-3 text-center lg:col-span-7 lg:text-left">
-                <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/15 px-3.5 py-1 text-xs font-bold backdrop-blur-md">
-                  <Sparkles className="size-3.5 text-[#7bcd4f]" />
-                  <span>{tCta("badge")}</span>
-                </div>
-                <h2 className="text-xl font-black leading-tight sm:text-3xl lg:text-4xl">
-                  {tCta("title")}
-                </h2>
-                <p className="max-w-xl text-xs text-white/90 sm:text-sm lg:text-base">
-                  {tCta("description")}
-                </p>
-              </div>
-
-              <div className="lg:col-span-5">
-                <form
-                    onSubmit={(e) => e.preventDefault()}
-                    className="flex flex-col gap-3 rounded-2xl border border-white/20 bg-white/10 p-3 shadow-inner backdrop-blur-md sm:p-4"
-                >
-                  <div className="relative">
-                    <Mail className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-white/70" />
-                    <input
-                        type="email"
-                        placeholder={tCta("placeholder")}
-                        className="w-full rounded-xl border border-white/10 bg-white/15 py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-white/70 focus:outline-none"
-                    />
-                  </div>
-                  <Button
-                      type="submit"
-                      className="w-full rounded-xl bg-[#7bcd4f] py-5 font-bold text-slate-950 shadow-lg transition-all active:scale-95 hover:bg-[#6ebd44]"
-                  >
-                    <Bell className="mr-2 size-4" />
-                    {tCta("button")}
-                  </Button>
-                </form>
-              </div>
-            </div>
-          </div>
+          <NewsletterSignup source="FLIGHT_PAGE" variant="flights" />
         </div>
 
         {isMobileFilterOpen && (

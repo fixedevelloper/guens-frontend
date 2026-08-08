@@ -19,6 +19,7 @@ import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { useAuth } from "@/context/auth-context";
 import { Button } from "@/components/ui/button";
+import { NotificationBell } from "@/components/notification-bell";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -175,6 +176,9 @@ export function SiteHeader() {
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {/* Notifications */}
+            {isAuthenticated && <NotificationBell />}
 
             {/* Profil ou Connexion */}
             <div className="hidden sm:flex items-center gap-2">
