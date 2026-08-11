@@ -1,7 +1,6 @@
 "use client";
 
-import React from "react";
-import { useQuery } from "@tanstack/react-query";
+import React, { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   LayoutDashboard,
@@ -19,65 +18,73 @@ import {
 } from "lucide-react";
 
 import { Link, useRouter } from "@/i18n/navigation";
-import { ResellerBookingResponse, ResellerBookingsTable } from "@/components/dashboard/ResellerBookingsTable";
+import { ResellerBookingsTable } from "@/components/dashboard/ResellerBookingsTable";
+import { useAuth } from "@/context/auth-context";
+import {
+  useMyResellerBalanceQuery,
+  useMyResellerBookingsQuery,
+  useMyResellerCommissionsQuery,
+  useResellerProfileQuery,
+} from "@/hooks/use-rellers-queries";
 
-
-// Interface des données de synthèse Dashboard Revendeur
-interface ResellerDashboardOverview {
-  walletBalance: number;
-  totalCommissions: number;
-  pendingCommissions: number;
-  totalSalesVolume: number;
-  totalBookingsCount: number;
-  totalCustomersCount: number;
-  currency: string;
-  resellerCode: string;
-  recentBookings: ResellerBookingResponse[];
-}
-
-// Fonction de récupération des données
-async function fetchResellerOverview(): Promise<ResellerDashboardOverview> {
-  const response = await fetch("/api/v1/reseller/overview", {
-    headers: { "Content-Type": "application/json" },
-  });
-
-  if (!response.ok) {
-    throw new Error("Erreur lors de la récupération du tableau de bord");
-  }
-
-  return response.json();
-}
+// Il n'existe aucun endpoint d'agrégation "/overview" côté Spring - cette page compose sa vue
+// d'ensemble à partir des endpoints réels et sécurisés (profil, solde, ventes, commissions),
+// plutôt que d'appeler un /api/v1/reseller/overview qui n'a jamais existé.
+const SAMPLE_SIZE = 50;
 
 export default function ResellerDashboardPage() {
   const t = useTranslations("Dashboard");
   const router = useRouter();
+  const { user } = useAuth();
+  const resellerId = user?.resellerId;
   const [copied, setCopied] = React.useState(false);
 
-  // Requete TanStack Query
-  const {
-    data: overview,
-    isLoading,
-    isFetching,
-    refetch,
-  } = useQuery<ResellerDashboardOverview>({
-    queryKey: ["reseller-overview"],
-    queryFn: fetchResellerOverview,
-    staleTime: 1000 * 60 * 5, // Cache 5 min
-  });
+  const { data: profile, isLoading: isProfileLoading, isFetching: isProfileFetching, refetch: refetchProfile } =
+    useResellerProfileQuery(resellerId);
+  const { data: balance, isLoading: isBalanceLoading, refetch: refetchBalance } = useMyResellerBalanceQuery(resellerId);
+  const { data: bookingsPage, isLoading: isBookingsLoading, refetch: refetchBookings } =
+    useMyResellerBookingsQuery(resellerId, 0, SAMPLE_SIZE);
+  const { data: commissionsPage, isLoading: isCommissionsLoading, refetch: refetchCommissions } =
+    useMyResellerCommissionsQuery(resellerId, 0, SAMPLE_SIZE);
 
-  // Copier le code ou lien d'affiliation
+  const isLoading = isProfileLoading || isBalanceLoading || isBookingsLoading || isCommissionsLoading;
+  const isFetching = isProfileFetching;
+
+  const bookings = bookingsPage?.content ?? [];
+  const commissions = commissionsPage?.content ?? [];
+
+  const currency = bookings[0]?.currency || commissions[0]?.currency || "XAF";
+  const totalCommissions = useMemo(
+    () => commissions.filter((c) => c.status === "AVAILABLE" || c.status === "PAID").reduce((s, c) => s + c.amount, 0),
+    [commissions]
+  );
+  const pendingCommissions = useMemo(
+    () => commissions.filter((c) => c.status === "PENDING").reduce((s, c) => s + c.amount, 0),
+    [commissions]
+  );
+  const totalSalesVolume = useMemo(() => bookings.reduce((s, b) => s + (b.totalAmount || 0), 0), [bookings]);
+  const totalCustomersCount = useMemo(() => new Set(bookings.map((b) => b.contactEmail)).size, [bookings]);
+  const recentBookings = bookings.slice(0, 5);
+
+  const refetch = () => {
+    refetchProfile();
+    refetchBalance();
+    refetchBookings();
+    refetchCommissions();
+  };
+
   const handleCopyCode = () => {
-    if (overview?.resellerCode) {
-      navigator.clipboard.writeText(overview.resellerCode);
+    if (profile?.promoCode) {
+      navigator.clipboard.writeText(profile.promoCode);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
   };
 
-  const formatCurrency = (amount: number = 0, currency: string = "XAF") => {
+  const formatCurrency = (amount: number = 0, curr: string = "XAF") => {
     return new Intl.NumberFormat("fr-FR", {
       style: "currency",
-      currency: currency,
+      currency: curr,
       maximumFractionDigits: 0,
     }).format(amount);
   };
@@ -104,11 +111,11 @@ export default function ResellerDashboardPage() {
 
         {/* Boutons d'action rapide / Code Apporteur */}
         <div className="flex items-center gap-3">
-          {overview?.resellerCode && (
+          {profile?.promoCode && (
             <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
               <span className="text-xs text-slate-500">Code:</span>
               <span className="font-mono text-xs font-bold text-slate-800 dark:text-slate-200">
-                {overview.resellerCode}
+                {profile.promoCode}
               </span>
               <button
                 onClick={handleCopyCode}
@@ -121,7 +128,7 @@ export default function ResellerDashboardPage() {
           )}
 
           <button
-            onClick={() => refetch()}
+            onClick={refetch}
             disabled={isFetching}
             className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white p-2 text-slate-600 shadow-sm hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 disabled:opacity-50"
           >
@@ -169,7 +176,7 @@ export default function ResellerDashboardPage() {
             </div>
           </div>
           <div className="mt-3 text-2xl font-bold text-slate-900 dark:text-slate-100">
-            {isLoading ? "---" : formatCurrency(overview?.walletBalance, overview?.currency)}
+            {isLoading ? "---" : formatCurrency(balance?.withdrawableBalance, currency)}
           </div>
           <div className="mt-3 flex items-center justify-between text-xs border-t border-slate-100 pt-3 dark:border-slate-800">
             <span className="text-slate-500">Portefeuille Revendeur</span>
@@ -188,11 +195,11 @@ export default function ResellerDashboardPage() {
             </div>
           </div>
           <div className="mt-3 text-2xl font-bold text-slate-900 dark:text-slate-100">
-            {isLoading ? "---" : formatCurrency(overview?.totalCommissions, overview?.currency)}
+            {isLoading ? "---" : formatCurrency(totalCommissions, currency)}
           </div>
           <div className="mt-3 flex items-center justify-between text-xs border-t border-slate-100 pt-3 dark:border-slate-800">
             <span className="text-amber-600 font-medium dark:text-amber-400">
-              {formatCurrency(overview?.pendingCommissions, overview?.currency)} en attente
+              {formatCurrency(pendingCommissions, currency)} en attente
             </span>
             <Link href="/dashboard/reseller/commissions" className="flex items-center gap-0.5 font-medium text-blue-600 hover:underline dark:text-blue-400">
               Détails <ArrowUpRight className="h-3 w-3" />
@@ -209,10 +216,10 @@ export default function ResellerDashboardPage() {
             </div>
           </div>
           <div className="mt-3 text-2xl font-bold text-slate-900 dark:text-slate-100">
-            {isLoading ? "---" : formatCurrency(overview?.totalSalesVolume, overview?.currency)}
+            {isLoading ? "---" : formatCurrency(totalSalesVolume, currency)}
           </div>
           <div className="mt-3 flex items-center justify-between text-xs border-t border-slate-100 pt-3 dark:border-slate-800">
-            <span className="text-slate-500">{overview?.totalBookingsCount ?? 0} commandes totales</span>
+            <span className="text-slate-500">{bookingsPage?.totalElements ?? 0} commandes totales</span>
             <Link href="/dashboard/reseller/bookings" className="flex items-center gap-0.5 font-medium text-blue-600 hover:underline dark:text-blue-400">
               Voir tout <ArrowUpRight className="h-3 w-3" />
             </Link>
@@ -228,10 +235,10 @@ export default function ResellerDashboardPage() {
             </div>
           </div>
           <div className="mt-3 text-2xl font-bold text-slate-900 dark:text-slate-100">
-            {isLoading ? "---" : overview?.totalCustomersCount ?? 0}
+            {isLoading ? "---" : totalCustomersCount}
           </div>
           <div className="mt-3 flex items-center justify-between text-xs border-t border-slate-100 pt-3 dark:border-slate-800">
-            <span className="text-slate-500">Clients rattachés</span>
+            <span className="text-slate-500">Sur vos {bookings.length} dernières ventes</span>
           </div>
         </div>
       </div>
@@ -257,8 +264,8 @@ export default function ResellerDashboardPage() {
         </div>
 
         <ResellerBookingsTable
-          bookings={overview?.recentBookings ?? []}
-          isLoading={isLoading}
+          bookings={recentBookings}
+          isLoading={isBookingsLoading}
           onViewDetails={(id) => router.push(`/dashboard/bookings/${id}`)}
         />
       </div>

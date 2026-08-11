@@ -1,6 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
-import { getTicketsForBooking } from "@/lib/api/tickets";
+import { getTicketsForBooking, sendTicketByEmail } from "@/lib/api/tickets";
 
 /**
  * Ticket rows are written asynchronously right after the booking flips to CONFIRMED (a Spring
@@ -14,5 +14,12 @@ export function useTicketsQuery(bookingId: string | null, enabled: boolean) {
     queryFn: () => getTicketsForBooking(bookingId as string),
     enabled: enabled && bookingId !== null,
     refetchInterval: (query) => (query.state.data && query.state.data.length > 0 ? false : 2000),
+  });
+}
+
+export function useSendTicketByEmailMutation() {
+  return useMutation({
+    mutationFn: ({ ticketId, recipientEmail }: { ticketId: string; recipientEmail?: string }) =>
+      sendTicketByEmail(ticketId, recipientEmail),
   });
 }

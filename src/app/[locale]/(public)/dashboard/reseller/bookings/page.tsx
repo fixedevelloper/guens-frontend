@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import {
   ShoppingBag,
@@ -15,57 +14,46 @@ import {
 } from "lucide-react";
 
 import { useRouter } from "@/i18n/navigation";
-import { ResellerBookingResponse, ResellerBookingsTable } from "@/components/dashboard/ResellerBookingsTable";
+import { ResellerBookingsTable } from "@/components/dashboard/ResellerBookingsTable";
+import { useAuth } from "@/context/auth-context";
+import { useMyResellerBookingsQuery } from "@/hooks/use-rellers-queries";
 
-
-// Type des filtres d'API
-interface BookingFilters {
-  search: string;
-  status: string;
-  offerType: string;
-}
-
-// Fonction de fetch API
-async function fetchResellerBookings(filters: BookingFilters): Promise<ResellerBookingResponse[]> {
-  const searchParams = new URLSearchParams();
-  if (filters.search) searchParams.set("search", filters.search);
-  if (filters.status && filters.status !== "ALL") searchParams.set("status", filters.status);
-  if (filters.offerType && filters.offerType !== "ALL") searchParams.set("offerType", filters.offerType);
-
-  const response = await fetch(`/api/v1/reseller/bookings?${searchParams.toString()}`, {
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error("Impossible de charger l'historique des ventes");
-  }
-
-  return response.json();
-}
+// Le back-end ne supporte pas encore de recherche/filtre côté serveur sur cet endpoint - on
+// récupère une page large et on filtre côté client, plutôt que d'appeler un /api/v1/reseller/...
+// qui n'existe nulle part (ni route Next.js, ni endpoint Spring).
+const PAGE_SIZE = 100;
 
 export default function ResellerBookingsPage() {
   const t = useTranslations("Dashboard");
   const router = useRouter();
+  const { user } = useAuth();
 
   // États locaux des filtres
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [offerTypeFilter, setOfferTypeFilter] = useState<string>("ALL");
 
-  // Requête TanStack Query
   const {
-    data: bookings = [],
+    data: page,
     isLoading,
     isFetching,
     error,
     refetch,
-  } = useQuery<ResellerBookingResponse[]>({
-    queryKey: ["reseller-bookings", { search, status: statusFilter, offerType: offerTypeFilter }],
-    queryFn: () => fetchResellerBookings({ search, status: statusFilter, offerType: offerTypeFilter }),
-    staleTime: 1000 * 60 * 2, // Cache valide pendant 2 minutes
-  });
+  } = useMyResellerBookingsQuery(user?.resellerId, 0, PAGE_SIZE);
+
+  const allBookings = useMemo(() => page?.content ?? [], [page]);
+
+  const bookings = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return allBookings.filter((b) => {
+      if (statusFilter !== "ALL" && b.status !== statusFilter) return false;
+      if (offerTypeFilter !== "ALL" && b.offerType !== offerTypeFilter) return false;
+      if (term && !b.contactEmail.toLowerCase().includes(term) && !(b.pnrCode ?? "").toLowerCase().includes(term)) {
+        return false;
+      }
+      return true;
+    });
+  }, [allBookings, search, statusFilter, offerTypeFilter]);
 
   // Navigation vers le détail de la réservation
   const handleViewDetails = (bookingId: string) => {

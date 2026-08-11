@@ -33,6 +33,18 @@ export async function generateMetadata({
     return {
         title: t("title"),
         description: t("description"),
+        // Unlike sitemap.xml/robots.ts (which read the incoming request's Host header instead,
+        // see src/lib/site-url.ts), this stays a NEXT_PUBLIC_ build-time constant on purpose:
+        // deriving it from the request would force every page under this layout into dynamic
+        // (per-request) rendering, losing static generation site-wide, for a value that (today)
+        // resolves nothing - no page sets a relative openGraph/twitter image or URL yet. Because
+        // NEXT_PUBLIC_ vars are inlined at `next build` time, NOT read at server start: set the
+        // real production domain in NEXT_PUBLIC_APP_URL wherever `next build` actually runs for
+        // this app, THEN build/deploy - changing it after the fact (e.g. only in the running
+        // container's env) has no effect until the next rebuild. Note: .github/workflows/deploy.yml
+        // currently only builds/deploys the Spring Boot backend Docker image - the frontend build
+        // step lives outside this repo's CI, so make sure NEXT_PUBLIC_APP_URL is set correctly
+        // wherever that happens.
         metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
     };
 }

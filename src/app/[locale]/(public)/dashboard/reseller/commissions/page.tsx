@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import {
   BadgePercent,
@@ -15,95 +14,60 @@ import {
   Percent,
   Download,
   AlertCircle,
-  Plane,
-  Building2,
 } from "lucide-react";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/context/auth-context";
+import { useMyResellerCommissionsQuery, useResellerProfileQuery } from "@/hooks/use-rellers-queries";
+import type { ResellerCommissionEntry } from "@/lib/api/types";
 
-// --- Types ---
-export type CommissionStatus = "PENDING" | "AVAILABLE" | "PAID" | "CANCELLED";
-
-export interface ResellerCommissionRate {
-  flightCommissionType: "PERCENTAGE" | "FIXED";
-  flightCommissionValue: number;
-  hotelCommissionType: "PERCENTAGE" | "FIXED";
-  hotelCommissionValue: number;
-}
-
-export interface CommissionItem {
-  id: string;
-  bookingReference: string;
-  offerType: "FLIGHT" | "HOTEL";
-  customerName: string;
-  bookingAmount: number;
-  commissionAmount: number;
-  commissionRate: string; // Ex: "5%" ou "2000 XAF"
-  currency: string;
-  status: CommissionStatus;
-  createdAt: string;
-  maturedAt?: string; // Date à laquelle la commission passe de PENDING à AVAILABLE
-}
-
-export interface CommissionsDataResponse {
-  rates: ResellerCommissionRate;
-  summary: {
-    totalEarned: number;
-    totalPending: number;
-    totalAvailable: number;
-    currency: string;
-  };
-  items: CommissionItem[];
-}
-
-// --- API Fetcher ---
-async function fetchCommissionsData(statusFilter: string): Promise<CommissionsDataResponse> {
-  const params = new URLSearchParams();
-  if (statusFilter && statusFilter !== "ALL") {
-    params.set("status", statusFilter);
-  }
-
-  const res = await fetch(`/api/v1/reseller/commissions?${params.toString()}`, {
-    headers: { "Content-Type": "application/json" },
-  });
-
-  if (!res.ok) {
-    throw new Error("Impossible de récupérer les détails des commissions.");
-  }
-
-  return res.json();
-}
+// Le back-end ne renvoie ni référence de réservation lisible, ni nom client, ni montant de
+// vente sur une commission (voir ResellerCommissionResponse) - uniquement id/bookingId/amount/
+// currency/status/createdAt. On affiche donc ce qui existe réellement plutôt que des colonnes
+// vides ; le taux affiché est le taux global du compte (Reseller.commissionRate), pas un
+// barème par produit qui n'existe pas côté serveur.
+const PAGE_SIZE = 100;
 
 export default function ResellerCommissionsPage() {
   const t = useTranslations("Dashboard");
+  const { user } = useAuth();
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [searchTerm, setSearchTerm] = useState<string>("");
 
-  // TanStack Query
   const {
-    data,
+    data: profile,
+    isLoading: isProfileLoading,
+  } = useResellerProfileQuery(user?.resellerId);
+
+  const {
+    data: page,
     isLoading,
     isFetching,
     refetch,
     error,
-  } = useQuery<CommissionsDataResponse>({
-    queryKey: ["reseller-commissions", statusFilter],
-    queryFn: () => fetchCommissionsData(statusFilter),
-    staleTime: 1000 * 60 * 3, // Cache de 3 minutes
-  });
+  } = useMyResellerCommissionsQuery(user?.resellerId, 0, PAGE_SIZE);
 
-  // Filtrage côté client pour la recherche PNR/Nom Client
+  const items = page?.content ?? [];
+
   const filteredItems = useMemo(() => {
-    if (!data?.items) return [];
-    if (!searchTerm.trim()) return data.items;
+    return items.filter((item) => {
+      if (statusFilter !== "ALL" && item.status !== statusFilter) return false;
+      if (searchTerm.trim() && !item.bookingId.toLowerCase().includes(searchTerm.trim().toLowerCase())) return false;
+      return true;
+    });
+  }, [items, statusFilter, searchTerm]);
 
-    const term = searchTerm.toLowerCase();
-    return data.items.filter(
-      (item) =>
-        item.bookingReference.toLowerCase().includes(term) ||
-        item.customerName.toLowerCase().includes(term)
-    );
-  }, [data?.items, searchTerm]);
+  const summary = useMemo(() => {
+    const currency = items[0]?.currency || "XAF";
+    const sum = (predicate: (i: ResellerCommissionEntry) => boolean) =>
+      items.filter(predicate).reduce((acc, i) => acc + i.amount, 0);
+    return {
+      totalEarned: sum((i) => i.status === "AVAILABLE" || i.status === "PAID"),
+      totalAvailable: sum((i) => i.status === "AVAILABLE"),
+      totalPending: sum((i) => i.status === "PENDING"),
+      currency,
+    };
+  }, [items]);
 
   const formatCurrency = (val: number = 0, curr: string = "XAF") => {
     return new Intl.NumberFormat("fr-FR", {
@@ -113,16 +77,12 @@ export default function ResellerCommissionsPage() {
     }).format(val);
   };
 
-  // Exporter en CSV
   const handleExportCSV = () => {
     if (!filteredItems.length) return;
 
-    const headers = "Référence,Type,Client,Montant Vente,Commission,Taux,Statut,Date\n";
+    const headers = "Réservation,Commission,Statut,Date\n";
     const rows = filteredItems
-      .map(
-        (i) =>
-          `"${i.bookingReference}","${i.offerType}","${i.customerName}",${i.bookingAmount},${i.commissionAmount},"${i.commissionRate}","${i.status}","${i.createdAt}"`
-      )
+      .map((i) => `"${i.bookingId}",${i.amount},"${i.status}","${i.createdAt}"`)
       .join("\n");
 
     const blob = new Blob([headers + rows], { type: "text/csv;charset=utf-8;" });
@@ -148,7 +108,7 @@ export default function ResellerCommissionsPage() {
               {t("commissions") ?? "Mes Commissions"}
             </h1>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Visualisez vos taux négociés et le suivi de vos commissions générées
+              Suivez vos commissions générées, par réservation
             </p>
           </div>
         </div>
@@ -174,45 +134,22 @@ export default function ResellerCommissionsPage() {
         </div>
       </div>
 
-      {/* Barème de commission actuel */}
+      {/* Taux de commission du compte */}
       <div className="rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50/60 to-blue-50/60 p-5 shadow-sm dark:border-indigo-900/40 dark:from-indigo-950/20 dark:to-blue-950/20">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-indigo-900 dark:text-indigo-300">
-          Votre Barème de Commission Configuré
-        </h2>
-        <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="flex items-center gap-3 rounded-xl border border-indigo-100 bg-white/80 p-3.5 backdrop-blur-sm dark:border-indigo-900/50 dark:bg-slate-900/80">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
-              <Plane className="h-4 w-4" />
-            </div>
-            <div>
-              <span className="text-xs text-slate-500 dark:text-slate-400">Commission sur les Vols</span>
-              <div className="text-base font-bold text-slate-900 dark:text-slate-100">
-                {isLoading ? (
-                  <Skeleton className="h-5 w-20" />
-                ) : data?.rates ? (
-                  `${data.rates.flightCommissionValue}${data.rates.flightCommissionType === "PERCENTAGE" ? "%" : " XAF"}`
-                ) : (
-                  "N/A"
-                )}
-              </div>
-            </div>
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
+            <Percent className="h-4 w-4" />
           </div>
-
-          <div className="flex items-center gap-3 rounded-xl border border-indigo-100 bg-white/80 p-3.5 backdrop-blur-sm dark:border-indigo-900/50 dark:bg-slate-900/80">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
-              <Building2 className="h-4 w-4" />
-            </div>
-            <div>
-              <span className="text-xs text-slate-500 dark:text-slate-400">Commission sur les Hôtels</span>
-              <div className="text-base font-bold text-slate-900 dark:text-slate-100">
-                {isLoading ? (
-                  <Skeleton className="h-5 w-20" />
-                ) : data?.rates ? (
-                  `${data.rates.hotelCommissionValue}${data.rates.hotelCommissionType === "PERCENTAGE" ? "%" : " XAF"}`
-                ) : (
-                  "N/A"
-                )}
-              </div>
+          <div>
+            <span className="text-xs text-slate-500 dark:text-slate-400">Votre taux de commission négocié</span>
+            <div className="text-lg font-bold text-slate-900 dark:text-slate-100">
+              {isProfileLoading ? (
+                <Skeleton className="h-6 w-20" />
+              ) : profile ? (
+                `${(profile.commissionRate * 100).toFixed(1)}%`
+              ) : (
+                "N/A"
+              )}
             </div>
           </div>
         </div>
@@ -226,7 +163,7 @@ export default function ResellerCommissionsPage() {
             <TrendingUp className="h-4 w-4 text-indigo-500" />
           </div>
           <div className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100">
-            {isLoading ? <Skeleton className="h-8 w-32" /> : formatCurrency(data?.summary.totalEarned, data?.summary.currency)}
+            {isLoading ? <Skeleton className="h-8 w-32" /> : formatCurrency(summary.totalEarned, summary.currency)}
           </div>
         </div>
 
@@ -236,7 +173,7 @@ export default function ResellerCommissionsPage() {
             <CheckCircle2 className="h-4 w-4 text-emerald-500" />
           </div>
           <div className="mt-2 text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-            {isLoading ? <Skeleton className="h-8 w-32" /> : formatCurrency(data?.summary.totalAvailable, data?.summary.currency)}
+            {isLoading ? <Skeleton className="h-8 w-32" /> : formatCurrency(summary.totalAvailable, summary.currency)}
           </div>
         </div>
 
@@ -246,7 +183,7 @@ export default function ResellerCommissionsPage() {
             <Clock className="h-4 w-4 text-amber-500" />
           </div>
           <div className="mt-2 text-2xl font-bold text-amber-600 dark:text-amber-400">
-            {isLoading ? <Skeleton className="h-8 w-32" /> : formatCurrency(data?.summary.totalPending, data?.summary.currency)}
+            {isLoading ? <Skeleton className="h-8 w-32" /> : formatCurrency(summary.totalPending, summary.currency)}
           </div>
         </div>
       </div>
@@ -259,7 +196,7 @@ export default function ResellerCommissionsPage() {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Rechercher par référence billet ou nom client..."
+            placeholder="Rechercher par id de réservation..."
             className="w-full rounded-lg border border-slate-200 bg-slate-50/50 py-2 pl-9 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-100"
           />
         </div>
@@ -313,9 +250,6 @@ export default function ResellerCommissionsPage() {
               <thead className="border-b border-slate-200 bg-slate-50/50 text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
                 <tr>
                   <th className="px-4 py-3 font-semibold">Réservation</th>
-                  <th className="px-4 py-3 font-semibold">Client</th>
-                  <th className="px-4 py-3 font-semibold">Montant Vente</th>
-                  <th className="px-4 py-3 font-semibold">Taux Appliqué</th>
                   <th className="px-4 py-3 font-semibold">Gain Commission</th>
                   <th className="px-4 py-3 font-semibold">Statut</th>
                   <th className="px-4 py-3 font-semibold text-right">Date</th>
@@ -325,26 +259,12 @@ export default function ResellerCommissionsPage() {
                 {filteredItems.map((item) => (
                   <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
                     <td className="px-4 py-3.5">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
-                          {item.bookingReference}
-                        </span>
-                        <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
-                          {item.offerType === "FLIGHT" ? "Vol" : "Hôtel"}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3.5 font-medium text-slate-800 dark:text-slate-200">
-                      {item.customerName}
-                    </td>
-                    <td className="px-4 py-3.5 text-slate-600 dark:text-slate-400">
-                      {formatCurrency(item.bookingAmount, item.currency)}
-                    </td>
-                    <td className="px-4 py-3.5 font-semibold text-slate-700 dark:text-slate-300">
-                      {item.commissionRate}
+                      <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
+                        {item.bookingId}
+                      </span>
                     </td>
                     <td className="px-4 py-3.5 font-bold text-indigo-600 dark:text-indigo-400">
-                      +{formatCurrency(item.commissionAmount, item.currency)}
+                      +{formatCurrency(item.amount, item.currency)}
                     </td>
                     <td className="px-4 py-3.5">
                       {(item.status === "AVAILABLE" || item.status === "PAID") && (

@@ -394,9 +394,12 @@ export interface ETicket {
   id: string;
   bookingId: string;
   ticketNumber: string;
-  tempPassword:string;
   providerConfirmationNumber: string | null;
   document: string;
+  /** Public MinIO URL of the branded PDF (company logo, plus the reseller's when the booking went
+   *  through one) - null when PDF generation hasn't completed yet or failed; `document` (plain
+   *  text) is always available as a fallback. */
+  pdfUrl: string | null;
   issuedAt: string;
 }
 
@@ -938,6 +941,58 @@ export interface ResellerWithdrawal {
   payoutMethod: string; // ex: "MOBILE_MONEY", "BANK_TRANSFER"
   status: "PENDING" | "COMPLETED" | "REJECTED";
   createdAt: string;
+}
+
+// ---------- Reseller self-service (own dashboard: /dashboard/reseller/**) ----------
+// Mirrors the real backend contracts 1:1 (ResellerController / ResellerCommissionResponse /
+// ResellerWithdrawalResponse) - unlike the invented shapes above, kept for the admin screens.
+
+/** Flat shape ResellerController actually returns (GET /api/resellers/{id}) - not the
+ *  {success,message,data} envelope ResellerResponse/Reseller above assume. */
+export interface ResellerProfile {
+  id: string;
+  companyName: string;
+  contactName: string;
+  email: string;
+  promoCode: string;
+  commissionRate: number; // fraction, e.g. 0.10 for 10%
+  status: ResellerStatus;
+  createdAt: string;
+}
+
+export interface ResellerCommissionEntry {
+  id: string;
+  bookingId: string;
+  amount: number;
+  currency: string;
+  status: "PENDING" | "AVAILABLE" | "PAID" | "CANCELLED";
+  createdAt: string;
+}
+
+export interface ResellerBalance {
+  withdrawableBalance: number;
+}
+
+export interface ResellerWithdrawalEntry {
+  id: string;
+  resellerId: string;
+  amount: number;
+  remainingWallet: number;
+  currency: string;
+  paymentMethod: string;
+  paymentDetails: string;
+  status: "PENDING" | "PROCESSING" | "APPROVED" | "REJECTED";
+  rejectionReason?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  processedAt?: string | null;
+}
+
+export interface ResellerWithdrawalRequestPayload {
+  amount: number;
+  currency?: string;
+  paymentMethod: string;
+  paymentDetails: string;
 }
 
 export interface PaginatedResponse<T> {
