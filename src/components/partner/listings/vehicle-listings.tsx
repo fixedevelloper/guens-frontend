@@ -153,6 +153,8 @@ export function VehicleListings({ partnerId }: VehicleListingsProps) {
                                                             <img
                                                                 src={vehicle.coverImageUrl || vehicle.coverImageUrl}
                                                                 alt={`${vehicle.brand} ${vehicle.model}`}
+                                                                loading="lazy"
+                                                                decoding="async"
                                                                 className="size-full object-cover"
                                                             />
                                                         ) : (

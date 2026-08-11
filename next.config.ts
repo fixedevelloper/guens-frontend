@@ -36,6 +36,20 @@ const cspHeader = `
 `;
 
 const nextConfig: NextConfig = {
+  images: {
+    // Our own MinIO bucket (reseller logos, property/vehicle/room cover images) - the only image
+    // host under our control, so next/image's automatic resizing/lazy-loading/AVIF-WebP conversion
+    // is safe to enable for it. Provider/GDS photos (hotel results, room galleries) come from
+    // arbitrary third-party CDN domains that can't be enumerated here, so those stay as native
+    // <img loading="lazy"> instead - see hotel-gallery.tsx and friends.
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "s3.guens.org",
+        pathname: "/**",
+      },
+    ],
+  },
   async headers() {
     return [
       {

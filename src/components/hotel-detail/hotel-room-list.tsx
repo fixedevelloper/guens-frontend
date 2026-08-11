@@ -155,6 +155,8 @@ function RoomCard({
                     <img
                         src={roomImageUrl}
                         alt={room.roomType || "Chambre"}
+                        loading="lazy"
+                        decoding="async"
                         className="h-32 w-full shrink-0 rounded-xl object-cover md:h-24 md:w-32"
                     />
                 )}

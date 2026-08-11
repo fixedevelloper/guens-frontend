@@ -1,13 +1,14 @@
-"use client";
-
-import { useLocale, useTranslations } from "next-intl";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ArrowLeft } from "lucide-react";
 
 import { Link } from "@/i18n/navigation";
 
-export default function TermsPage() {
-  const t = useTranslations("Legal");
-  const locale = useLocale();
+/** Same rationale as legal/privacy/page.tsx: static translated content, converted to a Server
+ *  Component instead of hydrating next-intl's client runtime for zero interactivity. */
+export default async function TermsPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+  const t = await getTranslations("Legal");
   const updatedAt = new Date("2026-07-15").toLocaleDateString(locale, {
     year: "numeric",
     month: "long",

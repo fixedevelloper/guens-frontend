@@ -137,6 +137,8 @@ function HotelOfferCard({
                 <img
                     src={offer.coverImageUrl}
                     alt={offer.hotelName}
+                    loading="lazy"
+                    decoding="async"
                     className="absolute inset-0 size-full object-cover"
                 />
             ) : (

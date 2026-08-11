@@ -244,6 +244,8 @@ export default function VehicleImagesPage({ params }: PageProps) {
                                 <img
                                     src={img.url}
                                     alt={img.name ?? "Vehicle photo"}
+                                    loading="lazy"
+                                    decoding="async"
                                     className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                                 />
 

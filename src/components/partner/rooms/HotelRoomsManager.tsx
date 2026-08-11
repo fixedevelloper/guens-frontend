@@ -263,6 +263,8 @@ export function HotelRoomsManager({ partnerId, hotelId, hotelName = "Hôtel" }: 
                                                 <img
                                                     src={room.coverImageUrl}
                                                     alt={room.name}
+                                                    loading="lazy"
+                                                    decoding="async"
                                                     className="h-12 w-16 rounded-lg object-cover border border-border/50 shrink-0"
                                                 />
                                             ) : (

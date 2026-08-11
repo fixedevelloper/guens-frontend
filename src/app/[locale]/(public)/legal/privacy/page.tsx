@@ -1,13 +1,18 @@
-"use client";
-
-import { useLocale, useTranslations } from "next-intl";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ArrowLeft } from "lucide-react";
 
 import { Link } from "@/i18n/navigation";
 
-export default function PrivacyPage() {
-  const t = useTranslations("Legal");
-  const locale = useLocale();
+/**
+ * Purely static/translated content, no client interactivity - a Server Component (the
+ * layout above already calls setRequestLocale, this repeats it per next-intl's static-rendering
+ * guidance for statically generated segments) ships zero JS for this route instead of hydrating
+ * next-intl's client runtime just to read five translated strings.
+ */
+export default async function PrivacyPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+  const t = await getTranslations("Legal");
   const updatedAt = new Date("2026-07-15").toLocaleDateString(locale, {
     year: "numeric",
     month: "long",

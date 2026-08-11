@@ -158,6 +158,8 @@ export function HotelListings({ partnerId }: { partnerId: string }) {
                                                     <img
                                                         src={hotel.coverImageUrl}
                                                         alt={hotel.name}
+                                                        loading="lazy"
+                                                        decoding="async"
                                                         className="h-11 w-11 shrink-0 rounded-xl border border-border/50 object-cover"
                                                     />
                                                 ) : (

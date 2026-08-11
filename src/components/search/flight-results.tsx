@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   Plane,
@@ -58,7 +58,7 @@ export function FlightResultsList({
   );
 }
 
-export function FlightOfferCard({
+export const FlightOfferCard = memo(function FlightOfferCard({
                                   offer,
                                   locale,
                                   isReseller,
@@ -73,9 +73,11 @@ export function FlightOfferCard({
 
   const selectOffer = useFlightStore((state) => state.selectOffer);
 
-  // Tri des offres par prix croissant
-  const sortedQuotes = [...offer.quotes].sort(
-      (a, b) => Number(a.price.amount) - Number(b.price.amount)
+  // Tri des offres par prix croissant - recalculé seulement quand les quotes changent, pas à
+  // chaque re-render (ex: toggle de showDetails, qui ne touche pas offer.quotes).
+  const sortedQuotes = useMemo(
+      () => [...offer.quotes].sort((a, b) => Number(a.price.amount) - Number(b.price.amount)),
+      [offer.quotes]
   );
   const cheapestQuote = sortedQuotes[0];
 
@@ -349,4 +351,4 @@ export function FlightOfferCard({
         )}
       </Card>
   );
-}
+});

@@ -26,7 +26,16 @@ import { flightSearchParamsToQuery, hotelSearchParamsToQuery, multiCitySearchPar
 import { useFeaturedDestinationsQuery } from "@/hooks/use-destinations";
 import { pickFallbackDestinationImage } from "@/lib/destination-fallback-images";
 import type { FlightSearchParams, HotelSearchParams, MultiCityFlightSearchParams } from "@/lib/api/types";
-import {AppPromo} from "../../../components/AppPromo";
+import dynamic from "next/dynamic";
+
+// AppPromo pulls in framer-motion + next-qrcode (~90KB combined) purely for a below-the-fold
+// scroll-in animation and a client-generated QR code - neither is needed for the initial paint,
+// so it's split into its own chunk and skipped entirely during SSR instead of shipping in the
+// homepage's critical bundle.
+const AppPromo = dynamic(() => import("../../../components/AppPromo").then((m) => m.AppPromo), {
+  ssr: false,
+  loading: () => <Skeleton className="h-[420px] w-full rounded-3xl" />,
+});
 
 const HERO_CONFIGS = {
   flights: {
