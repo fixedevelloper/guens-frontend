@@ -1,6 +1,19 @@
 import { apiClient } from "./client";
 import { getRememberedContactEmail, rememberContactEmail } from "@/lib/booking-contact";
-import type { BookingResponse, CheckoutRequest, MultiCityCheckoutRequest } from "./types";
+import type {
+  AncillaryOptionResponse,
+  AncillaryOptionsRequest,
+  BookingResponse,
+  CheckoutRequest,
+  FlightOrderDetail,
+  MultiCityCheckoutRequest,
+} from "./types";
+
+/** Quotes priced extras (baggage/meal/seat/insurance) for the "additional options" checkout step. */
+export async function getAncillaryOptions(request: AncillaryOptionsRequest) {
+  const { data } = await apiClient.post<AncillaryOptionResponse[]>("/api/bookings/ancillary-options", request);
+  return data;
+}
 
 export async function checkout(request: CheckoutRequest) {
   const { data } = await apiClient.post<BookingResponse>("/api/bookings/checkout", request);
@@ -37,6 +50,16 @@ export async function cancelBooking(bookingId: string) {
 /** Resubmits the provider hold for a FAILED booking that never got a provider confirmation. */
 export async function retryBooking(bookingId: string) {
   const { data } = await apiClient.post<BookingResponse>(`/api/bookings/${bookingId}/retry`, null, {
+    params: { email: getRememberedContactEmail() ?? undefined },
+  });
+  return data;
+}
+
+/** Live baggage/meals/seats/cancellation-policy detail for a confirmed flight booking, straight
+ *  from the provider - null when unavailable (not a flight, not provider-confirmed yet, or the
+ *  provider doesn't support this). The booking page falls back to what's already on the booking. */
+export async function getFlightOrderDetail(bookingId: string) {
+  const { data } = await apiClient.get<FlightOrderDetail | null>(`/api/bookings/${bookingId}/flight-order-detail`, {
     params: { email: getRememberedContactEmail() ?? undefined },
   });
   return data;

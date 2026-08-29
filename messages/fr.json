@@ -130,11 +130,32 @@
     "roomType": "Type de chambre",
     "night": "{count, plural, =1 {1 nuit} other {# nuits}}",
     "closeSearch": "Fermer la recherche",
-    "passenger": "Passagers"
+    "passenger": "Passagers",
+    "editShort": "Modifier",
+    "noFlightsMatch": "Aucun vol ne correspond à vos filtres",
+    "tryWiderCriteria": "Essayez d'élargir vos critères de recherche.",
+    "refundableTicket": "Billet modifiable ou remboursable",
+    "showDetailsAction": "Détails",
+    "hideDetailsAction": "Masquer",
+    "offerNumber": "Offre {index}",
+    "recommendedFare": "Tarif conseillé",
+    "viewOffer": "Voir l'offre",
+    "otherOptions": "Autres options ({count})",
+    "detailedItinerary": "Itinéraire détaillé",
+    "departureAirport": "Aéroport de départ ({code})",
+    "arrivalAirport": "Aéroport d'arrivée ({code})",
+    "flightPrefix": "Vol",
+    "durationLabel": "Durée : {duration}",
+    "cabinClassLabel": "Classe",
+    "baggageLabel": "Bagages",
+    "carryOnIncluded": "1 bagage à main incl.",
+    "availableSeatsLabel": "Places disponibles",
+    "seatsRemaining": "{count, plural, =1 {1 siège restant} other {# sièges restants}}"
   },
   "Filters": {
     "title": "Filtres",
     "reset": "Réinitialiser",
+    "showResults": "Afficher les résultats ({count})",
     "maxPrice": "Prix maximum",
     "providers": "Fournisseurs",
     "airlines": "Compagnies aériennes",
@@ -203,6 +224,7 @@
   "Checkout": {
     "title": "Finaliser la réservation",
     "summaryTitle": "Récapitulatif",
+    "summaryExtrasLabel": "Options additionnelles",
     "contactSection": "Coordonnées",
     "contactEmail": "Adresse e-mail",
     "contactFullName": "Nom complet",
@@ -242,7 +264,7 @@
   },
   "SeatSelection": {
     "title": "Choisissez vos sièges",
-    "instructions": "Sélectionnez {count, plural, =1 {1 siège} other {# sièges}} disponibles sur le plan de la cabine.",
+    "instructions": "Sélectionnez {count, plural, =1 {1 siège disponible} other {# sièges disponibles}} sur le plan de la cabine.",
     "legendAvailable": "Disponible",
     "legendSelected": "Sélectionné",
     "legendOccupied": "Occupé",
@@ -260,6 +282,24 @@
       "selected": "Sélectionné",
       "occupied": "Occupé / Indisponible"
     }
+  },
+  "AncillaryOptions": {
+    "title": "Options supplémentaires",
+    "subtitle": "Ajoutez si besoin : bagages supplémentaires, choix du siège, assurance voyage, repas spéciaux.",
+    "baggageSection": "Bagages supplémentaires",
+    "mealSection": "Repas",
+    "seatSection": "Sièges",
+    "insuranceSection": "Assurance voyage",
+    "forTraveler": "Voyageur {index}",
+    "forAllTravelers": "Pour tous les voyageurs",
+    "noSeatSelected": "Aucun siège sélectionné pour le voyageur {index}",
+    "loading": "Chargement des options…",
+    "unavailable": "Aucune option supplémentaire n'est disponible pour ce vol.",
+    "loadError": "Impossible de charger les options supplémentaires pour le moment.",
+    "continue": "Continuer",
+    "skip": "Passer cette étape",
+    "selectedCount": "{count, plural, =0 {Aucune option sélectionnée} =1 {1 option sélectionnée} other {# options sélectionnées}}",
+    "totalLabel": "Total des options"
   },
   "Payment": {
     "title": "Paiement sécurisé",
@@ -281,14 +321,29 @@
     "processing": "Paiement en cours…",
     "success": "Paiement accepté, confirmation en cours avec le fournisseur…",
     "failure": "Paiement refusé : {reason}",
-    "secureNotice": "Paiement chiffré, aucune donnée bancaire n'est stockée sur nos serveurs."
+    "genericFailure": "Paiement refusé. Veuillez réessayer ou choisir un autre moyen de paiement.",
+    "secureNotice": "Paiement chiffré, aucune donnée bancaire n'est stockée sur nos serveurs.",
+    "bookingNotFound": "Impossible de charger cette réservation. Si vous avez ouvert ce lien sur un nouvel appareil ou une nouvelle fenêtre, utilisez le lien reçu par e-mail ou connectez-vous à votre compte pour continuer."
   },
   "Tracking": {
     "title": "Suivi de la réservation",
+    "subtitle": "Gérez votre voyage et accédez à vos informations de vol en temps réel.",
     "reference": "Référence",
+    "referenceLabel": "Référence dossier",
+    "realtimeUpdateTitle": "Mise à jour en temps réel",
+    "itineraryTitle": "Détails de l'itinéraire",
+    "paymentBreakdownTitle": "Détail du paiement",
+    "paymentValidationTitle": "Validation du paiement en cours…",
+    "paymentValidationDescription": "Nous confirmons votre transaction auprès de l'opérateur (Réf : <code>{reference}</code>). Le statut se mettra à jour automatiquement dès réception de l'accord.",
+    "cancelWarning": "Êtes-vous absolument sûr de vouloir annuler cette réservation ? Cette opération est irréversible.",
+    "loadError": "Impossible de charger les détails de cette réservation.",
     "totalPrice": "Prix total",
+    "extrasTitle": "Options supplémentaires",
+    "extraTraveler": "Voyageur {index}",
+    "extraForAll": "Pour tous les voyageurs",
     "payNowAction": "Payer maintenant",
     "payBalanceAction": "Payer le solde",
+    "goToAccount": "Aller à mon compte",
     "status": {
       "PENDING_HOLD": "Finalisation en cours...",
       "PENDING_PAYMENT": "Paiement en attente",
@@ -313,9 +368,11 @@
     "cancelConfirm": "Confirmer l'annulation",
     "cancelling": "Annulation en cours…",
     "viewTickets": "Voir mes billets",
+    "viewFlightDetails": "Détails du vol",
     "failureReason": "Motif : {reason}",
     "retryAction": "Réessayer",
-    "searchAgainAction": "Recommencer la recherche"
+    "searchAgainAction": "Recommencer la recherche",
+    "paymentCapturedNotice": "Votre paiement a bien été débité. Notre support va vous contacter pour régulariser cette réservation - inutile de repayer ou de refaire une recherche."
   },
   "Tickets": {
     "title": "Vos billets électroniques",
@@ -544,7 +601,17 @@
     "navDashboard": "Tableau de bord",
     "navListings": "Annonces",
     "navBookings": "Réservations",
+    "navMyBookings": "Mes réservations",
     "navSettings": "Paramètres",
+    "myBookings": {
+      "title": "Mes réservations",
+      "subtitle": "Vos propres voyages réservés en tant que client, distincts des réservations de vos clients sur vos annonces.",
+      "loadError": "Impossible de charger vos réservations. Merci de réessayer.",
+      "retry": "Réessayer",
+      "emptyTitle": "Aucune réservation pour le moment",
+      "emptyDesc": "Vos réservations personnelles (vols, hôtels...) apparaîtront ici.",
+      "searchCta": "Rechercher un voyage"
+    },
     "status": {
       "PENDING_REVIEW": "En attente",
       "APPROVED": "Approuvé",
@@ -1009,5 +1076,22 @@
     "delete": "Supprimer",
     "deleteConfirm": "Supprimer ce véhicule ? Cette action est irréversible.",
     "pageInfo": "Page {page} sur {totalPages} — {totalElements} véhicule(s)"
+  },
+  "FlightDetail": {
+    "title": "Détails du vol",
+    "subtitle": "Itinéraire, voyageurs, bagages, repas et sièges pour cette réservation.",
+    "backToBooking": "Retour à la réservation",
+    "notAvailable": "Détails du vol non disponibles pour cette réservation.",
+    "itinerary": "Itinéraire",
+    "pnr": "PNR",
+    "travelers": "Voyageurs",
+    "extraDetailUnavailable": "Détails supplémentaires (bagages, repas, sièges) non disponibles pour ce fournisseur.",
+    "extraBaggage": "Bagage supplémentaire",
+    "meal": "Repas",
+    "seat": "Siège",
+    "cancellationPolicy": "Politique d'annulation",
+    "refundable": "Remboursable",
+    "nonRefundable": "Non remboursable",
+    "cancellationCharges": "Frais d'annulation"
   }
 }

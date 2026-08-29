@@ -17,11 +17,15 @@ import {
   CheckCircle2,
   Clock,
   RotateCw,
-  Search
+  Search,
+  Luggage,
+  UtensilsCrossed,
+  Armchair,
+  ShieldCheck
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { useRouter } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -34,7 +38,7 @@ import { useBookingTracking } from "@/hooks/use-booking-tracking";
 import { normalizeApiError } from "@/lib/api/client";
 import { airlineLabel, formatDateTime, formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { BookingStatus } from "@/lib/api/types";
+import type { AncillaryType, BookingStatus } from "@/lib/api/types";
 
 // Type pour la réponse enregistrée en session
 interface PaymentSessionData {
@@ -45,6 +49,13 @@ interface PaymentSessionData {
 }
 
 const IN_PROGRESS_STATUSES: BookingStatus[] = ["PENDING_HOLD", "PENDING_PAYMENT", "PAID", "CONFIRMING"];
+
+const EXTRA_ICONS: Record<AncillaryType, typeof Luggage> = {
+  BAGGAGE: Luggage,
+  MEAL: UtensilsCrossed,
+  SEAT: Armchair,
+  INSURANCE: ShieldCheck,
+};
 
 export default function BookingTrackingPage() {
   const params = useParams<{ bookingId: string }>();
@@ -149,7 +160,7 @@ export default function BookingTrackingPage() {
           <Alert variant="destructive" className="rounded-2xl border-destructive/25 bg-destructive/[0.03]">
             <XCircle className="size-5" />
             <AlertDescription className="font-medium text-destructive">
-              {t("title") ?? "Impossible de charger les détails de cette réservation."}
+              {t("loadError")}
             </AlertDescription>
           </Alert>
         </div>
@@ -160,8 +171,11 @@ export default function BookingTrackingPage() {
   const inProgress = IN_PROGRESS_STATUSES.includes(status) && !tracking.connectionError;
   const needsPayment = status === "PENDING_PAYMENT" || status === "DEPOSIT_PAID";
 
-  // Vérifie si le paiement est activement en cours de confirmation
-  const isPaymentPending = status === "PENDING_PAYMENT" || status === "CONFIRMING" || recentPayment?.status === "PENDING";
+  // Vérifie si le paiement est activement en cours de confirmation - PENDING_PAYMENT seul ne
+  // compte pas : c'est l'état normal d'une réservation qui attend encore un premier paiement (le
+  // cas courant juste après le checkout), pas la preuve qu'une tentative est en vol. L'inclure ici
+  // masquait le bouton "Procéder au paiement" dès l'arrivée sur cette page après un checkout.
+  const isPaymentPending = status === "CONFIRMING" || recentPayment?.status === "PENDING";
 
   return (
       <div className="mx-auto max-w-2xl px-4 py-10 space-y-6">
@@ -169,10 +183,10 @@ export default function BookingTrackingPage() {
         {/* HEADER DE LA PAGE */}
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
-            {t("title") ?? "Suivi de votre réservation"}
+            {t("title")}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Gérez votre voyage et accédez à vos informations de vol en temps réel.
+            {t("subtitle")}
           </p>
         </div>
 
@@ -181,7 +195,7 @@ export default function BookingTrackingPage() {
           {/* CARTE EN-TÊTE : REFERENCE ET STATUT */}
           <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 sm:p-6 bg-slate-50/40 dark:bg-zinc-900/10 border-b border-border/40">
             <div className="space-y-1">
-              <span className="text-[10px] font-bold tracking-widest text-muted-foreground/60 uppercase">Référence Dossier</span>
+              <span className="text-[10px] font-bold tracking-widest text-muted-foreground/60 uppercase">{t("referenceLabel")}</span>
               <p className="text-lg font-black tracking-wide text-foreground font-mono">
                 {booking.id}
               </p>
@@ -203,14 +217,17 @@ export default function BookingTrackingPage() {
                     <div className="space-y-1 flex-1">
                       <div className="flex items-center justify-between">
                     <span className="font-bold text-sm tracking-tight">
-                      Validation du paiement en cours...
+                      {t("paymentValidationTitle")}
                     </span>
                         <span className="text-[10px] font-mono font-bold uppercase bg-amber-500/20 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-md">
                       {recentPayment.paymentMethod}
                     </span>
                       </div>
                       <p className="text-xs text-amber-900/80 dark:text-amber-300/80 leading-relaxed">
-                        Nous confirmons votre transaction auprès de l'opérateur (Réf: <code className="font-mono">{recentPayment.id.slice(0, 8)}...</code>). Le statut se mettra à jour automatiquement dès réception de l'accord.
+                        {t.rich("paymentValidationDescription", {
+                          reference: `${recentPayment.id.slice(0, 8)}...`,
+                          code: (chunks) => <code className="font-mono">{chunks}</code>,
+                        })}
                       </p>
                     </div>
                   </div>
@@ -231,9 +248,9 @@ export default function BookingTrackingPage() {
                       <Info className="size-4 text-muted-foreground shrink-0 mt-0.5" />
                   )}
                   <div className="space-y-1">
-                    <span className="font-bold text-foreground block">Mise à jour en temps réel</span>
+                    <span className="font-bold text-foreground block">{t("realtimeUpdateTitle")}</span>
                     <p className="text-xs text-muted-foreground/90">
-                      {t(`statusDescription.${status}`) ?? `Statut de votre dossier : ${status}`}
+                      {t(`statusDescription.${status}`)}
                     </p>
                   </div>
                 </div>
@@ -247,33 +264,40 @@ export default function BookingTrackingPage() {
                     <p className="text-xs font-semibold text-destructive">
                       {t("failureReason", { reason: booking.failureReason })}
                     </p>
-                    <div className="flex flex-wrap items-center gap-2">
-                      {booking.retryable && (
+                    {booking.paymentCaptured ? (
+                        <p className="text-xs font-medium text-destructive/90">
+                          {t("paymentCapturedNotice") ??
+                              "Votre paiement a bien été débité. Notre support va vous contacter pour régulariser cette réservation - inutile de repayer ou de refaire une recherche."}
+                        </p>
+                    ) : (
+                        <div className="flex flex-wrap items-center gap-2">
+                          {booking.retryable && (
+                              <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  className="rounded-xl font-bold gap-1.5"
+                                  onClick={handleRetry}
+                                  disabled={retryMutation.isPending}
+                              >
+                                {retryMutation.isPending ? (
+                                    <Loader2 className="size-3.5 animate-spin" />
+                                ) : (
+                                    <RotateCw className="size-3.5" />
+                                )}
+                                {t("retryAction")}
+                              </Button>
+                          )}
                           <Button
                               size="sm"
-                              variant="destructive"
-                              className="rounded-xl font-bold gap-1.5"
-                              onClick={handleRetry}
-                              disabled={retryMutation.isPending}
+                              variant="outline"
+                              className="rounded-xl font-bold gap-1.5 border-destructive/30 text-destructive hover:bg-destructive/[0.04]"
+                              onClick={() => router.push("/")}
                           >
-                            {retryMutation.isPending ? (
-                                <Loader2 className="size-3.5 animate-spin" />
-                            ) : (
-                                <RotateCw className="size-3.5" />
-                            )}
-                            {t("retryAction") ?? "Réessayer"}
+                            <Search className="size-3.5" />
+                            {t("searchAgainAction")}
                           </Button>
-                      )}
-                      <Button
-                          size="sm"
-                          variant="outline"
-                          className="rounded-xl font-bold gap-1.5 border-destructive/30 text-destructive hover:bg-destructive/[0.04]"
-                          onClick={() => router.push("/")}
-                      >
-                        <Search className="size-3.5" />
-                        {t("searchAgainAction") ?? "Recommencer la recherche"}
-                      </Button>
-                    </div>
+                        </div>
+                    )}
                   </AlertDescription>
                 </Alert>
             )}
@@ -281,7 +305,7 @@ export default function BookingTrackingPage() {
             {/* COMPOSANT ITINÉRAIRE (TRONÇONS) */}
             {booking.itineraryLegs.length > 0 && (
                 <div className="space-y-3">
-                  <span className="text-xs font-bold text-muted-foreground/80 tracking-wider uppercase block">Détails de l'Itinéraire</span>
+                  <span className="text-xs font-bold text-muted-foreground/80 tracking-wider uppercase block">{t("itineraryTitle")}</span>
                   <div className="grid gap-3">
                     {booking.itineraryLegs.map((leg) => (
                         <div
@@ -326,7 +350,7 @@ export default function BookingTrackingPage() {
 
             {/* RÉCAPITULATIF FINANCIER TYPE FACTURE */}
             <div className="space-y-3">
-              <span className="text-xs font-bold text-muted-foreground/80 tracking-wider uppercase block">Détail du paiement</span>
+              <span className="text-xs font-bold text-muted-foreground/80 tracking-wider uppercase block">{t("paymentBreakdownTitle")}</span>
               <div className="rounded-xl border border-border/40 p-4 space-y-3.5 bg-slate-50/10 dark:bg-zinc-900/5">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground/85 font-medium">{t("totalPrice")}</span>
@@ -339,7 +363,7 @@ export default function BookingTrackingPage() {
                       <div className="flex items-center justify-between text-sm">
                     <span className="text-amber-600 dark:text-amber-400 font-bold flex items-center gap-1.5">
                       <span className="inline-block size-1.5 rounded-full bg-amber-500" />
-                      {tPayment("balanceDue") ?? "Reste à payer"}
+                      {tPayment("balanceDue")}
                     </span>
                         <span className="font-black text-amber-600 dark:text-amber-400">{formatMoney(booking.amountDue, locale)}</span>
                       </div>
@@ -347,6 +371,39 @@ export default function BookingTrackingPage() {
                 )}
               </div>
             </div>
+
+            {/* OPTIONS SUPPLÉMENTAIRES CHOISIES (bagages, repas, sièges, assurance) */}
+            {booking.extras.length > 0 && (
+                <div className="space-y-3">
+                  <span className="text-xs font-bold text-muted-foreground/80 tracking-wider uppercase block">
+                    {t("extrasTitle")}
+                  </span>
+                  <div className="rounded-xl border border-border/40 p-4 space-y-2.5 bg-slate-50/10 dark:bg-zinc-900/5">
+                    {booking.extras.map((extra, index) => {
+                      const Icon = EXTRA_ICONS[extra.type];
+                      return (
+                          <div key={index} className="flex items-center justify-between gap-3 text-sm">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <Icon className="size-3.5 text-muted-foreground/60 shrink-0" />
+                              <span className="text-muted-foreground/90 truncate">
+                            {extra.label}
+                                <span className="text-[11px] text-muted-foreground/60">
+                              {" · "}
+                                  {extra.travelerIndex !== null
+                                      ? t("extraTraveler", { index: extra.travelerIndex + 1 })
+                                      : t("extraForAll")}
+                            </span>
+                          </span>
+                            </div>
+                            <span className="font-semibold text-foreground whitespace-nowrap">
+                          {formatMoney(extra.price, locale)}
+                        </span>
+                          </div>
+                      );
+                    })}
+                  </div>
+                </div>
+            )}
 
             {/* APPEL À L'ACTION : PAIEMENT EN ATTENTE OU SOLDE - masqué tant qu'un paiement est
                 déjà en cours de validation, pour ne pas inciter à relancer un paiement en double */}
@@ -358,8 +415,8 @@ export default function BookingTrackingPage() {
                 >
                   <CreditCard className="size-4 shrink-0" />
                   {status === "DEPOSIT_PAID"
-                      ? (t("payBalanceAction") ?? "Payer le solde restant")
-                      : (t("payNowAction") ?? "Procéder au paiement")}
+                      ? (t("payBalanceAction"))
+                      : (t("payNowAction"))}
                 </Button>
             )}
 
@@ -370,7 +427,7 @@ export default function BookingTrackingPage() {
                     className="w-full sm:w-auto rounded-xl font-bold gap-2 py-6 px-6 transition-transform active:scale-97"
                     onClick={() => router.push("/dashboard")}
                 >
-                  {t("goToAccount") ?? "Aller à mon compte"}
+                  {t("goToAccount")}
                   <ChevronRight className="size-4 shrink-0" />
                 </Button>
             )}
@@ -378,11 +435,18 @@ export default function BookingTrackingPage() {
             {/* ACCÈS AUX BILLETS ISSUS DU VOL */}
             {status === "CONFIRMED" && (
                 <div className="space-y-4 pt-2">
-                  <div className="flex items-center gap-2">
-                    <div className="p-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                      <Ticket className="size-4 shrink-0" />
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                        <Ticket className="size-4 shrink-0" />
+                      </div>
+                      <h2 className="font-bold text-sm tracking-wide uppercase text-foreground">{t("viewTickets")}</h2>
                     </div>
-                    <h2 className="font-bold text-sm tracking-wide uppercase text-foreground">{t("viewTickets") ?? "Vos billets émis"}</h2>
+                    {booking.offerType === "FLIGHT" && (
+                        <Button asChild variant="outline" size="sm" className="rounded-lg font-semibold text-xs">
+                          <Link href={`/bookings/${bookingId}/flight`}>{t("viewFlightDetails")}</Link>
+                        </Button>
+                    )}
                   </div>
                   <TicketList bookingId={bookingId} enabled={status === "CONFIRMED"} />
                 </div>
@@ -395,7 +459,7 @@ export default function BookingTrackingPage() {
                   {confirmingCancel ? (
                       <div className="p-4 rounded-xl border border-destructive/20 bg-destructive/[0.02] space-y-3">
                         <p className="text-xs font-semibold text-destructive/90 leading-normal">
-                          Êtes-vous absolument sûr de vouloir annuler cette réservation ? Cette opération est irréversible.
+                          {t("cancelWarning")}
                         </p>
                         <div className="flex items-center gap-2.5">
                           <Button
@@ -411,7 +475,7 @@ export default function BookingTrackingPage() {
                                   {t("cancelling")}
                                 </div>
                             ) : (
-                                t("cancelConfirm") ?? "Confirmer l'annulation"
+                                t("cancelConfirm")
                             )}
                           </Button>
                           <Button
@@ -432,7 +496,7 @@ export default function BookingTrackingPage() {
                           onClick={() => setConfirmingCancel(true)}
                       >
                         <XCircle className="size-4 shrink-0" />
-                        {t("cancelAction") ?? "Annuler la réservation"}
+                        {t("cancelAction")}
                       </Button>
                   )}
                 </div>

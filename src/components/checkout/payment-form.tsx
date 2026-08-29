@@ -14,61 +14,17 @@ import { CountrySelect } from "./country-select";
 export const PAYMENT_METHODS = ["CARD", "MOBILE_MONEY", "GOOGLE_PAY", "APPLE_PAY", "PAYPAL"] as const;
 export type PaymentMethodOption = (typeof PAYMENT_METHODS)[number];
 
-const REQUIRES_BILLING_ADDRESS: ReadonlySet<PaymentMethodOption> = new Set([
-    "GOOGLE_PAY",
-    "APPLE_PAY",
-    "PAYPAL",
-]);
-
 const paymentFormSchema = z
     .object({
         countryCode: z.string().length(2, "Sélectionne un pays"),
         currency: z.string().min(3),
         paymentMethod: z.enum(PAYMENT_METHODS),
-        cardNumber: z.string().optional(),
-        cardHolderName: z.string().optional(),
-        expiry: z.string().optional(),
-        cvv: z.string().optional(),
         mobileNumber: z.string().optional(),
-        billingZipCode: z.string().optional(),
-        billingCity: z.string().optional(),
-        billingAddress: z.string().optional(),
-        billingState: z.string().optional(),
     })
     .superRefine((data, ctx) => {
-        if (data.paymentMethod === "CARD") {
-            if (!data.cardNumber || !/^\d{12,19}$/.test(data.cardNumber.replace(/\s+/g, ""))) {
-                ctx.addIssue({ code: "custom", path: ["cardNumber"], message: "Numéro de carte invalide" });
-            }
-            if (!data.cardHolderName?.trim()) {
-                ctx.addIssue({ code: "custom", path: ["cardHolderName"], message: "Nom du titulaire requis" });
-            }
-            if (!data.expiry || !/^(0[1-9]|1[0-2])\/\d{2}$/.test(data.expiry)) {
-                ctx.addIssue({ code: "custom", path: ["expiry"], message: "Format MM/AA attendu" });
-            }
-            if (!data.cvv || !/^\d{3,4}$/.test(data.cvv)) {
-                ctx.addIssue({ code: "custom", path: ["cvv"], message: "CVV invalide" });
-            }
-        }
-
         if (data.paymentMethod === "MOBILE_MONEY") {
             if (!data.mobileNumber || !/^\+?\d{8,15}$/.test(data.mobileNumber.replace(/\s+/g, ""))) {
                 ctx.addIssue({ code: "custom", path: ["mobileNumber"], message: "Numéro invalide" });
-            }
-        }
-
-        if (REQUIRES_BILLING_ADDRESS.has(data.paymentMethod)) {
-            if (!data.billingAddress?.trim()) {
-                ctx.addIssue({ code: "custom", path: ["billingAddress"], message: "Adresse requise" });
-            }
-            if (!data.billingCity?.trim()) {
-                ctx.addIssue({ code: "custom", path: ["billingCity"], message: "Ville requise" });
-            }
-            if (!data.billingZipCode?.trim()) {
-                ctx.addIssue({ code: "custom", path: ["billingZipCode"], message: "Code postal requis" });
-            }
-            if (!data.billingState?.trim()) {
-                ctx.addIssue({ code: "custom", path: ["billingState"], message: "Région/État requis" });
             }
         }
     });
@@ -90,6 +46,13 @@ type PaymentFormProps = {
     defaultCurrency?: string;
 };
 
+/**
+ * CARD/GOOGLE_PAY/APPLE_PAY/PAYPAL collect nothing here beyond country/currency: they route to
+ * Stripe, which creates a PaymentIntent from just this, then collects card/wallet details itself
+ * via its own Payment Element (see StripeCheckoutDialog) - card numbers and billing addresses
+ * never pass through this form or this backend. Only MOBILE_MONEY (stays on Flutterwave, which
+ * Stripe doesn't support) still needs a field collected here.
+ */
 export function PaymentForm({
                                 onSubmit,
                                 isSubmitting,
@@ -102,44 +65,22 @@ export function PaymentForm({
             countryCode: defaultCountryCode ?? "",
             currency: defaultCurrency ?? "",
             paymentMethod: "CARD",
-            cardNumber: "",
-            cardHolderName: "",
-            expiry: "",
-            cvv: "",
             mobileNumber: "",
-            billingZipCode: "",
-            billingCity: "",
-            billingAddress: "",
-            billingState: "",
         },
     });
 
     const method = form.watch("paymentMethod");
     const countryCode = form.watch("countryCode");
-    const requiresBillingAddress = REQUIRES_BILLING_ADDRESS.has(method);
 
     const handleFormSubmit = (data: PaymentFormValues) => {
-        // Filtrage des données inutiles selon le mode de paiement
         const payload: PaymentFormValues = {
             countryCode: data.countryCode,
             currency: data.currency,
             paymentMethod: data.paymentMethod,
         };
 
-        if (data.paymentMethod === "CARD") {
-            payload.cardNumber = data.cardNumber?.replace(/\s+/g, "");
-            payload.cardHolderName = data.cardHolderName?.trim();
-            payload.expiry = data.expiry;
-            payload.cvv = data.cvv;
-        } else if (data.paymentMethod === "MOBILE_MONEY") {
+        if (data.paymentMethod === "MOBILE_MONEY") {
             payload.mobileNumber = data.mobileNumber?.replace(/\s+/g, "");
-        }
-
-        if (REQUIRES_BILLING_ADDRESS.has(data.paymentMethod)) {
-            payload.billingAddress = data.billingAddress?.trim();
-            payload.billingCity = data.billingCity?.trim();
-            payload.billingZipCode = data.billingZipCode?.trim();
-            payload.billingState = data.billingState?.trim();
         }
 
         onSubmit(payload);
@@ -191,71 +132,6 @@ export function PaymentForm({
                 </Tabs>
             </div>
 
-            {method === "CARD" && (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div className="space-y-1.5 sm:col-span-2">
-                        <Label className="text-xs font-bold">Numéro de carte</Label>
-                        <Input
-                            inputMode="numeric"
-                            placeholder="4242 4242 4242 4242"
-                            {...form.register("cardNumber")}
-                            disabled={isSubmitting}
-                            className="rounded-xl"
-                        />
-                        {form.formState.errors.cardNumber && (
-                            <p className="text-xs font-semibold text-destructive">
-                                {form.formState.errors.cardNumber.message}
-                            </p>
-                        )}
-                    </div>
-
-                    <div className="space-y-1.5 sm:col-span-2">
-                        <Label className="text-xs font-bold">Nom du titulaire</Label>
-                        <Input
-                            placeholder="Jean Dupont"
-                            {...form.register("cardHolderName")}
-                            disabled={isSubmitting}
-                            className="rounded-xl"
-                        />
-                        {form.formState.errors.cardHolderName && (
-                            <p className="text-xs font-semibold text-destructive">
-                                {form.formState.errors.cardHolderName.message}
-                            </p>
-                        )}
-                    </div>
-
-                    <div className="space-y-1.5">
-                        <Label className="text-xs font-bold">Expiration (MM/AA)</Label>
-                        <Input
-                            placeholder="12/28"
-                            {...form.register("expiry")}
-                            disabled={isSubmitting}
-                            className="rounded-xl"
-                        />
-                        {form.formState.errors.expiry && (
-                            <p className="text-xs font-semibold text-destructive">
-                                {form.formState.errors.expiry.message}
-                            </p>
-                        )}
-                    </div>
-
-                    <div className="space-y-1.5">
-                        <Label className="text-xs font-bold">CVV</Label>
-                        <Input
-                            placeholder="123"
-                            {...form.register("cvv")}
-                            disabled={isSubmitting}
-                            className="rounded-xl"
-                        />
-                        {form.formState.errors.cvv && (
-                            <p className="text-xs font-semibold text-destructive">
-                                {form.formState.errors.cvv.message}
-                            </p>
-                        )}
-                    </div>
-                </div>
-            )}
-
             {method === "MOBILE_MONEY" && (
                 <div className="space-y-1.5">
                     <Label className="text-xs font-bold">Numéro mobile money</Label>
@@ -273,75 +149,11 @@ export function PaymentForm({
                 </div>
             )}
 
-            {requiresBillingAddress && (
-                <div className="space-y-4 rounded-2xl border border-dashed p-4">
-                    <p className="text-xs font-semibold text-muted-foreground">
-                        Adresse de facturation requise pour {METHOD_CONFIG[method].label}. Tu seras ensuite
-                        redirigé pour finaliser le paiement en toute sécurité.
-                    </p>
-
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <div className="space-y-1.5 sm:col-span-2">
-                            <Label className="text-xs font-bold">Adresse</Label>
-                            <Input
-                                placeholder="3563 Huntertown Rd"
-                                {...form.register("billingAddress")}
-                                disabled={isSubmitting}
-                                className="rounded-xl"
-                            />
-                            {form.formState.errors.billingAddress && (
-                                <p className="text-xs font-semibold text-destructive">
-                                    {form.formState.errors.billingAddress.message}
-                                </p>
-                            )}
-                        </div>
-
-                        <div className="space-y-1.5">
-                            <Label className="text-xs font-bold">Ville</Label>
-                            <Input
-                                placeholder="Douala"
-                                {...form.register("billingCity")}
-                                disabled={isSubmitting}
-                                className="rounded-xl"
-                            />
-                            {form.formState.errors.billingCity && (
-                                <p className="text-xs font-semibold text-destructive">
-                                    {form.formState.errors.billingCity.message}
-                                </p>
-                            )}
-                        </div>
-
-                        <div className="space-y-1.5">
-                            <Label className="text-xs font-bold">Code postal</Label>
-                            <Input
-                                placeholder="00237"
-                                {...form.register("billingZipCode")}
-                                disabled={isSubmitting}
-                                className="rounded-xl"
-                            />
-                            {form.formState.errors.billingZipCode && (
-                                <p className="text-xs font-semibold text-destructive">
-                                    {form.formState.errors.billingZipCode.message}
-                                </p>
-                            )}
-                        </div>
-
-                        <div className="space-y-1.5 sm:col-span-2">
-                            <Label className="text-xs font-bold">Région / État</Label>
-                            <Input
-                                placeholder="Littoral"
-                                {...form.register("billingState")}
-                                disabled={isSubmitting}
-                                className="rounded-xl"
-                            />
-                            {form.formState.errors.billingState && (
-                                <p className="text-xs font-semibold text-destructive">
-                                    {form.formState.errors.billingState.message}
-                                </p>
-                            )}
-                        </div>
-                    </div>
-                </div>
+            {method !== "MOBILE_MONEY" && (
+                <p className="text-xs font-semibold text-muted-foreground rounded-2xl border border-dashed p-4">
+                    Tu saisiras tes informations de paiement à l&apos;étape suivante, directement et en
+                    toute sécurité chez notre partenaire de paiement Stripe.
+                </p>
             )}
 
             <Button
@@ -349,7 +161,7 @@ export function PaymentForm({
                 className="w-full rounded-xl py-6 font-bold sm:py-5"
                 disabled={isSubmitting || !countryCode}
             >
-                {isSubmitting ? "Traitement en cours..." : "Payer"}
+                {isSubmitting ? "Traitement en cours..." : "Continuer"}
             </Button>
         </form>
     );

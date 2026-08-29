@@ -1,0 +1,85 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  REGISTRY: ghcr.io
+  # Explicit name (matching the backend's "guestravel-api") rather than the repository's own
+  # name, so the VPS compose file and this workflow both refer to an unambiguous "this is the
+  # frontend" image regardless of what the repo itself is called.
+  IMAGE_NAME: guestravel-frontend
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          # NEXT_PUBLIC_* values are baked into the client bundle at build time (see the
+          # Dockerfile) - passed here as build args, sourced from Actions Variables since none of
+          # these are actually secret (a Stripe *publishable* key and two public URLs are meant to
+          # ship inside the browser bundle).
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}
+            NEXT_PUBLIC_APP_URL=${{ vars.NEXT_PUBLIC_APP_URL }}
+            NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${{ vars.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+
+      # Only deploy on an actual push to main - never on a pull_request build, which only exists
+      # here to prove the image still builds.
+      - name: Deploy VPS
+        if: github.event_name == 'push'
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT }}
+          script: |
+            docker login ghcr.io \
+              -u ${{ github.actor }} \
+              -p ${{ secrets.GITHUB_TOKEN }}
+
+            cd /opt/apps
+
+            docker compose pull frontend
+
+            docker compose up -d frontend
+
+            docker image prune -f

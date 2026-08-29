@@ -1,7 +1,28 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import * as bookingApi from "@/lib/api/booking";
-import type { CheckoutRequest, MultiCityCheckoutRequest } from "@/lib/api/types";
+import type { AncillaryOptionsRequest, CheckoutRequest, MultiCityCheckoutRequest } from "@/lib/api/types";
+
+/**
+ * Quotes priced extras for the "additional options" checkout step. Keyed by offerId + traveler
+ * count rather than the full request (names are just placeholders at this stage, see
+ * AncillaryOptionsStep) - a real name change shouldn't trigger a refetch. `staleTime: Infinity`
+ * because the underlying OfferCache quote is only valid for one checkout session anyway.
+ *
+ * `enabled` is a separate flag from `request` on purpose: the caller keeps passing the same
+ * `request` object once past the options step (so the queryKey - and therefore the already-fetched
+ * `data` - stays stable) and only flips `enabled` to stop refetching. Passing `null` for `request`
+ * itself once the step is done would change the queryKey and silently lose the cached options,
+ * breaking the price recap on later steps.
+ */
+export function useAncillaryOptionsQuery(request: AncillaryOptionsRequest | null, enabled: boolean) {
+  return useQuery({
+    queryKey: ["ancillary-options", request?.offerId, request?.travelers.length],
+    queryFn: () => bookingApi.getAncillaryOptions(request as AncillaryOptionsRequest),
+    enabled: enabled && request !== null,
+    staleTime: Infinity,
+  });
+}
 
 export function useCheckoutMutation() {
   return useMutation({
@@ -23,6 +44,17 @@ export function useBookingQuery(bookingId: string | null) {
     // faster than the default staleTime, and the payment and tracking pages both query the
     // same id in quick succession - always refetch on mount instead of serving a cached,
     // possibly-stale status from the page the user was just on.
+    staleTime: 0,
+  });
+}
+
+export function useFlightOrderDetailQuery(bookingId: string | null, enabled: boolean) {
+  return useQuery({
+    queryKey: ["flight-order-detail", bookingId],
+    queryFn: () => bookingApi.getFlightOrderDetail(bookingId as string),
+    enabled: bookingId !== null && enabled,
+    // Reflects the provider's live state (baggage/meals/seats can be added post-booking) - don't
+    // serve a stale cached value from an earlier visit.
     staleTime: 0,
   });
 }

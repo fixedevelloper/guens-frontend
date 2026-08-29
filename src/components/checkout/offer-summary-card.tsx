@@ -18,9 +18,14 @@ import type { PaymentPlanValue } from "@/components/checkout/checkout-form";
 export function OfferSummaryCard({
                                    offer,
                                    paymentPlan = "PAY_NOW",
+                                   extrasTotal = 0,
                                  }: {
   offer: OfferSummary;
   paymentPlan?: PaymentPlanValue;
+  /** Sum of extras (baggage/meal/seat/insurance) picked at the "additional options" step, in the
+   *  offer's own currency - folded into the displayed total, ignored while PAY_LATER shows the
+   *  flat reservation fee instead. */
+  extrasTotal?: number;
 }) {
   const t = useTranslations("Checkout");
   const locale = useLocale();
@@ -46,7 +51,7 @@ export function OfferSummaryCard({
   const roomQuantity = offer.offerType === "HOTEL" ? (hotelCartItem?.quantity ?? offer.quantity) : undefined;
 
   const isPayLater = paymentPlan === "PAY_LATER";
-  const displayedAmount = isPayLater ? RESERVATION_FEE_AMOUNT : realAmount;
+  const displayedAmount = isPayLater ? RESERVATION_FEE_AMOUNT : realAmount + extrasTotal;
   const displayedCurrency = isPayLater ? RESERVATION_FEE_CURRENCY : realCurrency;
 
   return (
@@ -218,6 +223,15 @@ export function OfferSummaryCard({
                   <strong>{formatMoney({ amount: realAmount, currency: realCurrency }, locale)}</strong>{" "}
                   sera à régler ultérieurement.
             </span>
+              </div>
+          )}
+
+          {!isPayLater && extrasTotal > 0 && (
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>{t("summaryExtrasLabel") ?? "Options additionnelles"}</span>
+                <span className="font-semibold text-foreground">
+                  {formatMoney({ amount: extrasTotal, currency: realCurrency }, locale)}
+                </span>
               </div>
           )}
 

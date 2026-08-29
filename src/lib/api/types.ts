@@ -23,7 +23,7 @@ export type BookingStatus =
 
 export type PaymentStatus = "PENDING" | "PENDING_AUTHORIZATION" | "SUCCEEDED" | "FAILED";
 
-export type PaymentAuthorizationType = "PIN" | "AVS" | "REDIRECT" | "OTP";
+export type PaymentAuthorizationType = "PIN" | "AVS" | "REDIRECT" | "OTP" | "CLIENT_ACTION";
 
 export type CabinClass = "ECONOMY" | "PREMIUM_ECONOMY" | "BUSINESS" | "FIRST";
 
@@ -210,6 +210,51 @@ export interface SeatMapResponse {
   columns: string[];
   seats: Seat[];
 }
+
+// ---------- Ancillary options (extra baggage, meals, paid seats, travel insurance) ----------
+export type AncillaryType = "BAGGAGE" | "MEAL" | "SEAT" | "INSURANCE";
+
+/** Cabin-grid placement/attributes for a SEAT-type option - lets the checkout render an actual
+ *  airplane seat map instead of a flat list. `totalRows`/`totalColumns`/`seatGroups`/`cabinClass`
+ *  describe the whole segment's grid and are repeated identically on every seat in that segment. */
+export interface SeatLayout {
+  row: string;
+  column: string;
+  status: string;
+  exitRow: boolean;
+  accessible: boolean;
+  bassinet: boolean;
+  toilet: boolean;
+  galley: boolean;
+  totalRows: number;
+  totalColumns: number;
+  seatGroups: string[];
+  cabinClass: string | null;
+}
+
+/**
+ * One priced extra quoted for the "additional options" checkout step. `id` is an opaque cache
+ * key to echo back in a traveler's `selectedAncillaryIds` - never trust a client-supplied price.
+ * `paxRef` is the provider's positional passenger reference ("T1"/"T2"/...), null for a
+ * booking-level option like INSURANCE. `seatLayout` is set only when `type === "SEAT"`.
+ */
+export interface AncillaryOptionResponse {
+  id: string;
+  type: AncillaryType;
+  segmentId: string | null;
+  code: string | null;
+  label: string;
+  price: Money;
+  paxRef: string | null;
+  seatLayout: SeatLayout | null;
+}
+
+export interface AncillaryOptionsRequest {
+  offerId: string;
+  offerType: OfferType;
+  travelers: { fullName: string; type: PassengerType }[];
+}
+
 // ---------- Booking ----------
 export interface TravelerRequest {
   fullName: string;
@@ -223,6 +268,8 @@ export interface TravelerRequest {
   passportIssueCountry?: string;
   /** Passport expiry date; optional, requested by some flight booking APIs. */
   passportExpiryDate?: string;
+  /** Ids from AncillaryOptionResponse picked for this traveler at the "additional options" step. */
+  selectedAncillaryIds?: string[];
 }
 export interface CheckoutRequest {
   offerId: string;
@@ -276,7 +323,11 @@ export interface BookingResponse {
   failureReason: string | null;
   /** True only when FAILED and the provider hold never got a confirmation number - safe to retry. */
   retryable: boolean;
+  /** True once a payment was actually captured for this booking, even if it later failed anyway
+   *  (see confirmWithProvider) - sending the payer back to search would risk a second charge. */
+  paymentCaptured: boolean;
   travelers: BookingTravelerResponse[];
+  extras: BookingExtraResponse[];
   airline: string | null;
   flightNumber: string | null;
   origin: string | null;
@@ -313,6 +364,14 @@ export interface BookingTravelerResponse {
   type: PassengerType;
   seatNumber: string | null;
 }
+export interface BookingExtraResponse {
+  type: AncillaryType;
+  travelerIndex: number | null;
+  segmentId: string | null;
+  code: string | null;
+  label: string;
+  price: Money;
+}
 export type PaymentMethod = "CARD" | "MOBILE_MONEY" | "GOOGLE_PAY" | "APPLE_PAY" | "PAYPAL";
 export interface BillingAddress {
   address: string;
@@ -329,13 +388,10 @@ interface BasePaymentRequest {
   countryCurrency: string; // ISO 4217, ex. "XAF"
 }
 
-// Variante Carte
+// Variante Carte - Stripe (the default CARD route) collects the card itself via its own Payment
+// Element after this request creates the PaymentIntent, so no card fields travel through here.
 export interface CardPaymentRequest extends BasePaymentRequest {
   paymentMethod: "CARD";
-  cardNumber: string;
-  cardHolderName: string;
-  expiry: string;
-  cvv: string;
 }
 
 // Variante Mobile Money
@@ -366,6 +422,9 @@ export interface PaymentResponse {
   authorizationType: PaymentAuthorizationType | null;
   /** Set only when authorizationType is REDIRECT - where to send the payer to complete 3DS. */
   authorizationRedirectUrl: string | null;
+  /** Set only when authorizationType is CLIENT_ACTION - the Stripe PaymentIntent client secret,
+   *  passed to stripe.confirmPayment on the frontend (Stripe never sees this backend at all). */
+  authorizationClientSecret: string | null;
   failureReason: string | null;
 }
 
@@ -1077,4 +1136,56 @@ export interface HarmonizedPropertyOffer {
   checkOut: string;
   bestOfferId: string;
   quotes: ProviderQuote[];
+}
+
+/** Live baggage/meals/seats/cancellation-policy detail for a confirmed flight booking - see
+ *  GET /api/bookings/{id}/flight-order-detail. Route/times/passenger names already live on the
+ *  BookingResponse itself and aren't duplicated here. */
+export interface FlightOrderDetail {
+  bookingStatus: string | null;
+  travelers: FlightOrderDetailTraveler[];
+  cancellationRules: FlightOrderDetailCancellationRule[];
+}
+
+export interface FlightOrderDetailTraveler {
+  firstName: string | null;
+  lastName: string | null;
+  paxType: string | null;
+  baggages: FlightOrderDetailBaggage[];
+  meals: FlightOrderDetailMeal[];
+  seats: FlightOrderDetailSeat[];
+}
+
+export interface FlightOrderDetailBaggage {
+  segmentId: string | null;
+  departure: string | null;
+  arrival: string | null;
+  description: string | null;
+  price: string | null;
+  currency: string | null;
+}
+
+export interface FlightOrderDetailMeal {
+  segmentId: string | null;
+  departure: string | null;
+  arrival: string | null;
+  description: string | null;
+  price: string | null;
+  currency: string | null;
+}
+
+export interface FlightOrderDetailSeat {
+  segmentId: string | null;
+  departure: string | null;
+  arrival: string | null;
+  row: string | null;
+  column: string | null;
+  price: string | null;
+  currency: string | null;
+}
+
+export interface FlightOrderDetailCancellationRule {
+  adultCharges: string | null;
+  currency: string | null;
+  refundable: boolean;
 }

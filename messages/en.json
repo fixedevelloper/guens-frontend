@@ -130,11 +130,32 @@
     "rating": "Rating",
     "roomType": "Room type",
     "night": "{count, plural, =1 {1 night} other {# nights}}",
-    "passenger": "passengers"
+    "passenger": "passengers",
+    "editShort": "Edit",
+    "noFlightsMatch": "No flights match your filters",
+    "tryWiderCriteria": "Try widening your search criteria.",
+    "refundableTicket": "Changeable or refundable ticket",
+    "showDetailsAction": "Details",
+    "hideDetailsAction": "Hide",
+    "offerNumber": "Offer {index}",
+    "recommendedFare": "Recommended fare",
+    "viewOffer": "View offer",
+    "otherOptions": "Other options ({count})",
+    "detailedItinerary": "Detailed itinerary",
+    "departureAirport": "Departure airport ({code})",
+    "arrivalAirport": "Arrival airport ({code})",
+    "flightPrefix": "Flight",
+    "durationLabel": "Duration: {duration}",
+    "cabinClassLabel": "Class",
+    "baggageLabel": "Baggage",
+    "carryOnIncluded": "1 carry-on included",
+    "availableSeatsLabel": "Available seats",
+    "seatsRemaining": "{count, plural, =1 {1 seat remaining} other {# seats remaining}}"
   },
   "Filters": {
     "title": "Filters",
     "reset": "Reset",
+    "showResults": "Show results ({count})",
     "maxPrice": "Max price",
     "providers": "Providers",
     "airlines": "Airlines",
@@ -204,6 +225,7 @@
   "Checkout": {
     "title": "Complete your booking",
     "summaryTitle": "Summary",
+    "summaryExtrasLabel": "Additional options",
     "contactSection": "Contact details",
     "contactEmail": "Email address",
     "contactFullName": "Full name",
@@ -262,6 +284,24 @@
       "occupied": "Occupied / Unavailable"
     }
   },
+  "AncillaryOptions": {
+    "title": "Additional options",
+    "subtitle": "Add extra baggage, seat selection, travel insurance, or special meals if needed.",
+    "baggageSection": "Extra baggage",
+    "mealSection": "Meals",
+    "seatSection": "Seats",
+    "insuranceSection": "Travel insurance",
+    "forTraveler": "Traveler {index}",
+    "forAllTravelers": "For all travelers",
+    "noSeatSelected": "No seat selected for traveler {index}",
+    "loading": "Loading options…",
+    "unavailable": "No additional options are available for this flight.",
+    "loadError": "Couldn't load additional options right now.",
+    "continue": "Continue",
+    "skip": "Skip this step",
+    "selectedCount": "{count, plural, =0 {No option selected} =1 {1 option selected} other {# options selected}}",
+    "totalLabel": "Options total"
+  },
   "Payment": {
     "title": "Secure payment",
     "amountDue": "Amount due",
@@ -282,14 +322,29 @@
     "processing": "Processing payment…",
     "success": "Payment accepted, confirming with the provider…",
     "failure": "Payment declined: {reason}",
-    "secureNotice": "Encrypted payment, no card data is stored on our servers."
+    "genericFailure": "Payment declined. Please try again or choose another payment method.",
+    "secureNotice": "Encrypted payment, no card data is stored on our servers.",
+    "bookingNotFound": "We couldn't load this booking. If you opened this link on a new device or window, use the link from your confirmation email or sign in to your account to continue."
   },
   "Tracking": {
     "title": "Booking tracking",
+    "subtitle": "Manage your trip and access your flight information in real time.",
     "reference": "Reference",
+    "referenceLabel": "Booking reference",
+    "realtimeUpdateTitle": "Real-time update",
+    "itineraryTitle": "Itinerary details",
+    "paymentBreakdownTitle": "Payment breakdown",
+    "paymentValidationTitle": "Validating payment…",
+    "paymentValidationDescription": "We're confirming your transaction with the payment provider (Ref: <code>{reference}</code>). The status will update automatically once confirmed.",
+    "cancelWarning": "Are you absolutely sure you want to cancel this booking? This action cannot be undone.",
+    "loadError": "Couldn't load the details for this booking.",
     "totalPrice": "Total price",
+    "extrasTitle": "Additional options",
+    "extraTraveler": "Traveler {index}",
+    "extraForAll": "For all travelers",
     "payNowAction": "Pay now",
     "payBalanceAction": "Pay balance",
+    "goToAccount": "Go to my account",
     "status": {
       "PENDING_HOLD": "Finalizing...",
       "PENDING_PAYMENT": "Pending Payment",
@@ -314,9 +369,11 @@
     "cancelConfirm": "Confirm cancellation",
     "cancelling": "Cancelling…",
     "viewTickets": "View my tickets",
+    "viewFlightDetails": "Flight details",
     "failureReason": "Reason: {reason}",
     "retryAction": "Retry",
-    "searchAgainAction": "Search again"
+    "searchAgainAction": "Search again",
+    "paymentCapturedNotice": "Your payment was successfully charged. Our support team will contact you to sort out this booking - no need to pay again or search again."
   },
   "Tickets": {
     "title": "Your e-tickets",
@@ -547,7 +604,17 @@
     "navDashboard": "Dashboard",
     "navListings": "Listings",
     "navBookings": "Bookings",
+    "navMyBookings": "My bookings",
     "navSettings": "Settings",
+    "myBookings": {
+      "title": "My bookings",
+      "subtitle": "Your own trips booked as a customer, separate from the bookings your customers made on your listings.",
+      "loadError": "Couldn't load your bookings. Please try again.",
+      "retry": "Retry",
+      "emptyTitle": "No bookings yet",
+      "emptyDesc": "Your personal bookings (flights, hotels...) will show up here.",
+      "searchCta": "Search a trip"
+    },
     "dashboard": {
       "title": "Partner Dashboard",
       "subtitle": "Overview your listings, approve incoming bookings, and track your revenue in real time.",
@@ -1005,5 +1072,22 @@
     "delete": "Delete",
     "deleteConfirm": "Delete this vehicle? This action cannot be undone.",
     "pageInfo": "Page {page} of {totalPages} — {totalElements} vehicle(s)"
+  },
+  "FlightDetail": {
+    "title": "Flight details",
+    "subtitle": "Itinerary, travelers, baggage, meals and seats for this booking.",
+    "backToBooking": "Back to booking",
+    "notAvailable": "Flight details aren't available for this booking.",
+    "itinerary": "Itinerary",
+    "pnr": "PNR",
+    "travelers": "Travelers",
+    "extraDetailUnavailable": "Extra detail (baggage, meals, seats) isn't available for this provider.",
+    "extraBaggage": "Extra baggage",
+    "meal": "Meal",
+    "seat": "Seat",
+    "cancellationPolicy": "Cancellation policy",
+    "refundable": "Refundable",
+    "nonRefundable": "Non-refundable",
+    "cancellationCharges": "Cancellation charges"
   }
 }

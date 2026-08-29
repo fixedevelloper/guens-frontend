@@ -4,7 +4,7 @@
 import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Minus, Plus, Armchair, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { Minus, Plus, ArrowLeft, PackagePlus } from "lucide-react";
 import { toast } from "sonner";
 
 import { useRouter } from "@/i18n/navigation";
@@ -13,13 +13,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
+import { AncillaryOptionsStep } from "@/components/checkout/ancillary-options-step";
 import { CheckoutForm } from "@/components/checkout/checkout-form";
 import { OfferSummaryCard } from "@/components/checkout/offer-summary-card";
-import { SeatMap } from "@/components/checkout/seat-map";
-import { useCheckoutMultiCityMutation, useCheckoutMutation } from "@/hooks/use-booking";
+import { useAncillaryOptionsQuery, useCheckoutMultiCityMutation, useCheckoutMutation } from "@/hooks/use-booking";
 import { normalizeApiError } from "@/lib/api/client";
 import { parseOfferSummary } from "@/lib/offer-summary";
-import type { CheckoutRequest } from "@/lib/api/types";
+import type { CheckoutRequest, TravelerRequest } from "@/lib/api/types";
 
 const MAX_SEATS = 9;
 
@@ -44,6 +44,7 @@ export default function CheckoutPage() {
 function CheckoutPageContent() {
   const t = useTranslations("Checkout");
   const tSeat = useTranslations("SeatSelection");
+  const tExtras = useTranslations("AncillaryOptions");
   const searchParams = useSearchParams();
   const router = useRouter();
   const checkoutMutation = useCheckoutMutation();
@@ -53,19 +54,105 @@ function CheckoutPageContent() {
   const isSubmitting = checkoutMutation.isPending || multiCityCheckoutMutation.isPending;
 
   const needsSeatSelection = offer?.offerType === "FLIGHT";
-  const [seatStepDone, setSeatStepDone] = useState(false);
+  const totalSteps = needsSeatSelection ? 2 : 1;
   const [seatCount, setSeatCount] = useState(1);
-  const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
+
+  // Étape "options supplémentaires" (voyageurs, bagages/repas/sièges/assurance) - vols uniquement,
+  // avant le formulaire de coordonnées. Le choix des sièges vit désormais ici (section dédiée de
+  // AncillaryOptionsStep, alimentée par les vraies données du fournisseur) : l'ancien plan de
+  // cabine séparé montrait un plan simulé, sans rapport avec les sièges réels/tarifés récupérés
+  // ici, et n'avait donc plus lieu d'être. Les voyageurs n'ayant pas encore de nom à ce stade, la
+  // quote est demandée avec des placeholders (ADULT x seatCount) - seul le nombre de voyageurs
+  // compte pour le pricing, les vrais noms n'arrivent qu'au moment du Book.
+  const [extrasStepDone, setExtrasStepDone] = useState(false);
+  const [selectedExtraIds, setSelectedExtraIds] = useState<string[]>([]);
+  const ancillaryOptionsRequest = useMemo(() => {
+    if (!offer || offer.offerType !== "FLIGHT") return null;
+    return {
+      offerId: offer.offerId,
+      offerType: offer.offerType,
+      travelers: Array.from({ length: seatCount }, (_, i) => ({
+        fullName: `Voyageur ${i + 1}`,
+        type: "ADULT" as const,
+      })),
+    };
+  }, [offer, seatCount]);
+  const ancillaryOptionsQuery = useAncillaryOptionsQuery(
+      ancillaryOptionsRequest,
+      needsSeatSelection && !extrasStepDone
+  );
+  const extrasTotalAmount = useMemo(() => {
+    if (!ancillaryOptionsQuery.data) return 0;
+    const byId = new Map(ancillaryOptionsQuery.data.map((option) => [option.id, option]));
+    return selectedExtraIds.reduce((sum, id) => sum + Number(byId.get(id)?.price.amount ?? 0), 0);
+  }, [selectedExtraIds, ancillaryOptionsQuery.data]);
+
+  /** Real per-traveler seat code ("1A"), derived from whichever SEAT-type extra is selected for
+   *  each traveler's paxRef - feeds CheckoutForm's traveler rows so the "Siège X" badge reflects
+   *  the actual (priced, provider-forwarded) seat pick instead of the old simulated one. */
+  const seatLabelsByTraveler = useMemo(() => {
+    if (!ancillaryOptionsQuery.data) return [];
+    const byId = new Map(ancillaryOptionsQuery.data.map((option) => [option.id, option]));
+    return Array.from({ length: seatCount }, (_, i) => {
+      const paxRef = `T${i + 1}`;
+      const selected = selectedExtraIds
+          .map((id) => byId.get(id))
+          .find((option) => option?.type === "SEAT" && option.paxRef === paxRef);
+      return selected?.code ?? undefined;
+    });
+  }, [selectedExtraIds, ancillaryOptionsQuery.data, seatCount]);
+
+  // Vols (simple ou multi-villes) uniquement : rend date de naissance/nationalité obligatoires et
+  // vérifie que le passeport couvre bien le voyage (voir CheckoutForm) - mêmes règles que
+  // BookingService.validateFlightTravelers côté serveur.
+  const isFlightCheckout = offer?.offerType === "FLIGHT" || offer?.offerType === "MULTI_CITY_FLIGHT";
+  const travelDate = offer?.offerType === "FLIGHT"
+      ? offer.departureTime
+      : offer?.offerType === "MULTI_CITY_FLIGHT"
+          ? offer.legs[offer.legs.length - 1]?.arrivalTime
+          : undefined;
 
   function changeSeatCount(next: number) {
     const clamped = Math.max(1, Math.min(MAX_SEATS, next));
     setSeatCount(clamped);
-    setSelectedSeats((seats) => seats.slice(0, clamped));
+    // Drops any extra picked for a traveler slot that no longer exists (e.g. a seat selected for
+    // traveler 3, then the count reduced back to 2).
+    if (ancillaryOptionsQuery.data) {
+      const byId = new Map(ancillaryOptionsQuery.data.map((option) => [option.id, option]));
+      const validPaxRefs = new Set(Array.from({ length: clamped }, (_, i) => `T${i + 1}`));
+      setSelectedExtraIds((ids) => ids.filter((id) => {
+        const option = byId.get(id);
+        return !option?.paxRef || validPaxRefs.has(option.paxRef);
+      }));
+    }
+  }
+
+  /** Distributes selected extra ids onto the matching traveler by the option's paxRef ("T1" ->
+   *  index 0, ...); a booking-level option (no paxRef, e.g. INSURANCE) is attached to the first
+   *  traveler - the backend never forwards it to a provider, it only needs to be counted once. */
+  function applySelectedExtras(travelers: TravelerRequest[]): TravelerRequest[] {
+    if (selectedExtraIds.length === 0 || !ancillaryOptionsQuery.data) return travelers;
+    const byId = new Map(ancillaryOptionsQuery.data.map((option) => [option.id, option]));
+    const idsByTravelerIndex = new Map<number, string[]>();
+    for (const id of selectedExtraIds) {
+      const option = byId.get(id);
+      if (!option) continue;
+      const digits = option.paxRef?.replace(/\D/g, "");
+      const travelerIndex = digits ? Math.max(0, Number(digits) - 1) : 0;
+      const ids = idsByTravelerIndex.get(travelerIndex) ?? [];
+      ids.push(id);
+      idsByTravelerIndex.set(travelerIndex, ids);
+    }
+    return travelers.map((traveler, index) => {
+      const ids = idsByTravelerIndex.get(index);
+      return ids ? { ...traveler, selectedAncillaryIds: ids } : traveler;
+    });
   }
 
   function handleSubmit(partial: Omit<CheckoutRequest, "offerId" | "offerType">) {
     if (!offer) return;
 
+    const travelers = applySelectedExtras(partial.travelers);
     const callbacks = {
       onSuccess: (booking: { id: string }) => {
         // Checkout now returns immediately with the provider hold still in progress
@@ -80,13 +167,14 @@ function CheckoutPageContent() {
 
     if (offer.offerType === "MULTI_CITY_FLIGHT") {
       multiCityCheckoutMutation.mutate(
-          { ...partial, legOfferIds: offer.legs.map((leg) => leg.offerId) },
+          { ...partial, travelers, legOfferIds: offer.legs.map((leg) => leg.offerId) },
           callbacks
       );
     } else {
       checkoutMutation.mutate(
           {
             ...partial,
+            travelers,
             offerId: offer.offerId,
             offerType: offer.offerType,
             quantity: offer.offerType === "HOTEL" ? offer.quantity : undefined,
@@ -120,35 +208,32 @@ function CheckoutPageContent() {
     );
   }
 
-  /* ÉTAPE 1 : SÉLECTION DES SIÈGES */
-  if (needsSeatSelection && !seatStepDone && offer.offerType === "FLIGHT") {
+  /* ÉTAPE 1 : VOYAGEURS & OPTIONS SUPPLÉMENTAIRES (bagages, repas, sièges payants, assurance) */
+  if (needsSeatSelection && !extrasStepDone && offer.offerType === "FLIGHT") {
     return (
         <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:py-10 grid-cols-1 lg:grid-cols-[1fr_360px]">
-          {/* Résumé de l'offre (Mobile: Premier / Desktop: Colonne de droite) */}
           <div className="order-1 lg:order-2">
             <div className="lg:sticky lg:top-24">
-              <OfferSummaryCard offer={offer} />
+              <OfferSummaryCard offer={offer} extrasTotal={extrasTotalAmount} />
             </div>
           </div>
 
-          {/* Sélection des sièges (Mobile: Second / Desktop: Colonne de gauche) */}
           <div className="order-2 lg:order-1 space-y-5 sm:space-y-6">
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <Badge variant="secondary" className="rounded-full px-2.5 py-0.5 text-[11px] font-bold">
-                  Étape 1 sur 2
+                  Étape 1 sur {totalSteps}
                 </Badge>
               </div>
               <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-2.5">
-                <Armchair className="size-5 sm:size-6 text-primary shrink-0" />
-                {tSeat("title") ?? "Choix des sièges"}
+                <PackagePlus className="size-5 sm:size-6 text-primary shrink-0" />
+                {tExtras("title")}
               </h1>
-              <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-                Sélectionnez vos places préférées pour votre voyage.
-              </p>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1">{tExtras("subtitle")}</p>
             </div>
 
-            {/* Sélecteur du nombre de passagers */}
+            {/* Sélecteur du nombre de voyageurs - détermine à la fois combien de voyageurs le
+                formulaire final affichera et pour combien de passagers les options sont tarifées. */}
             <Card className="border-border/60 shadow-2xs rounded-2xl">
               <CardContent className="p-3.5 sm:p-4 flex items-center justify-between gap-3">
                 <div className="space-y-0.5">
@@ -183,17 +268,18 @@ function CheckoutPageContent() {
               </CardContent>
             </Card>
 
-            {/* Plan de cabine interactif */}
             <div className="rounded-2xl border border-border/60 bg-background p-4 sm:p-6 shadow-2xs">
-              <SeatMap
-                  offerId={offer.offerId}
-                  seatCount={seatCount}
-                  selectedSeats={selectedSeats}
-                  onChange={setSelectedSeats}
-                  onContinue={() => setSeatStepDone(true)}
+              <AncillaryOptionsStep
+                  options={ancillaryOptionsQuery.data}
+                  isLoading={ancillaryOptionsQuery.isLoading}
+                  isError={ancillaryOptionsQuery.isError}
+                  travelerCount={seatCount}
+                  selectedIds={selectedExtraIds}
+                  onChange={setSelectedExtraIds}
+                  onContinue={() => setExtrasStepDone(true)}
                   onSkip={() => {
-                    setSelectedSeats([]);
-                    setSeatStepDone(true);
+                    setSelectedExtraIds([]);
+                    setExtrasStepDone(true);
                   }}
               />
             </div>
@@ -202,13 +288,13 @@ function CheckoutPageContent() {
     );
   }
 
-  /* ÉTAPE 2 : FORMULAIRE DE PAIEMENT & PASSAGERS */
+  /* ÉTAPE 3 : FORMULAIRE DE PAIEMENT & PASSAGERS */
   return (
       <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:py-10 grid-cols-1 lg:grid-cols-[1fr_360px]">
         {/* Résumé de l'offre */}
         <div className="order-1 lg:order-2">
           <div className="lg:sticky lg:top-24">
-            <OfferSummaryCard offer={offer} paymentPlan={paymentPlan} />
+            <OfferSummaryCard offer={offer} paymentPlan={paymentPlan} extrasTotal={extrasTotalAmount} />
           </div>
         </div>
 
@@ -217,20 +303,20 @@ function CheckoutPageContent() {
           <div>
             <div className="flex items-center gap-2 mb-2">
               <Badge variant="secondary" className="rounded-full px-2.5 py-0.5 text-[11px] font-bold">
-                {needsSeatSelection ? "Étape 2 sur 2" : "Étape 1 sur 1"}
+                {needsSeatSelection ? `Étape ${totalSteps} sur ${totalSteps}` : "Étape 1 sur 1"}
               </Badge>
 
-              {/* Bouton pour revenir à la sélection des sièges si applicable */}
+              {/* Bouton pour revenir aux étapes précédentes si applicable */}
               {needsSeatSelection && (
                   <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={() => setSeatStepDone(false)}
+                      onClick={() => setExtrasStepDone(false)}
                       className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground gap-1 rounded-lg"
                   >
                     <ArrowLeft className="size-3" />
-                    Modifier les sièges
+                    Modifier les options
                   </Button>
               )}
             </div>
@@ -242,11 +328,11 @@ function CheckoutPageContent() {
               Complétez vos coordonnées pour finaliser la réservation de votre voyage.
             </p>
 
-            {/* Badge récapitulatif des sièges sélectionnés */}
-            {selectedSeats.length > 0 && (
-                <div className="mt-3 inline-flex items-center gap-2 text-xs font-semibold text-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 dark:text-emerald-400 px-3 py-1.5 rounded-xl border border-emerald-200/50 dark:border-emerald-800/40">
-                  <CheckCircle2 className="size-3.5 shrink-0" />
-                  Sièges choisis : {selectedSeats.join(", ")}
+            {/* Badge récapitulatif des options supplémentaires sélectionnées */}
+            {selectedExtraIds.length > 0 && (
+                <div className="mt-2 inline-flex items-center gap-2 text-xs font-semibold text-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 dark:text-emerald-400 px-3 py-1.5 rounded-xl border border-emerald-200/50 dark:border-emerald-800/40">
+                  <PackagePlus className="size-3.5 shrink-0" />
+                  {tExtras("selectedCount", { count: selectedExtraIds.length })}
                 </div>
             )}
           </div>
@@ -255,8 +341,11 @@ function CheckoutPageContent() {
             <CheckoutForm
                 onSubmit={handleSubmit}
                 isSubmitting={isSubmitting}
-                selectedSeats={selectedSeats}
+                travelerCount={needsSeatSelection ? seatCount : undefined}
+                seatLabelsByTraveler={seatLabelsByTraveler}
                 onPaymentPlanChange={setPaymentPlan}
+                isFlight={isFlightCheckout}
+                travelDate={travelDate}
             />
           </div>
         </div>

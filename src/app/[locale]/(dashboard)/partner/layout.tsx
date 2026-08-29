@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { CalendarCheck, LayoutDashboard, ListChecks, Settings } from "lucide-react";
+import { CalendarCheck, LayoutDashboard, ListChecks, Settings, Ticket } from "lucide-react";
 
 import { useRouter } from "@/i18n/navigation";
 import { useAuth } from "@/context/auth-context";
@@ -35,6 +35,7 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
         { href: "/partner", label: t("navDashboard") ?? "Tableau de bord", icon: LayoutDashboard },
         { href: "/partner/listings", label: t("navListings") ?? "Annonces", icon: ListChecks },
         { href: "/partner/bookings", label: t("navBookings") ?? "Réservations", icon: CalendarCheck },
+        { href: "/partner/my-bookings", label: t("navMyBookings") ?? "Mes réservations", icon: Ticket },
         { href: "/partner/settings", label: t("navSettings") ?? "Paramètres", icon: Settings },
     ];
 

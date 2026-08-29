@@ -27,7 +27,12 @@ import { cn } from "@/lib/utils";
 // pour chaque passager - confirmé par des tests réels ("PassengerNationality details is required
 // for this airline"). Optionnel pour les autres types d'offre (hôtel/véhicule/logement), qui n'en
 // ont pas besoin.
-const travelerSchema = (isFlight: boolean) => z.object({
+//
+// passportExpiryDate reste optionnel (certaines routes ne demandent pas de passeport), mais s'il
+// est renseigné il doit couvrir la date du voyage - un vrai rejet Travel Terminus au moment de
+// l'émission du billet ("Passport for passenger1 will be expired before travel date"), qui
+// n'apparaissait sinon qu'après capture du paiement, a montré que ça manquait ici.
+const travelerSchema = (isFlight: boolean, travelDate?: string) => z.object({
   fullName: z.string().trim().min(1, "Le nom du voyageur est requis"),
   dateOfBirth: isFlight
     ? z.string().trim().min(1, "La date de naissance est requise")
@@ -40,15 +45,21 @@ const travelerSchema = (isFlight: boolean) => z.object({
     : z.string().optional(),
   passportIssueCountry: z.string().optional(),
   passportExpiryDate: z.string().optional(),
-});
+}).refine(
+    (traveler) => {
+      if (!isFlight || !travelDate || !traveler.passportExpiryDate) return true;
+      return traveler.passportExpiryDate >= travelDate.slice(0, 10);
+    },
+    { message: "Le passeport doit être valide à la date du voyage", path: ["passportExpiryDate"] }
+);
 
-const buildSchema = (isFlight: boolean) => z.object({
+const buildSchema = (isFlight: boolean, travelDate?: string) => z.object({
   contactEmail: z.string().trim()
     .min(1, "L'email de contact est requis")
     .email("Format d'email invalide"),
   contactFullName: z.string().trim().min(1, "Le nom du contact est requis"),
   contactPhone: z.string().optional(),
-  travelers: z.array(travelerSchema(isFlight)).min(1, "Au moins un voyageur est requis"),
+  travelers: z.array(travelerSchema(isFlight, travelDate)).min(1, "Au moins un voyageur est requis"),
   paymentPlan: z.enum(["PAY_NOW", "PAY_LATER"]),
 });
 
@@ -56,40 +67,49 @@ export type CheckoutFormValues = z.infer<ReturnType<typeof buildSchema>>;
 export type PaymentPlanValue = "PAY_NOW" | "PAY_LATER";
 
 interface CheckoutFormProps {
-  selectedSeats?: string[];
+  /** Nombre de voyageurs à préremplir dans le formulaire (défaut 1) - vient du sélecteur de
+   *  l'étape Options pour un vol, absent pour les autres types d'offre. */
+  travelerCount?: number;
+  /** Code du siège réel choisi (ex. "1A") pour chaque voyageur, même index que travelerCount -
+   *  peut avoir des trous (voyageur sans siège choisi). */
+  seatLabelsByTraveler?: (string | undefined)[];
   onSubmit: (request: Omit<CheckoutRequest, "offerId" | "offerType">) => void;
   isSubmitting: boolean;
   /** Remonte le choix PAY_NOW/PAY_LATER au parent, pour que OfferSummaryCard puisse afficher le bon montant. */
   onPaymentPlanChange?: (plan: PaymentPlanValue) => void;
   /** Rend date de naissance et nationalité obligatoires par voyageur - requis par les fournisseurs de vols. */
   isFlight?: boolean;
+  /** Date du voyage (ISO), utilisée pour vérifier que le passeport ne sera pas expiré. */
+  travelDate?: string;
 }
 
-export function CheckoutForm({ selectedSeats, onSubmit, isSubmitting, onPaymentPlanChange, isFlight = false }: CheckoutFormProps) {
+export function CheckoutForm({
+                                travelerCount = 1,
+                                seatLabelsByTraveler,
+                                onSubmit,
+                                isSubmitting,
+                                onPaymentPlanChange,
+                                isFlight = false,
+                                travelDate,
+                              }: CheckoutFormProps) {
   const t = useTranslations("Checkout");
 
   const form = useForm<CheckoutFormValues>({
-    resolver: zodResolver(buildSchema(isFlight)),
+    resolver: zodResolver(buildSchema(isFlight, travelDate)),
     defaultValues: {
       contactEmail: "",
       contactFullName: "",
       contactPhone: "",
-      travelers:
-          selectedSeats && selectedSeats.length > 0
-              ? selectedSeats.map((seatNumber) => ({
-                fullName: "",
-                dateOfBirth: "",
-                passportNumber: "",
-                type: "ADULT" as const,
-                seatNumber,
-                nationality: "",
-                passportIssueCountry: "",
-                passportExpiryDate: "",
-              }))
-              : [{
-                fullName: "", dateOfBirth: "", passportNumber: "", type: "ADULT",
-                nationality: "", passportIssueCountry: "", passportExpiryDate: "",
-              }],
+      travelers: Array.from({ length: Math.max(1, travelerCount) }, (_, i) => ({
+        fullName: "",
+        dateOfBirth: "",
+        passportNumber: "",
+        type: "ADULT" as const,
+        seatNumber: seatLabelsByTraveler?.[i] ?? "",
+        nationality: "",
+        passportIssueCountry: "",
+        passportExpiryDate: "",
+      })),
       paymentPlan: "PAY_NOW",
     },
   });

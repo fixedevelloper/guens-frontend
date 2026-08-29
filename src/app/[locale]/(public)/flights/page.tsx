@@ -23,6 +23,7 @@ import { FlightResultsList } from "@/components/search/flight-results";
 import { FlightFilters } from "@/components/search/flight-filters";
 import { NewsletterSignup } from "@/components/newsletter-signup";
 import { useFlightSearch } from "@/hooks/use-search";
+import { useIsDesktop } from "@/hooks/use-media-query";
 import { useFlightStore } from "@/store/useFlightStore";
 import {
   flightSearchParamsToQuery,
@@ -62,12 +63,19 @@ export default function FlightsPage() {
 
 function FlightsPageContent() {
   const t = useTranslations("SearchResults");
+  const tFilters = useTranslations("Filters");
   const searchParams = useSearchParams();
   const router = useRouter();
 
   const [editing, setEditing] = useState(false);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [filters, setFilters] = useState(DEFAULT_FLIGHT_FILTERS);
+  // On desktop the edit form renders as a plain inline panel (below), not through this Dialog -
+  // its CSS is hidden there (lg:hidden) but Radix's Dialog stays logically "open" regardless of
+  // CSS, so its outside-click handler was firing on clicks inside the desktop panel and closing
+  // both at once. Gating `open` on viewport, not just `editing`, keeps Radix out of the picture
+  // entirely on desktop.
+  const isDesktop = useIsDesktop();
 
   const params = useMemo(() => parseFlightSearchParams(searchParams), [searchParams]);
   const query = useFlightSearch(params);
@@ -112,7 +120,9 @@ function FlightsPageContent() {
   );
 
   const isResultsEmpty = (query.data?.length ?? 0) > 0 && filteredOffers.length === 0;
-  const showMobileOverlay = editing || isMobileFilterOpen;
+  // Desktop's edit panel is a plain inline block, not an overlay - only lock scroll for the
+  // actual full-screen mobile sheets (see the isDesktop guards on MobileDialogSheet below).
+  const showMobileOverlay = (editing || isMobileFilterOpen) && !isDesktop;
 
   useEffect(() => {
     if (!showMobileOverlay) return;
@@ -155,7 +165,7 @@ function FlightsPageContent() {
               className="rounded-full px-4 py-2.5 text-xs font-bold gap-2"
           >
             <Search className="size-4 text-primary shrink-0" />
-            <span>Modifier</span>
+            <span>{t("editShort")}</span>
           </Button>
           <div className="h-4 w-px bg-border/80" />
           <Button
@@ -165,7 +175,7 @@ function FlightsPageContent() {
               className="rounded-full px-4 py-2.5 text-xs font-bold gap-2 text-foreground active:bg-muted"
           >
             <Filter className="size-4 text-primary shrink-0" />
-            <span>Filtres</span>
+            <span>{tFilters("title")}</span>
           </Button>
         </div>
 
@@ -205,7 +215,7 @@ function FlightsPageContent() {
                 className="w-full rounded-xl bg-primary font-semibold text-primary-foreground shadow-xs transition-all active:scale-95 sm:w-auto sm:rounded-full"
             >
               <Search className="mr-2 size-3.5" />
-              Modifier la recherche
+              {t("backToSearch")}
             </Button>
           </div>
 
@@ -233,7 +243,7 @@ function FlightsPageContent() {
 
                 <main className="min-w-0 space-y-4">
                   {isResultsEmpty ? (
-                      <EmptyResults onReset={() => setFilters(DEFAULT_FLIGHT_FILTERS)} />
+                      <EmptyResults t={t} tFilters={tFilters} onReset={() => setFilters(DEFAULT_FLIGHT_FILTERS)} />
                   ) : (
                       <FlightResultsList offers={filteredOffers} isReseller={false} />
                   )}
@@ -244,21 +254,21 @@ function FlightsPageContent() {
           <NewsletterSignup source="FLIGHT_PAGE" variant="flights" />
         </div>
 
-        {isMobileFilterOpen && (
-            <MobileDialogSheet title="Filtres" onOpenChange={setIsMobileFilterOpen} open={isMobileFilterOpen}>
+        {isMobileFilterOpen && !isDesktop && (
+            <MobileDialogSheet title={tFilters("title")} onOpenChange={setIsMobileFilterOpen} open={isMobileFilterOpen}>
               <div className="flex-1 max-h-[54dvh] overflow-y-auto p-5 pb-20">
                 <FlightFilters options={filterOptions} value={filters} onChange={setFilters} />
               </div>
               <div className="absolute bottom-0 left-0 right-0 border-t bg-background/95 p-4 backdrop-blur-md">
                 <Button className="w-full rounded-full font-bold" onClick={closePanels}>
-                  Afficher les résultats ({filteredOffers.length})
+                  {tFilters("showResults", { count: filteredOffers.length })}
                 </Button>
               </div>
             </MobileDialogSheet>
         )}
 
-        {editing && (
-            <MobileDialogSheet title="Modifier la recherche"  open={editing} onOpenChange={setEditing}>
+        {editing && !isDesktop && (
+            <MobileDialogSheet title={t("backToSearch")} open={editing} onOpenChange={setEditing}>
               <div className="flex-1 max-h-[54dvh] overflow-y-auto p-5 pb-18">
                 <FlightSearchForm
                     defaultValues={params ?? undefined}
@@ -272,51 +282,29 @@ function FlightsPageContent() {
   );
 }
 
-function MobileSheet({
-                       title,
-                       onClose,
-                       children,
-                     }: {
-  title: string;
-  onClose: () => void;
-  children: React.ReactNode;
+
+function EmptyResults({
+  onReset,
+  t,
+  tFilters,
+}: {
+  onReset: () => void;
+  t: ReturnType<typeof useTranslations>;
+  tFilters: ReturnType<typeof useTranslations>;
 }) {
-  return (
-      <div className="relative z-50 lg:hidden">
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs" onClick={onClose} />
-
-        <div className="relative mt-4 flex max-h-[88dvh] w-full flex-col overflow-hidden rounded-t-3xl bg-background shadow-2xl">
-          <div className="flex h-14 shrink-0 items-center justify-between border-b bg-muted/30 px-5">
-          <span className="text-sm font-bold uppercase tracking-wider text-foreground">
-            {title}
-          </span>
-            <Button variant="ghost" size="icon" className="size-8 rounded-full" onClick={onClose}>
-              <X className="size-4" />
-            </Button>
-          </div>
-
-          <div className="overflow-y-auto overscroll-contain">
-            {children}
-          </div>
-        </div>
-      </div>
-  );
-}
-
-function EmptyResults({ onReset }: { onReset: () => void }) {
   return (
       <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border/80 bg-background/50 p-8 text-center backdrop-blur-xs">
         <div className="relative mb-4 flex size-16 items-center justify-center rounded-full bg-primary/10 text-primary">
           <PlaneTakeoff className="size-8 animate-bounce" />
         </div>
         <h3 className="text-base font-bold text-foreground">
-          Aucun vol ne correspond à vos filtres
+          {t("noFlightsMatch")}
         </h3>
         <p className="mt-1.5 max-w-sm text-xs text-muted-foreground">
-          Essayez d'élargir vos critères de recherche.
+          {t("tryWiderCriteria")}
         </p>
         <Button onClick={onReset} className="mt-6 rounded-full px-6 font-semibold">
-          Réinitialiser les filtres
+          {tFilters("reset")}
         </Button>
       </div>
   );

@@ -72,14 +72,23 @@ export type ResellerBookingCheckout = z.infer<ReturnType<typeof buildSchema>>;
 export type ResellerCheckoutFormValues = z.infer<ReturnType<typeof buildSchema>>;
 
 interface ResellerCheckoutFormProps {
-  selectedSeats?: string[];
+  /** Nombre de voyageurs à préremplir (défaut 1). */
+  travelerCount?: number;
+  /** Code du siège réel choisi (ex. "1A") pour chaque voyageur, même index que travelerCount. */
+  seatLabelsByTraveler?: (string | undefined)[];
   onSubmit: (request: ResellerBookingCheckout) => void;
   isSubmitting: boolean;
   /** Rend date de naissance et nationalité obligatoires par voyageur - requis par les fournisseurs de vols. */
   isFlight?: boolean;
 }
 
-export function ResellerCheckoutForm({ selectedSeats, onSubmit, isSubmitting, isFlight = false }: ResellerCheckoutFormProps) {
+export function ResellerCheckoutForm({
+                                        travelerCount = 1,
+                                        seatLabelsByTraveler,
+                                        onSubmit,
+                                        isSubmitting,
+                                        isFlight = false,
+                                      }: ResellerCheckoutFormProps) {
   const t = useTranslations("Checkout");
 
   const form = useForm<ResellerCheckoutFormValues>({
@@ -89,22 +98,16 @@ export function ResellerCheckoutForm({ selectedSeats, onSubmit, isSubmitting, is
         contactEmail: "",
         contactFullName: "",
         contactPhone: "",
-        travelers:
-            selectedSeats && selectedSeats.length > 0
-                ? selectedSeats.map((seatNumber) => ({
-                  fullName: "",
-                  dateOfBirth: "",
-                  passportNumber: "",
-                  type: "ADULT" as const,
-                  seatNumber,
-                  nationality: "",
-                  passportIssueCountry: "",
-                  passportExpiryDate: "",
-                }))
-                : [{
-                  fullName: "", dateOfBirth: "", passportNumber: "", type: "ADULT",
-                  nationality: "", passportIssueCountry: "", passportExpiryDate: "",
-                }],
+        travelers: Array.from({ length: Math.max(1, travelerCount) }, (_, i) => ({
+          fullName: "",
+          dateOfBirth: "",
+          passportNumber: "",
+          type: "ADULT" as const,
+          seatNumber: seatLabelsByTraveler?.[i] ?? "",
+          nationality: "",
+          passportIssueCountry: "",
+          passportExpiryDate: "",
+        })),
         paymentPlan: "PAY_NOW",
       },
       customAmount: 0,

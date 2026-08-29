@@ -176,7 +176,7 @@ export const FlightOfferCard = memo(function FlightOfferCard({
             <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/40 pt-3.5 text-xs text-muted-foreground sm:pt-4">
             <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 sm:text-[11px]">
               <ShieldCheck className="size-3.5 shrink-0" />
-              Billet modifiable ou remboursable
+              {t("refundableTicket")}
             </span>
 
               {/* BOUTON DÉTAILS */}
@@ -186,7 +186,7 @@ export const FlightOfferCard = memo(function FlightOfferCard({
                   onClick={() => setShowDetails((v) => !v)}
                   className="ml-auto h-7 gap-1 rounded-full px-2.5 text-xs font-bold text-primary hover:bg-primary/10 hover:text-primary sm:px-3"
               >
-                <span>{showDetails ? "Masquer" : "Détails"}</span>
+                <span>{showDetails ? t("hideDetailsAction") : t("showDetailsAction")}</span>
                 <ChevronDown
                     className={`size-3.5 transition-transform duration-300 ${
                         showDetails ? "rotate-180" : ""
@@ -202,13 +202,13 @@ export const FlightOfferCard = memo(function FlightOfferCard({
             <div className="flex flex-row items-center justify-between gap-3 lg:flex-col lg:items-stretch lg:justify-start">
               <div>
               <span className="mb-0.5 block text-[10px] font-extrabold uppercase tracking-widest text-muted-foreground">
-                Meilleur prix
+                {t("bestPrice")}
               </span>
                 <p className="text-2xl font-black leading-none tracking-tight text-foreground sm:text-3xl">
                   {cheapestQuote && formatMoney(cheapestQuote.price, locale)}
                 </p>
                 <span className="mt-1 block text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 sm:text-[11px]">
-                Offre 1 • Tarif conseillé
+                {t("offerNumber", { index: 1 })} • {t("recommendedFare")}
               </span>
               </div>
 
@@ -218,7 +218,7 @@ export const FlightOfferCard = memo(function FlightOfferCard({
                       onClick={() => handleSelect(cheapestQuote.offerId)}
                       className="group/btn flex h-11 w-auto items-center justify-center gap-1.5 rounded-2xl bg-primary px-5 text-xs font-extrabold text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:bg-primary/90 active:scale-95 lg:w-full"
                   >
-                    Voir l'offre
+                    {t("viewOffer")}
                     <ChevronRight className="size-4 transition-transform duration-200 group-hover/btn:translate-x-0.5" />
                   </Button>
               )}
@@ -229,7 +229,7 @@ export const FlightOfferCard = memo(function FlightOfferCard({
                 <div className="space-y-2">
                   <Separator className="bg-border/60" />
                   <p className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">
-                    Autres options ({sortedQuotes.length - 1})
+                    {t("otherOptions", { count: sortedQuotes.length - 1 })}
                   </p>
 
                   <div className="grid gap-1.5">
@@ -240,7 +240,7 @@ export const FlightOfferCard = memo(function FlightOfferCard({
                             className="group/option flex cursor-pointer items-center justify-between rounded-xl border border-border/40 bg-background/60 p-2 transition-all duration-200 hover:border-primary/30 hover:bg-background hover:shadow-xs"
                         >
                     <span className="text-xs font-semibold text-muted-foreground transition-colors group-hover/option:text-foreground">
-                      Offre {index + 2}
+                      {t("offerNumber", { index: index + 2 })}
                     </span>
                           <div className="flex items-center gap-1.5">
                       <span className="text-xs font-bold text-foreground">
@@ -261,7 +261,7 @@ export const FlightOfferCard = memo(function FlightOfferCard({
             <div className="animate-in fade-in slide-in-from-top-2 space-y-4 border-t border-border/50 bg-slate-50/80 p-4 duration-200 dark:bg-zinc-900/50 sm:space-y-5 sm:p-6">
               <h5 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 <Info className="size-3.5 text-primary" />
-                Itinéraire détaillé
+                {t("detailedItinerary")}
               </h5>
 
               {/* Chronologie du trajet */}
@@ -284,7 +284,7 @@ export const FlightOfferCard = memo(function FlightOfferCard({
                   </span>
                     </div>
                     <p className="mt-0.5 text-[11px] text-muted-foreground sm:text-xs">
-                      Aéroport de départ ({offer.origin})
+                      {t("departureAirport", { code: offer.origin })}
                     </p>
                   </div>
 
@@ -293,13 +293,13 @@ export const FlightOfferCard = memo(function FlightOfferCard({
                     <div className="flex items-center gap-1.5 sm:gap-2">
                       <Plane className="size-3.5 text-primary" />
                       <span>
-                    {airlineLabel(offer.airline)} • Vol {offer.flightNumber}
+                    {airlineLabel(offer.airline)} • {t("flightPrefix")} {offer.flightNumber}
                   </span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Clock className="size-3 text-primary" />
                       <span>
-                    Durée : {formatDuration(offer.departureTime, offer.arrivalTime)}
+                    {t("durationLabel", { duration: formatDuration(offer.departureTime, offer.arrivalTime) })}
                   </span>
                     </div>
                   </div>
@@ -315,7 +315,7 @@ export const FlightOfferCard = memo(function FlightOfferCard({
                   </span>
                     </div>
                     <p className="mt-0.5 text-[11px] text-muted-foreground sm:text-xs">
-                      Aéroport d'arrivée ({offer.destination})
+                      {t("arrivalAirport", { code: offer.destination })}
                     </p>
                   </div>
                 </div>
@@ -325,25 +325,25 @@ export const FlightOfferCard = memo(function FlightOfferCard({
               <div className="grid grid-cols-1 gap-2.5 text-xs xs:grid-cols-2 sm:grid-cols-3 sm:gap-3">
                 <div className="space-y-1 rounded-2xl border border-border/50 bg-background p-3">
               <span className="block text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">
-                Classe
+                {t("cabinClassLabel")}
               </span>
                   <p className="font-bold text-foreground">{offer.cabinClass}</p>
                 </div>
                 <div className="space-y-1 rounded-2xl border border-border/50 bg-background p-3">
               <span className="block text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">
-                Bagages
+                {t("baggageLabel")}
               </span>
                   <p className="flex items-center gap-1.5 font-bold text-foreground">
                     <Luggage className="size-3.5 text-primary" />
-                    1 bagage à main incl.
+                    {t("carryOnIncluded")}
                   </p>
                 </div>
                 <div className="space-y-1 rounded-2xl border border-border/50 bg-background p-3 xs:col-span-2 sm:col-span-1">
               <span className="block text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">
-                Places disponibles
+                {t("availableSeatsLabel")}
               </span>
                   <p className="font-bold text-foreground">
-                    {offer.seatsAvailable} sièges restants
+                    {t("seatsRemaining", { count: offer.seatsAvailable })}
                   </p>
                 </div>
               </div>

@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CardPinDialog } from "@/components/checkout/card-pin-dialog";
+import { StripeCheckoutDialog } from "@/components/checkout/stripe-checkout-dialog";
 import { PaymentForm, type PaymentFormValues } from "@/components/checkout/payment-form";
 import { useBookingQuery } from "@/hooks/use-booking";
 import { usePaymentMutation } from "@/hooks/use-payment";
@@ -29,6 +30,8 @@ export default function PaymentPage() {
   const paymentMutation = usePaymentMutation();
   // Non-null uniquement le temps que la banque demande le code PIN de la carte.
   const [pinChallengePaymentId, setPinChallengePaymentId] = useState<string | null>(null);
+  // Non-null uniquement le temps de confirmer un paiement Stripe (CARD/GOOGLE_PAY/APPLE_PAY/PAYPAL).
+  const [stripePayment, setStripePayment] = useState<PaymentResponse | null>(null);
 
   const booking = bookingQuery.data;
 
@@ -50,59 +53,20 @@ export default function PaymentPage() {
   }, [booking, bookingId, router]);
 
     function handleSubmit(values: PaymentFormValues) {
-        // 1. Préparation de l'adresse de facturation
-        const billingAddress = values.billingAddress
-            ? {
-                zipCode: values.billingZipCode ?? "",
-                city: values.billingCity ?? "",
-                address: values.billingAddress,
-                state: values.billingState ?? "",
-                countryCode: values.countryCode,
-            }
-            : undefined;
-
-        // 2. Construction de la base commune
         const basePayload = {
             bookingId,
             countryCode: values.countryCode,
             countryCurrency: values.currency,
         };
 
-        // 3. Construction du payload typé (Narrowing de l'union discriminée)
-        let payload: BookingPaymentRequest;
+        // Narrowing de l'union discriminée. CARD/GOOGLE_PAY/APPLE_PAY/PAYPAL n'ont plus aucun champ
+        // propre à saisir ici : ils routent vers Stripe, qui crée un PaymentIntent à partir de juste
+        // ça puis collecte carte/adresse lui-même via son propre widget (voir StripeCheckoutDialog).
+        const payload: BookingPaymentRequest =
+            values.paymentMethod === "MOBILE_MONEY"
+                ? { ...basePayload, paymentMethod: "MOBILE_MONEY", mobileNumber: String(values.mobileNumber) }
+                : { ...basePayload, paymentMethod: values.paymentMethod };
 
-        switch (values.paymentMethod) {
-            case "CARD":
-                payload = {
-                    ...basePayload,
-                    paymentMethod: "CARD",
-                    cardNumber: String(values.cardNumber),
-                    cardHolderName: String(values.cardHolderName),
-                    expiry: String(values.expiry),
-                    cvv: String(values.cvv),
-                };
-                break;
-
-            case "MOBILE_MONEY":
-                payload = {
-                    ...basePayload,
-                    paymentMethod: "MOBILE_MONEY",
-                    mobileNumber: String(values.mobileNumber),
-                };
-                break;
-
-            case "GOOGLE_PAY":
-            case "APPLE_PAY":
-            case "PAYPAL":
-                payload = {
-                    ...basePayload,
-                    paymentMethod: values.paymentMethod,
-                    billingAddress,
-                };
-                break;
-        }
-
-        // 4. Mutation sécurisée
         paymentMutation.mutate(payload, {
             onSuccess: (payment) => {
                 if (payment.status === "PENDING" || payment.status === "SUCCEEDED") {
@@ -113,8 +77,16 @@ export default function PaymentPage() {
                     && payment.authorizationType === "REDIRECT" && payment.authorizationRedirectUrl) {
                     // 3DS : la confirmation se fait via webhook une fois le payeur revenu de sa banque.
                     window.location.href = payment.authorizationRedirectUrl;
+                } else if (payment.status === "PENDING_AUTHORIZATION"
+                    && payment.authorizationType === "CLIENT_ACTION" && payment.authorizationClientSecret) {
+                    // Stripe : la carte/le wallet est saisi côté client, jamais transmis à notre backend.
+                    setStripePayment(payment);
                 } else {
-                    toast.error(payment.failureReason ?? t("failure", { reason: "" }));
+                    toast.error(
+                        payment.failureReason
+                            ? t("failure", { reason: payment.failureReason })
+                            : t("genericFailure"),
+                    );
                 }
             },
             onError: (error) => {
@@ -132,8 +104,7 @@ export default function PaymentPage() {
         <div className="mx-auto max-w-xl px-4 py-16 text-center">
           <Alert className="rounded-2xl border-destructive/20 bg-destructive/5 text-destructive p-6">
             <AlertDescription className="text-sm font-semibold">
-              {t("failure", { reason: "" }) ||
-                  "Impossible de charger les détails de cette réservation."}
+              {t("bookingNotFound")}
             </AlertDescription>
           </Alert>
           <Button asChild variant="outline" className="mt-4 rounded-xl">
@@ -265,6 +236,23 @@ export default function PaymentPage() {
                   proceedToBookingTracking(payment);
                 }}
                 onCancel={() => setPinChallengePaymentId(null)}
+            />
+        )}
+
+        {stripePayment?.authorizationClientSecret && (
+            <StripeCheckoutDialog
+                clientSecret={stripePayment.authorizationClientSecret}
+                returnUrl={window.location.href}
+                onConfirmed={() => {
+                  // La confirmation finale (SUCCEEDED) vient du webhook Stripe, pas de ce retour
+                  // client - on note juste "PENDING" ici, comme pour mobile money/PayPal, pour que
+                  // la page de suivi affiche "Aller à mon compte" plutôt que de proposer de payer
+                  // une seconde fois pendant la petite fenêtre avant que le webhook arrive.
+                  const payment = stripePayment;
+                  setStripePayment(null);
+                  proceedToBookingTracking({ ...payment, status: "PENDING" });
+                }}
+                onCancel={() => setStripePayment(null)}
             />
         )}
       </div>

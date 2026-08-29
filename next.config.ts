@@ -21,13 +21,17 @@ const apiOrigin = (() => {
 // (frame-ancestors, object-src, base-uri, form-action, connect-src) still meaningfully narrows
 // what an XSS payload could do (no framing, no fetching-and-exfiltrating to arbitrary origins,
 // no <base>/<object> hijack, no oauth-style form hijack).
+// Stripe.js (Payment Element for CARD/GOOGLE_PAY/APPLE_PAY/PAYPAL - see StripeCheckoutDialog)
+// needs its own script + iframe + API origins allowlisted, per Stripe's documented CSP guidance:
+// https://docs.stripe.com/security/guide#content-security-policy. Nothing else changes.
 const cspHeader = `
   default-src 'self';
-  script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""};
+  script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://js.stripe.com;
   style-src 'self' 'unsafe-inline';
   img-src 'self' blob: data: https:;
   font-src 'self' data:;
-  connect-src 'self' ${apiOrigin};
+  connect-src 'self' ${apiOrigin} https://api.stripe.com;
+  frame-src 'self' https://js.stripe.com https://hooks.stripe.com;
   object-src 'none';
   base-uri 'self';
   form-action 'self';
@@ -36,6 +40,7 @@ const cspHeader = `
 `;
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   images: {
     // Our own MinIO bucket (reseller logos, property/vehicle/room cover images) - the only image
     // host under our control, so next/image's automatic resizing/lazy-loading/AVIF-WebP conversion

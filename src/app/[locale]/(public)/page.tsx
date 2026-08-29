@@ -221,9 +221,12 @@ export default function HomePage() {
                     ? Array.from({ length: 6 }).map((_, i) => (
                         <Skeleton key={i} className="aspect-[4/5] w-full rounded-2xl sm:aspect-[3/4]" />
                     ))
-                    : destinationsQuery.data?.map((destination) => (
+                    : destinationsQuery.data?.map((destination, index) => (
+                        // destinationCode (e.g. an IATA code) is the real unique id - two distinct
+                        // destinations can share the same city/country (e.g. JFK vs EWR are both
+                        // "New York, United States"), which was producing a duplicate React key.
                         <Link
-                            key={`${destination.cityName}-${destination.countryName}`}
+                            key={destination.destinationCode ?? `${destination.cityName}-${destination.countryName}-${index}`}
                             href={destination.destinationCode
                                 ? `/flights?destination=${encodeURIComponent(destination.destinationCode)}`
                                 : "/flights"}

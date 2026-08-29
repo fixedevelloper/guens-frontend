@@ -1,0 +1,24 @@
+# Local-only reference for `docker compose up --build` on a dev machine. Production does NOT use
+# this file - it deploys via .github/workflows/docker-build-push.yml (GHCR image, built with the
+# real NEXT_PUBLIC_* values as build args) pulled by the VPS's own compose file at /opt/apps.
+#
+# NEXT_PUBLIC_* must be build args, not a runtime `environment:` entry: Next.js inlines them into
+# the client bundle at `next build` time, so setting them at container start has no effect at all
+# (see the ARG/ENV block in ../Dockerfile) - update the values below to test against a different
+# backend locally, then `docker compose -f deploy/docker-compose.yml up --build`.
+services:
+  frontend:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8080
+        NEXT_PUBLIC_APP_URL: http://localhost:3000
+        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ""
+    image: guentours-frontend:latest
+    container_name: guentours-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    restart: always
