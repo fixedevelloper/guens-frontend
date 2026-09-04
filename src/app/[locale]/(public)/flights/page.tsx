@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FlightSearchForm } from "@/components/search/flight-search-form";
-import { FlightResultsList } from "@/components/search/flight-results";
+import { FlightResultsList, FlightSearchErrorState } from "@/components/search/flight-results";
 import { FlightFilters } from "@/components/search/flight-filters";
 import { NewsletterSignup } from "@/components/newsletter-signup";
 import { useFlightSearch } from "@/hooks/use-search";
@@ -235,6 +235,8 @@ function FlightsPageContent() {
 
           {query.isLoading ? (
               <DynamicFlightLoader isPending />
+          ) : query.isError ? (
+              <FlightSearchErrorState onRetry={() => query.refetch()} />
           ) : (
               <div className="grid items-start gap-8 lg:grid-cols-[280px_1fr]">
                 <aside className="hidden max-h-[calc(100dvh-7rem)] overflow-y-auto rounded-3xl border border-border/60 bg-background/90 p-5 shadow-xs backdrop-blur-sm lg:sticky lg:top-24 lg:block">

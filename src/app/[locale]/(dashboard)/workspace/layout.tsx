@@ -16,6 +16,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if (isHydrated && !(isAuthenticated && isAdmin)) {
+      // TEMPORARY diagnostic (prod login bug: /workspace bounces to /login despite the header
+      // showing isAdmin=true) - remove once root-caused. Shows the exact state this effect saw.
+      console.warn("[AdminLayout] redirecting to /login", { isHydrated, isAuthenticated, isAdmin });
       router.replace("/login");
     }
   }, [isHydrated, isAuthenticated, isAdmin, router]);
@@ -25,16 +28,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   const navItems: DashboardNavItem[] = [
-    { href: "/admin", label: t("navOverview") ?? "Vue d'ensemble", icon: LayoutDashboard },
-    { href: "/admin/bookings", label: t("navBookings") ?? "Réservations", icon: Receipt },
-    { href: "/admin/users", label: t("navUsers") ?? "Utilisateurs", icon: Users },
-    { href: "/admin/partners", label: t("navPartners") ?? "Partenaires", icon: Building2 },
-    { href: "/admin/resellers", label: t("navResellers") ?? "Revendeurs", icon: Store },
-    { href: "/admin/commission", label: t("navCommission") ?? "Commissions", icon: Banknote },
-    { href: "/admin/shareholders", label: t("navShareholders") ?? "Actionnaires", icon: PieChart },
-    { href: "/admin/payment-providers", label: t("navPaymentProviders") ?? "Fournisseurs de paiement", icon: CreditCard },
-    { href: "/admin/geo/sync", label: t("navGeo") ?? "Données Géo", icon: Database },
-    { href: "/admin/destinations", label: t("navDestinations") ?? "Destinations", icon: MapPin },
+    { href: "/workspace", label: t("navOverview") ?? "Vue d'ensemble", icon: LayoutDashboard },
+    { href: "/workspace/bookings", label: t("navBookings") ?? "Réservations", icon: Receipt },
+    { href: "/workspace/users", label: t("navUsers") ?? "Utilisateurs", icon: Users },
+    { href: "/workspace/partners", label: t("navPartners") ?? "Partenaires", icon: Building2 },
+    { href: "/workspace/resellers", label: t("navResellers") ?? "Revendeurs", icon: Store },
+    { href: "/workspace/commission", label: t("navCommission") ?? "Commissions", icon: Banknote },
+    { href: "/workspace/shareholders", label: t("navShareholders") ?? "Actionnaires", icon: PieChart },
+    { href: "/workspace/payment-providers", label: t("navPaymentProviders") ?? "Fournisseurs de paiement", icon: CreditCard },
+    { href: "/workspace/geo/sync", label: t("navGeo") ?? "Données Géo", icon: Database },
+    { href: "/workspace/destinations", label: t("navDestinations") ?? "Destinations", icon: MapPin },
   ];
 
   return (

@@ -10,6 +10,7 @@
     "myBooking": "My booking",
     "dashboard": "Dashboard",
     "admin": "Admin",
+    "adminPanel": "Admin Panel",
     "login": "Sign in",
     "account": "My Account",
     "register": "Create account",
@@ -134,6 +135,9 @@
     "editShort": "Edit",
     "noFlightsMatch": "No flights match your filters",
     "tryWiderCriteria": "Try widening your search criteria.",
+    "searchFailedTitle": "Search failed",
+    "searchFailedMessage": "This search took too long or couldn't be completed. Please try again.",
+    "retrySearch": "Try again",
     "refundableTicket": "Changeable or refundable ticket",
     "showDetailsAction": "Details",
     "hideDetailsAction": "Hide",
@@ -150,12 +154,18 @@
     "baggageLabel": "Baggage",
     "carryOnIncluded": "1 carry-on included",
     "availableSeatsLabel": "Available seats",
-    "seatsRemaining": "{count, plural, =1 {1 seat remaining} other {# seats remaining}}"
+    "seatsRemaining": "{count, plural, =1 {1 seat remaining} other {# seats remaining}}",
+    "stopsCount": "{count, plural, =1 {1 stop} other {# stops}}",
+    "layoverAt": "Layover in {city} ({duration})",
+    "holdAvailableBadge": "Price hold available before payment",
+    "cabinBaggageLabel": "Cabin baggage",
+    "checkedBaggageLabel": "Checked baggage"
   },
   "Filters": {
     "title": "Filters",
     "reset": "Reset",
     "showResults": "Show results ({count})",
+    "showMoreResults": "Show more results",
     "maxPrice": "Max price",
     "providers": "Providers",
     "airlines": "Airlines",
@@ -373,7 +383,8 @@
     "failureReason": "Reason: {reason}",
     "retryAction": "Retry",
     "searchAgainAction": "Search again",
-    "paymentCapturedNotice": "Your payment was successfully charged. Our support team will contact you to sort out this booking - no need to pay again or search again."
+    "paymentCapturedNotice": "Your payment was successfully charged. Our support team will contact you to sort out this booking - no need to pay again or search again.",
+    "paymentRefundedNotice": "Your payment was refunded following this failure. You can safely search again."
   },
   "Tickets": {
     "title": "Your e-tickets",
@@ -418,6 +429,7 @@
     "allBookingsTitle": "All bookings",
     "allUsersTitle": "All users",
     "noUsers": "No users.",
+    "noUsersMatch": "No user matches this search.",
     "userName": "Name",
     "userEmail": "Email",
     "userRole": "Role",
@@ -698,6 +710,7 @@
     "error": "An error occurred while searching for vehicles.",
     "missingParams": "Please provide your search criteria.",
     "title": "Available vehicles",
+    "showMoreResults": "Show more results",
     "select": "Select",
     "noResults": "No vehicles available for these criteria."
   },
@@ -705,6 +718,7 @@
     "error": "An error occurred while searching for properties.",
     "missingParams": "Please provide your search criteria.",
     "title": "Available properties",
+    "showMoreResults": "Show more results",
     "select": "Select",
     "noResults": "No properties available for these criteria."
   },

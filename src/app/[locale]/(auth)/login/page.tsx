@@ -5,7 +5,7 @@ import Image from "next/image";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useTranslations } from "next-intl";
-import { LogIn, Loader2 } from "lucide-react";
+import { LogIn, Loader2, Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
 
 import { Link, useRouter } from "@/i18n/navigation";
@@ -37,6 +37,7 @@ export default function LoginPage() {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [showPassword, setShowPassword] = useState(false);
 
     // Schéma de validation localisé
     const schema = useMemo(
@@ -62,7 +63,7 @@ export default function LoginPage() {
             const profile = await login(values);
 
             if (profile.role === "ADMIN") {
-                router.push("/admin");
+                router.push("/workspace");
             } else if (
                 PARTNER_ROLES.includes(profile.role as (typeof PARTNER_ROLES)[number])
             ) {
@@ -219,13 +220,27 @@ export default function LoginPage() {
                                             </Link>
                                         </div>
                                         <FormControl>
-                                            <Input
-                                                type="password"
-                                                autoComplete="current-password"
-                                                placeholder="••••••••"
-                                                className="h-10 rounded-xl border-border/70 text-sm font-medium transition-all placeholder:text-muted-foreground/45 focus-visible:ring-primary/20"
-                                                {...field}
-                                            />
+                                            <div className="relative">
+                                                <Input
+                                                    type={showPassword ? "text" : "password"}
+                                                    autoComplete="current-password"
+                                                    placeholder="••••••••"
+                                                    className="h-10 rounded-xl border-border/70 text-sm font-medium transition-all placeholder:text-muted-foreground/45 focus-visible:ring-primary/20 pr-10"
+                                                    {...field}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowPassword((prev) => !prev)}
+                                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground transition-colors"
+                                                    tabIndex={-1}
+                                                >
+                                                    {showPassword ? (
+                                                        <EyeOff className="size-4" />
+                                                    ) : (
+                                                        <Eye className="size-4" />
+                                                    )}
+                                                </button>
+                                            </div>
                                         </FormControl>
                                         <FormMessage className="text-[11px] font-bold text-destructive" />
                                     </FormItem>

@@ -28,8 +28,33 @@ export async function getAdminBookings() {
   return data;
 }
 
-export async function getAdminUsers() {
-  const { data } = await apiClient.get<AdminUserResponse[]>("/api/admin/users");
+/** Refunds the captured payment for a booking that failed after the charge already went through
+ *  (paymentCaptured && status === "FAILED") - the only way to resolve that state today. Returns
+ *  the raw Payment entity, not a BookingResponse - callers should refetch the booking instead of
+ *  reading the response body. */
+export async function refundBooking(bookingId: string) {
+  await apiClient.post(`/api/admin/bookings/${bookingId}/refund`);
+}
+
+/** Generates a fresh receipt PDF for the booking (not persisted server-side - each call re-renders
+ *  it) and returns the raw bytes for the caller to save/print. */
+export async function downloadBookingReceipt(bookingId: string): Promise<Blob> {
+  const { data } = await apiClient.post(`/api/admin/bookings/${bookingId}/receipt`, null, {
+    responseType: "blob",
+  });
+  return data as Blob;
+}
+
+/** Resends the booking-confirmed email (same content as the automatic one) to the booking's
+ *  contact address. The backend rejects with 409 if the booking isn't CONFIRMED. */
+export async function resendBookingConfirmation(bookingId: string) {
+  await apiClient.post(`/api/admin/bookings/${bookingId}/resend-confirmation`);
+}
+
+export async function getAdminUsers(page: number, size = 20, query?: string) {
+  const { data } = await apiClient.get<PageResponse<AdminUserResponse>>("/api/admin/users", {
+    params: { page, size, q: query || undefined },
+  });
   return data;
 }
 

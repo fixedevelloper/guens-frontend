@@ -1,4 +1,5 @@
 import type {
+  FlightProviderQuote,
   HarmonizedFlightOffer,
   HarmonizedHotelOffer,
   HarmonizedPropertyOffer,
@@ -13,7 +14,7 @@ import type {
  * checkout page can render a summary without a "get offer by id" endpoint to call.
  */
 export function checkoutUrlForFlight(offer: HarmonizedFlightOffer, offerId: string) {
-  const quote = offer.quotes.find((q) => q.offerId === offerId) as ProviderQuote;
+  const quote = offer.quotes.find((q) => q.offerId === offerId) as FlightProviderQuote;
   const qs = new URLSearchParams({
     offerId,
     offerType: "FLIGHT",
@@ -28,6 +29,10 @@ export function checkoutUrlForFlight(offer: HarmonizedFlightOffer, offerId: stri
     amount: String(quote.price.amount),
     currency: quote.price.currency,
   });
+  if (offer.airlineName) qs.set("airlineName", offer.airlineName);
+  // Stops/baggage/hold detail is per-quote (see FlightHarmonizer) - denormalized here, like
+  // everything else on this URL, so the checkout summary can render it without a lookup call.
+  if (quote.detail) qs.set("detail", JSON.stringify(quote.detail));
   return `/checkout?${qs.toString()}`;
 }
 
@@ -107,7 +112,7 @@ export function checkoutUrlForProperty(offer: HarmonizedPropertyOffer, offerId: 
 }
 
 export function resellerCheckoutUrlForFlight(offer: HarmonizedFlightOffer, offerId: string) {
-  const quote = offer.quotes.find((q) => q.offerId === offerId) as ProviderQuote;
+  const quote = offer.quotes.find((q) => q.offerId === offerId) as FlightProviderQuote;
   const qs = new URLSearchParams({
     offerId,
     offerType: "FLIGHT",
@@ -122,6 +127,8 @@ export function resellerCheckoutUrlForFlight(offer: HarmonizedFlightOffer, offer
     amount: String(quote.price.amount),
     currency: quote.price.currency,
   });
+  if (offer.airlineName) qs.set("airlineName", offer.airlineName);
+  if (quote.detail) qs.set("detail", JSON.stringify(quote.detail));
   return `/dashboard/reseller/flights/checkout?${qs.toString()}`;
 }
 export function resellerCheckoutUrlForHotel(

@@ -22,8 +22,35 @@ export interface FlightFilterOptions {
   airlines: string[];
 }
 
-function cheapestQuotePrice(quotes: HarmonizedFlightOffer["quotes"]): number {
+function cheapestQuotePrice(quotes: { price: { amount: string | number } }[]): number {
   return Math.min(...quotes.map((q) => Number(q.price.amount)));
+}
+
+/** Number of stops on the offer's cheapest quote (the fare shown by default) - 0 when that quote
+ *  carries no stop/segment detail (a provider that doesn't surface it, e.g. Sabre/Travelport/
+ *  Travelopro today), matching how this offer displays before any detail is available. */
+export function offerStopCount(offer: HarmonizedFlightOffer): number {
+  if (offer.quotes.length === 0) {
+    return 0;
+  }
+  const cheapest = offer.quotes.reduce((best, q) =>
+      Number(q.price.amount) < Number(best.price.amount) ? q : best
+  );
+  const segments = cheapest.detail?.segments ?? [];
+  return segments.length > 1 ? segments.length - 1 : 0;
+}
+
+function matchesStopsFilter(stopCount: number, filter: string): boolean {
+  switch (filter) {
+    case "DIRECT":
+      return stopCount === 0;
+    case "1":
+      return stopCount === 1;
+    case "2+":
+      return stopCount >= 2;
+    default:
+      return true;
+  }
 }
 
 export function computeFlightFilterOptions(offers: HarmonizedFlightOffer[]): FlightFilterOptions {
@@ -56,6 +83,7 @@ export function filterFlightOffers(
       if (offer.quotes.length === 0) return false;
       if (filters.airlines.length && !filters.airlines.includes(offer.airline)) return false;
       if (filters.maxPrice != null && cheapestQuotePrice(offer.quotes) > filters.maxPrice) return false;
+      if (filters.stops !== "ALL" && !matchesStopsFilter(offerStopCount(offer), filters.stops)) return false;
       return true;
     });
 }

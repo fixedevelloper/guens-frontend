@@ -6,7 +6,7 @@ type ChangeFrequency = "always" | "hourly" | "daily" | "weekly" | "monthly" | "y
 
 /**
  * Public, evergreen marketing/content pages only. Deliberately excludes:
- * - auth-gated areas (/dashboard, /admin/**, /partner/**) and transactional flows
+ * - auth-gated areas (/dashboard, /workspace/**, /partner/**) and transactional flows
  *   (/checkout, /payment/**, /bookings/**) - nothing there is meant to be indexed.
  * - /hotels/[hotelName] - a search-result detail page that only renders meaningfully with live
  *   query params (offerId, checkIn/checkOut) carried over from a search; it has no stable

@@ -21,7 +21,10 @@ export function useNotifications() {
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    getUnreadCount().then(setUnreadCount).catch(() => {});
+    getUnreadCount()
+        .then(setUnreadCount)
+        // TEMPORARY diagnostic (prod login bug investigation) - remove once root-caused.
+        .catch((err) => console.warn("[useNotifications] getUnreadCount failed", err));
   }, [isAuthenticated]);
 
   useEffect(() => {

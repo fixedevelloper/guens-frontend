@@ -39,10 +39,10 @@ const AppPromo = dynamic(() => import("../../../components/AppPromo").then((m) =
 
 const HERO_CONFIGS = {
   flights: {
-    bgImage: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1920&q=80",
+    bgImage: "/images/flight.avif",
   },
   hotels: {
-    bgImage: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1920&q=80",
+    bgImage: "/images/hotel.avif",
   }
 };
 

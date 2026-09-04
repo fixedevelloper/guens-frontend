@@ -264,7 +264,12 @@ export default function BookingTrackingPage() {
                     <p className="text-xs font-semibold text-destructive">
                       {t("failureReason", { reason: booking.failureReason })}
                     </p>
-                    {booking.paymentCaptured ? (
+                    {booking.paymentRefunded ? (
+                        <p className="text-xs font-medium text-destructive/90">
+                          {t("paymentRefundedNotice") ??
+                              "Votre paiement a été remboursé suite à cet échec. Vous pouvez refaire une recherche en toute sécurité."}
+                        </p>
+                    ) : booking.paymentCaptured ? (
                         <p className="text-xs font-medium text-destructive/90">
                           {t("paymentCapturedNotice") ??
                               "Votre paiement a bien été débité. Notre support va vous contacter pour régulariser cette réservation - inutile de repayer ou de refaire une recherche."}

@@ -203,7 +203,7 @@ export function SiteHeader() {
                       <DropdownMenuSeparator className="my-1" />
                       {isAdmin ? (
                           <DropdownMenuItem
-                              onSelect={() => router.push("/admin")}
+                              onSelect={() => router.push("/workspace")}
                               className="cursor-pointer gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium"
                           >
                             <ShieldCheck className="size-5 text-primary" />

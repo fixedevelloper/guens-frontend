@@ -1,9 +1,10 @@
-import type { MultiCityItineraryLeg } from "@/lib/api/types";
+import type { FlightOfferDetail, MultiCityItineraryLeg } from "@/lib/api/types";
 
 export interface FlightOfferSummary {
   offerType: "FLIGHT";
   offerId: string;
   airline: string;
+  airlineName: string | null;
   flightNumber: string;
   origin: string;
   destination: string;
@@ -13,6 +14,9 @@ export interface FlightOfferSummary {
   providerType: string;
   amount: string;
   currency: string;
+  /** Stops/baggage/hold detail of the selected quote - null for providers that don't surface it
+   *  (see FlightHarmonizer/FlightProviderQuote on the backend). */
+  detail: FlightOfferDetail | null;
 }
 
 export interface HotelOfferSummary {
@@ -105,10 +109,20 @@ export function parseOfferSummary(sp: URLSearchParams): OfferSummary | null {
     const arrivalTime = sp.get("arrivalTime");
     const cabinClass = sp.get("cabinClass");
     if (!airline || !flightNumber || !origin || !destination || !departureTime || !arrivalTime) return null;
+    const rawDetail = sp.get("detail");
+    let detail: FlightOfferDetail | null = null;
+    if (rawDetail) {
+      try {
+        detail = JSON.parse(rawDetail) as FlightOfferDetail;
+      } catch {
+        detail = null;
+      }
+    }
     return {
       offerType: "FLIGHT",
       offerId,
       airline,
+      airlineName: sp.get("airlineName"),
       flightNumber,
       origin,
       destination,
@@ -118,6 +132,7 @@ export function parseOfferSummary(sp: URLSearchParams): OfferSummary | null {
       providerType,
       amount,
       currency,
+      detail,
     };
   }
 

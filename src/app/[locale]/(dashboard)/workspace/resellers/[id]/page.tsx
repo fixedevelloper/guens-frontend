@@ -142,7 +142,7 @@ export default function ResellerDetailPage() {
             variant="outline"
             size="icon"
             className="size-9 rounded-xl shrink-0"
-            onClick={() => router.push("/admin/resellers")}
+            onClick={() => router.push("/workspace/resellers")}
           >
             <ArrowLeft className="size-4" />
           </Button>

@@ -70,7 +70,7 @@ export default function GeoSyncAdminPage() {
                             asChild
                             className="size-8 rounded-xl border-border/60"
                         >
-                            <Link href="/admin">
+                            <Link href="/workspace">
                                 <ArrowLeft className="size-4" />
                             </Link>
                         </Button>
@@ -90,7 +90,7 @@ export default function GeoSyncAdminPage() {
                         Auto-Sync 30j
                     </Badge>
                     <Button variant="outline" size="sm" asChild className="rounded-xl font-bold text-xs h-9">
-                        <Link href="/admin/geo/cities">
+                        <Link href="/workspace/geo/cities">
                             <Building2 className="size-4 mr-1.5" />
                             Gérer les villes
                         </Link>

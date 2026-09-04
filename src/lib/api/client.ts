@@ -9,8 +9,17 @@ import { clearProfile } from "@/lib/auth-storage";
 // pattern); withXSRFToken is required for that to still happen on this cross-origin (different
 // port in dev, possibly different subdomain in prod) baseURL - axios 1.x only does it
 // automatically for same-origin requests otherwise.
+// No timeout previously meant a stalled backend/provider call (or a dead connection with no
+// response at all) left the request hanging indefinitely on the client, with no cutoff -
+// exactly what "the app feels stuck" looks like. 45s comfortably covers the slowest real
+// request (flight search fans out to every provider concurrently, so it's bounded by the
+// slowest single provider's read timeout - up to ~30-60s - not their sum) while still giving a
+// genuinely dead request an upper bound instead of none.
+const REQUEST_TIMEOUT_MS = 45_000;
+
 export const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080",
+  timeout: REQUEST_TIMEOUT_MS,
   withCredentials: true,
   withXSRFToken: true,
   xsrfCookieName: "XSRF-TOKEN",
@@ -63,13 +72,16 @@ export function normalizeApiError(error: unknown): ApiError {
     if (error.response?.data && typeof error.response.data === "object") {
       return error.response.data as ApiError;
     }
+    const isTimeout = error.code === "ECONNABORTED";
     return {
       timestamp: new Date().toISOString(),
       status: error.response?.status ?? 0,
-      error: error.response ? "Request Failed" : "Network Error",
+      error: error.response ? "Request Failed" : isTimeout ? "Timeout" : "Network Error",
       message: error.response
         ? "Le serveur a répondu de façon inattendue. Veuillez réessayer."
-        : "Impossible de contacter le serveur. Vérifiez votre connexion et réessayez.",
+        : isTimeout
+          ? "Le serveur met trop de temps à répondre. Veuillez réessayer."
+          : "Impossible de contacter le serveur. Vérifiez votre connexion et réessayez.",
       details: [],
     };
   }

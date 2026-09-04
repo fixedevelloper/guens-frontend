@@ -11,6 +11,8 @@ import {
   ChevronDown,
   Info,
   Luggage,
+  Lock,
+  AlertTriangle,
 } from "lucide-react";
 
 import { useRouter } from "@/i18n/navigation";
@@ -20,9 +22,30 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { airlineLabel, formatDuration, formatMoney, formatTime } from "@/lib/format";
+import { offerStopCount } from "@/lib/filters";
+import { useRenderCap } from "@/hooks/use-render-cap";
 import { useFlightStore } from "@/store/useFlightStore";
 import type { HarmonizedFlightOffer } from "@/lib/api/types";
 import { checkoutUrlForFlight, resellerCheckoutUrlForFlight } from "@/lib/checkout-url";
+
+/** Shown when the search request itself failed (timeout, network error, 5xx) - distinct from a
+ *  successful search that found zero offers (see FlightResultsList's own empty state below). */
+export function FlightSearchErrorState({ onRetry }: { onRetry: () => void }) {
+  const t = useTranslations("SearchResults");
+
+  return (
+      <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-destructive/40 bg-destructive/5 p-8 text-center backdrop-blur-xs">
+        <div className="relative mb-4 flex size-16 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+          <AlertTriangle className="size-8" />
+        </div>
+        <h3 className="text-base font-bold text-foreground">{t("searchFailedTitle")}</h3>
+        <p className="mt-1.5 max-w-sm text-xs text-muted-foreground">{t("searchFailedMessage")}</p>
+        <Button onClick={onRetry} className="mt-6 rounded-full px-6 font-semibold">
+          {t("retrySearch")}
+        </Button>
+      </div>
+  );
+}
 
 export function FlightResultsList({
                                     offers,
@@ -33,6 +56,7 @@ export function FlightResultsList({
 }) {
   const t = useTranslations("Filters");
   const locale = useLocale();
+  const { visible, hasMore, showMore } = useRenderCap(offers);
 
   if (offers.length === 0) {
     return (
@@ -46,7 +70,7 @@ export function FlightResultsList({
 
   return (
       <div className="grid gap-4">
-        {offers.map((offer, index) => (
+        {visible.map((offer, index) => (
             <FlightOfferCard
                 key={`${offer.airline}-${offer.flightNumber}-${index}`}
                 offer={offer}
@@ -54,6 +78,11 @@ export function FlightResultsList({
                 isReseller={isReseller}
             />
         ))}
+        {hasMore && (
+            <Button variant="outline" onClick={showMore} className="mx-auto rounded-full px-6">
+              {t("showMoreResults")}
+            </Button>
+        )}
       </div>
   );
 }
@@ -80,6 +109,17 @@ export const FlightOfferCard = memo(function FlightOfferCard({
       [offer.quotes]
   );
   const cheapestQuote = sortedQuotes[0];
+  // Stops/baggage/hold detail is per-provider (a fare's inventory, not the shared physical-flight
+  // summary) - shown for the recommended (cheapest) quote, the one already highlighted at the top
+  // of this card. Null for providers that don't surface it (only TravelTerminus does today).
+  const detail = cheapestQuote?.detail ?? null;
+  const segments = detail?.segments ?? [];
+  const stopCount = offerStopCount(offer);
+  const firstSegmentCabinBaggage =
+      segments[0]?.cabinBaggage.find((b) => b.paxType === "Adult") ?? segments[0]?.cabinBaggage[0] ?? null;
+  const firstSegmentCheckedBaggage =
+      segments[0]?.checkedBaggage.find((b) => b.paxType === "Adult") ?? segments[0]?.checkedBaggage[0] ?? null;
+  const displayAirlineName = offer.airlineName ?? airlineLabel(offer.airline);
 
   function handleSelect(offerId: string) {
     selectOffer(offer);
@@ -104,7 +144,7 @@ export const FlightOfferCard = memo(function FlightOfferCard({
                 </div>
                 <div>
                   <h4 className="text-sm font-bold leading-snug text-foreground sm:text-base">
-                    {airlineLabel(offer.airline)}
+                    {displayAirlineName}
                   </h4>
                   <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground sm:gap-2">
                   <span>
@@ -156,8 +196,14 @@ export const FlightOfferCard = memo(function FlightOfferCard({
                   <div className="absolute -right-0.5 size-2 rounded-full bg-primary/80 ring-4 ring-background" />
                 </div>
 
-                <span className="mt-1 text-[9px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 sm:text-[10px]">
-                {t("nonstop")}
+                <span
+                    className={`mt-1 text-[9px] font-bold uppercase tracking-wider sm:text-[10px] ${
+                        stopCount > 0
+                            ? "text-amber-600 dark:text-amber-400"
+                            : "text-emerald-600 dark:text-emerald-400"
+                    }`}
+                >
+                {stopCount > 0 ? t("stopsCount", { count: stopCount }) : t("nonstop")}
               </span>
               </div>
 
@@ -178,6 +224,13 @@ export const FlightOfferCard = memo(function FlightOfferCard({
               <ShieldCheck className="size-3.5 shrink-0" />
               {t("refundableTicket")}
             </span>
+
+              {detail?.holdAvailable === true && (
+                  <span className="flex items-center gap-1.5 rounded-full bg-sky-500/10 px-2.5 py-1 text-[10px] font-semibold text-sky-600 dark:text-sky-400 sm:text-[11px]">
+                    <Lock className="size-3.5 shrink-0" />
+                    {t("holdAvailableBadge")}
+                  </span>
+              )}
 
               {/* BOUTON DÉTAILS */}
               <Button
@@ -273,51 +326,116 @@ export const FlightOfferCard = memo(function FlightOfferCard({
                 </div>
 
                 <div className="flex-1 space-y-3 text-xs sm:space-y-4">
-                  {/* Départ */}
-                  <div>
-                    <div className="flex items-center gap-2">
-                  <span className="text-xs font-black text-foreground sm:text-sm">
-                    {formatTime(offer.departureTime, locale)}
-                  </span>
-                      <span className="font-bold uppercase text-foreground">
-                    {offer.origin}
-                  </span>
-                    </div>
-                    <p className="mt-0.5 text-[11px] text-muted-foreground sm:text-xs">
-                      {t("departureAirport", { code: offer.origin })}
-                    </p>
-                  </div>
+                  {segments.length > 0 ? (
+                      segments.map((segment, index) => (
+                          <div key={`${segment.flightNumber}-${index}`} className="space-y-3 sm:space-y-4">
+                            {/* Départ du segment */}
+                            <div>
+                              <div className="flex items-center gap-2">
+                            <span className="text-xs font-black text-foreground sm:text-sm">
+                              {formatTime(segment.departureTime, locale)}
+                            </span>
+                                <span className="font-bold uppercase text-foreground">
+                              {segment.departure.code}
+                            </span>
+                              </div>
+                              <p className="mt-0.5 text-[11px] text-muted-foreground sm:text-xs">
+                                {segment.departure.city ?? t("departureAirport", { code: segment.departure.code })}
+                              </p>
+                            </div>
 
-                  {/* Vol central */}
-                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border/30 bg-muted/40 p-2 text-[11px] font-medium text-muted-foreground sm:p-2.5">
-                    <div className="flex items-center gap-1.5 sm:gap-2">
-                      <Plane className="size-3.5 text-primary" />
-                      <span>
-                    {airlineLabel(offer.airline)} • {t("flightPrefix")} {offer.flightNumber}
-                  </span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Clock className="size-3 text-primary" />
-                      <span>
-                    {t("durationLabel", { duration: formatDuration(offer.departureTime, offer.arrivalTime) })}
-                  </span>
-                    </div>
-                  </div>
+                            {/* Segment de vol */}
+                            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border/30 bg-muted/40 p-2 text-[11px] font-medium text-muted-foreground sm:p-2.5">
+                              <div className="flex items-center gap-1.5 sm:gap-2">
+                                <Plane className="size-3.5 text-primary" />
+                                <span>
+                              {segment.airlineName ?? airlineLabel(segment.airlineCode)} • {t("flightPrefix")} {segment.flightNumber}
+                            </span>
+                              </div>
+                              {segment.duration && (
+                                  <div className="flex items-center gap-1">
+                                    <Clock className="size-3 text-primary" />
+                                    <span>{t("durationLabel", { duration: segment.duration })}</span>
+                                  </div>
+                              )}
+                            </div>
 
-                  {/* Arrivée */}
-                  <div>
-                    <div className="flex items-center gap-2">
-                  <span className="text-xs font-black text-foreground sm:text-sm">
-                    {formatTime(offer.arrivalTime, locale)}
-                  </span>
-                      <span className="font-bold uppercase text-foreground">
-                    {offer.destination}
-                  </span>
-                    </div>
-                    <p className="mt-0.5 text-[11px] text-muted-foreground sm:text-xs">
-                      {t("arrivalAirport", { code: offer.destination })}
-                    </p>
-                  </div>
+                            {/* Arrivée du segment */}
+                            <div>
+                              <div className="flex items-center gap-2">
+                            <span className="text-xs font-black text-foreground sm:text-sm">
+                              {formatTime(segment.arrivalTime, locale)}
+                            </span>
+                                <span className="font-bold uppercase text-foreground">
+                              {segment.arrival.code}
+                            </span>
+                              </div>
+                              <p className="mt-0.5 text-[11px] text-muted-foreground sm:text-xs">
+                                {segment.arrival.city ?? t("arrivalAirport", { code: segment.arrival.code })}
+                              </p>
+                            </div>
+
+                            {/* Escale avant le segment suivant */}
+                            {index < segments.length - 1 && (
+                                <div className="flex items-center gap-2 rounded-xl border border-dashed border-amber-500/40 bg-amber-500/5 px-3 py-1.5 text-[11px] font-semibold text-amber-700 dark:text-amber-400">
+                                  <Clock className="size-3.5 shrink-0" />
+                                  {t("layoverAt", {
+                                    city: segment.arrival.city ?? segment.arrival.code,
+                                    duration: segment.layoverAfter ?? "",
+                                  })}
+                                </div>
+                            )}
+                          </div>
+                      ))
+                  ) : (
+                      <>
+                        {/* Départ */}
+                        <div>
+                          <div className="flex items-center gap-2">
+                        <span className="text-xs font-black text-foreground sm:text-sm">
+                          {formatTime(offer.departureTime, locale)}
+                        </span>
+                            <span className="font-bold uppercase text-foreground">
+                          {offer.origin}
+                        </span>
+                          </div>
+                          <p className="mt-0.5 text-[11px] text-muted-foreground sm:text-xs">
+                            {t("departureAirport", { code: offer.origin })}
+                          </p>
+                        </div>
+
+                        {/* Vol central */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border/30 bg-muted/40 p-2 text-[11px] font-medium text-muted-foreground sm:p-2.5">
+                          <div className="flex items-center gap-1.5 sm:gap-2">
+                            <Plane className="size-3.5 text-primary" />
+                            <span>
+                          {displayAirlineName} • {t("flightPrefix")} {offer.flightNumber}
+                        </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Clock className="size-3 text-primary" />
+                            <span>
+                          {t("durationLabel", { duration: formatDuration(offer.departureTime, offer.arrivalTime) })}
+                        </span>
+                          </div>
+                        </div>
+
+                        {/* Arrivée */}
+                        <div>
+                          <div className="flex items-center gap-2">
+                        <span className="text-xs font-black text-foreground sm:text-sm">
+                          {formatTime(offer.arrivalTime, locale)}
+                        </span>
+                            <span className="font-bold uppercase text-foreground">
+                          {offer.destination}
+                        </span>
+                          </div>
+                          <p className="mt-0.5 text-[11px] text-muted-foreground sm:text-xs">
+                            {t("arrivalAirport", { code: offer.destination })}
+                          </p>
+                        </div>
+                      </>
+                  )}
                 </div>
               </div>
 
@@ -331,13 +449,24 @@ export const FlightOfferCard = memo(function FlightOfferCard({
                 </div>
                 <div className="space-y-1 rounded-2xl border border-border/50 bg-background p-3">
               <span className="block text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">
-                {t("baggageLabel")}
+                {firstSegmentCabinBaggage ? t("cabinBaggageLabel") : t("baggageLabel")}
               </span>
                   <p className="flex items-center gap-1.5 font-bold text-foreground">
                     <Luggage className="size-3.5 text-primary" />
-                    {t("carryOnIncluded")}
+                    {firstSegmentCabinBaggage ? firstSegmentCabinBaggage.rule : t("carryOnIncluded")}
                   </p>
                 </div>
+                {firstSegmentCheckedBaggage && (
+                    <div className="space-y-1 rounded-2xl border border-border/50 bg-background p-3">
+                  <span className="block text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">
+                    {t("checkedBaggageLabel")}
+                  </span>
+                      <p className="flex items-center gap-1.5 font-bold text-foreground">
+                        <Luggage className="size-3.5 text-primary" />
+                        {firstSegmentCheckedBaggage.rule}
+                      </p>
+                    </div>
+                )}
                 <div className="space-y-1 rounded-2xl border border-border/50 bg-background p-3 xs:col-span-2 sm:col-span-1">
               <span className="block text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">
                 {t("availableSeatsLabel")}

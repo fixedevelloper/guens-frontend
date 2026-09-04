@@ -11,11 +11,13 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Link } from "@/i18n/navigation";
 import { formatMoney } from "@/lib/format";
 import { checkoutUrlForProperty } from "@/lib/checkout-url";
+import { useRenderCap } from "@/hooks/use-render-cap";
 import { usePropertyStore } from "@/store/use-property-store";
 import type { HarmonizedPropertyOffer } from "@/lib/api/types";
 
 export function PropertyResultsList({ offers }: { offers: HarmonizedPropertyOffer[] }) {
     const t = useTranslations("FurnishedRentalSearch");
+    const { visible, hasMore, showMore } = useRenderCap(offers);
 
     if (offers.length === 0) {
         return (
@@ -28,10 +30,17 @@ export function PropertyResultsList({ offers }: { offers: HarmonizedPropertyOffe
     }
 
     return (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {offers.map((offer, index) => (
-                <PropertyOfferCard key={`${offer.title}-${index}`} offer={offer} />
-            ))}
+        <div className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {visible.map((offer, index) => (
+                    <PropertyOfferCard key={`${offer.title}-${index}`} offer={offer} />
+                ))}
+            </div>
+            {hasMore && (
+                <Button variant="outline" onClick={showMore} className="mx-auto block rounded-full px-6">
+                    {t("showMoreResults")}
+                </Button>
+            )}
         </div>
     );
 }

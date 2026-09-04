@@ -1,12 +1,13 @@
 name: Build and Push Docker Image
 
+# Superseded by the monorepo's own .github/workflows/deploy.yml, which now builds+deploys the
+# frontend alongside the API in one place (per-repo trigger scope - this file only ever ran as a
+# real workflow for the standalone guens-frontend.git repo this directory started life as, never
+# for the monorepo, since GitHub Actions only scans .github/workflows/ at a repo's actual root).
+# Left manual-only rather than deleted, in case that standalone repo is ever pushed to again -
+# run it by hand from the Actions tab if needed.
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io

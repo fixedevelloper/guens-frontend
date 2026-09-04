@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { formatMoney } from "@/lib/format";
 import { hotelOfferKey } from "@/lib/filters";
+import { useRenderCap } from "@/hooks/use-render-cap";
 import { galleryHues } from "@/lib/hotel-mock-content";
 import { useHotelStore } from "@/store/useHotelStore";
 import type { HarmonizedHotelOffer, HotelSearchParams } from "@/lib/api/types";
@@ -26,6 +27,7 @@ interface HotelResultsListProps {
 
 export function HotelResultsList({ offers, nights, params, hoveredKey, onHoverChange, isReseller = false }: HotelResultsListProps) {
   const t = useTranslations("Filters");
+  const { visible, hasMore, showMore } = useRenderCap(offers);
 
   if (offers.length === 0) {
     return (
@@ -39,7 +41,7 @@ export function HotelResultsList({ offers, nights, params, hoveredKey, onHoverCh
 
   return (
       <div className="grid gap-4.5">
-        {offers.map((offer, index) => {
+        {visible.map((offer, index) => {
           const key = hotelOfferKey(offer, index);
           return (
               <HotelOfferCard
@@ -54,6 +56,11 @@ export function HotelResultsList({ offers, nights, params, hoveredKey, onHoverCh
               />
           );
         })}
+        {hasMore && (
+            <Button variant="outline" onClick={showMore} className="mx-auto rounded-full px-6">
+              {t("showMoreResults")}
+            </Button>
+        )}
       </div>
   );
 }

@@ -2,7 +2,7 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { Building2, Plane, Calendar, CreditCard, Clock3, Car, Home, MapPin } from "lucide-react";
+import { Building2, Plane, Calendar, CreditCard, Clock3, Car, Home, MapPin, Lock, Luggage } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,7 +28,17 @@ export function OfferSummaryCard({
   extrasTotal?: number;
 }) {
   const t = useTranslations("Checkout");
+  const tResults = useTranslations("SearchResults");
   const locale = useLocale();
+
+  const flightSegments = offer.offerType === "FLIGHT" ? offer.detail?.segments ?? [] : [];
+  const flightStopCount = flightSegments.length > 1 ? flightSegments.length - 1 : 0;
+  const flightCabinBaggage =
+      flightSegments[0]?.cabinBaggage.find((b) => b.paxType === "Adult") ?? flightSegments[0]?.cabinBaggage[0] ?? null;
+  const flightCheckedBaggage =
+      flightSegments[0]?.checkedBaggage.find((b) => b.paxType === "Adult") ?? flightSegments[0]?.checkedBaggage[0] ?? null;
+  const displayAirlineName =
+      offer.offerType === "FLIGHT" ? offer.airlineName ?? airlineLabel(offer.airline) : null;
 
   // The checkout URL denormalizes a price at "book now" time (see lib/checkout-url.ts), but for
   // hotels that's the property-level search quote, not the specific room the guest actually added
@@ -72,9 +82,28 @@ export function OfferSummaryCard({
               <span className="rounded-lg bg-primary/10 text-primary px-2 py-0.5 font-bold tracking-wide">
                 {offer.airline} {offer.flightNumber}
               </span>
-                  <span className="font-semibold text-foreground/85">{airlineLabel(offer.airline)}</span>
+                  <span className="font-semibold text-foreground/85">{displayAirlineName}</span>
                   <span className="text-muted-foreground/40">•</span>
                   <span className="text-muted-foreground font-medium">{offer.cabinClass}</span>
+                </div>
+
+                {/* Escales & hold */}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span
+                      className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                          flightStopCount > 0
+                              ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                              : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                      }`}
+                  >
+                    {flightStopCount > 0 ? tResults("stopsCount", { count: flightStopCount }) : tResults("nonstop")}
+                  </span>
+                  {offer.detail?.holdAvailable === true && (
+                      <span className="flex items-center gap-1 rounded-full bg-sky-500/10 px-2 py-0.5 text-[10px] font-bold text-sky-700 dark:text-sky-400">
+                        <Lock className="size-3 shrink-0" />
+                        {tResults("holdAvailableBadge")}
+                      </span>
+                  )}
                 </div>
 
                 <div className="relative pl-6 space-y-4 before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-[2px] before:bg-gradient-to-b before:from-primary/60 before:to-primary/20">
@@ -97,44 +126,140 @@ export function OfferSummaryCard({
                     </div>
                   </div>
                 </div>
+
+                {/* Détail des escales, si le fournisseur les fournit */}
+                {flightSegments.length > 1 && (
+                    <div className="space-y-1.5">
+                      {flightSegments.slice(0, -1).map((segment, index) => (
+                          <div
+                              key={`${segment.flightNumber}-${index}`}
+                              className="flex items-center gap-1.5 rounded-lg border border-dashed border-amber-500/40 bg-amber-500/5 px-2.5 py-1 text-[11px] font-medium text-amber-700 dark:text-amber-400"
+                          >
+                            <Clock3 className="size-3 shrink-0" />
+                            {tResults("layoverAt", {
+                              city: segment.arrival.city ?? segment.arrival.code,
+                              duration: segment.layoverAfter ?? "",
+                            })}
+                          </div>
+                      ))}
+                    </div>
+                )}
+
+                {/* Bagages, si le fournisseur les fournit */}
+                {(flightCabinBaggage || flightCheckedBaggage) && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {flightCabinBaggage && (
+                          <span className="flex items-center gap-1 rounded-lg border border-border/40 bg-background/60 px-2 py-1 text-[11px] font-medium text-muted-foreground">
+                            <Luggage className="size-3 text-primary" />
+                            {tResults("cabinBaggageLabel")}: {flightCabinBaggage.rule}
+                          </span>
+                      )}
+                      {flightCheckedBaggage && (
+                          <span className="flex items-center gap-1 rounded-lg border border-border/40 bg-background/60 px-2 py-1 text-[11px] font-medium text-muted-foreground">
+                            <Luggage className="size-3 text-primary" />
+                            {tResults("checkedBaggageLabel")}: {flightCheckedBaggage.rule}
+                          </span>
+                      )}
+                    </div>
+                )}
               </div>
           )}
 
           {offer.offerType === "MULTI_CITY_FLIGHT" && (
               <div className="space-y-3">
-                {offer.legs.map((leg, index) => (
-                    <div key={leg.legIndex} className="relative grid gap-2 rounded-xl border border-border/50 bg-background/60 p-3 shadow-2xs">
+                {offer.legs.map((leg, index) => {
+                  const legSegments = leg.detail?.segments ?? [];
+                  const legStopCount = legSegments.length > 1 ? legSegments.length - 1 : 0;
+                  const legCabinBaggage =
+                      legSegments[0]?.cabinBaggage.find((b) => b.paxType === "Adult") ?? legSegments[0]?.cabinBaggage[0] ?? null;
+                  const legCheckedBaggage =
+                      legSegments[0]?.checkedBaggage.find((b) => b.paxType === "Adult") ?? legSegments[0]?.checkedBaggage[0] ?? null;
+                  return (
+                      <div key={leg.legIndex} className="relative grid gap-2 rounded-xl border border-border/50 bg-background/60 p-3 shadow-2xs">
                 <span className="absolute top-3 right-3 text-[10px] font-bold text-primary uppercase tracking-wider">
                   Vol {index + 1}
                 </span>
 
-                      <div className="flex items-center gap-2 text-xs">
+                        <div className="flex items-center gap-2 text-xs">
                   <span className="rounded-md bg-muted px-1.5 py-0.5 font-bold text-foreground">
                     {leg.airline} {leg.flightNumber}
                   </span>
-                        <span className="font-medium text-muted-foreground truncate max-w-[120px]">
-                    {airlineLabel(leg.airline)}
+                          <span className="font-medium text-muted-foreground truncate max-w-[120px]">
+                    {leg.airlineName ?? airlineLabel(leg.airline)}
                   </span>
-                      </div>
+                        </div>
 
-                      <div className="grid grid-cols-2 gap-4 text-xs pt-1">
-                        <div className="space-y-0.5">
-                          <span className="text-muted-foreground block text-[10px] uppercase font-semibold">Départ</span>
-                          <span className="font-bold text-foreground">{leg.origin}</span>
-                          <span className="text-[10px] text-muted-foreground block leading-tight">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                  <span
+                      className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                          legStopCount > 0
+                              ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                              : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                      }`}
+                  >
+                    {legStopCount > 0 ? tResults("stopsCount", { count: legStopCount }) : tResults("nonstop")}
+                  </span>
+                          {leg.detail?.holdAvailable === true && (
+                              <span className="flex items-center gap-1 rounded-full bg-sky-500/10 px-2 py-0.5 text-[10px] font-bold text-sky-700 dark:text-sky-400">
+                                <Lock className="size-3 shrink-0" />
+                                {tResults("holdAvailableBadge")}
+                              </span>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 text-xs pt-1">
+                          <div className="space-y-0.5">
+                            <span className="text-muted-foreground block text-[10px] uppercase font-semibold">Départ</span>
+                            <span className="font-bold text-foreground">{leg.origin}</span>
+                            <span className="text-[10px] text-muted-foreground block leading-tight">
                       {formatDateTime(leg.departureTime, locale)}
                     </span>
-                        </div>
-                        <div className="space-y-0.5">
-                          <span className="text-muted-foreground block text-[10px] uppercase font-semibold">Arrivée</span>
-                          <span className="font-bold text-foreground">{leg.destination}</span>
-                          <span className="text-[10px] text-muted-foreground block leading-tight">
+                          </div>
+                          <div className="space-y-0.5">
+                            <span className="text-muted-foreground block text-[10px] uppercase font-semibold">Arrivée</span>
+                            <span className="font-bold text-foreground">{leg.destination}</span>
+                            <span className="text-[10px] text-muted-foreground block leading-tight">
                       {formatDateTime(leg.arrivalTime, locale)}
                     </span>
+                          </div>
                         </div>
+
+                        {legSegments.length > 1 && (
+                            <div className="space-y-1.5 pt-0.5">
+                              {legSegments.slice(0, -1).map((segment, segIndex) => (
+                                  <div
+                                      key={`${segment.flightNumber}-${segIndex}`}
+                                      className="flex items-center gap-1.5 rounded-lg border border-dashed border-amber-500/40 bg-amber-500/5 px-2.5 py-1 text-[11px] font-medium text-amber-700 dark:text-amber-400"
+                                  >
+                                    <Clock3 className="size-3 shrink-0" />
+                                    {tResults("layoverAt", {
+                                      city: segment.arrival.city ?? segment.arrival.code,
+                                      duration: segment.layoverAfter ?? "",
+                                    })}
+                                  </div>
+                              ))}
+                            </div>
+                        )}
+
+                        {(legCabinBaggage || legCheckedBaggage) && (
+                            <div className="flex flex-wrap gap-1.5 pt-0.5">
+                              {legCabinBaggage && (
+                                  <span className="flex items-center gap-1 rounded-lg border border-border/40 bg-background/60 px-2 py-1 text-[11px] font-medium text-muted-foreground">
+                                    <Luggage className="size-3 text-primary" />
+                                    {tResults("cabinBaggageLabel")}: {legCabinBaggage.rule}
+                                  </span>
+                              )}
+                              {legCheckedBaggage && (
+                                  <span className="flex items-center gap-1 rounded-lg border border-border/40 bg-background/60 px-2 py-1 text-[11px] font-medium text-muted-foreground">
+                                    <Luggage className="size-3 text-primary" />
+                                    {tResults("checkedBaggageLabel")}: {legCheckedBaggage.rule}
+                                  </span>
+                              )}
+                            </div>
+                        )}
                       </div>
-                    </div>
-                ))}
+                  );
+                })}
               </div>
           )}
 

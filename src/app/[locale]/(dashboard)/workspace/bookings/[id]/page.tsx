@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import {
     ArrowLeft,
@@ -23,6 +23,7 @@ import {
     Tag,
     Receipt,
     BadgeAlert,
+    Undo2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -35,9 +36,38 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDate, formatMoney, providerLabel } from "@/lib/format";
 import { useBookingQuery, useCancelBookingMutation } from "@/hooks/use-booking";
+import {
+    useDownloadBookingReceiptMutation,
+    useRefundBookingMutation,
+    useResendBookingConfirmationMutation,
+} from "@/hooks/use-admin";
+import { normalizeApiError } from "@/lib/api/client";
 
 interface AdminBookingDetailPageProps {
     params: Promise<{ id: string }>;
+}
+
+/** Human labels for the provider's machine-readable error codes (see Booking#providerErrorCode /
+ *  ProviderException#code) - Travel Terminus's documented codes, plus the auth-retry ones its
+ *  client already recognizes internally. Unlisted codes fall back to a generic message below. */
+const PROVIDER_ERROR_LABELS: Record<string, string> = {
+    invalid_request: "Requête invalide - détails passager manquants ou mal formatés (ex: date de naissance).",
+    unauthorized: "Authentification fournisseur échouée - jeton d'accès invalide ou expiré.",
+    insufficient_funds: "Solde du portefeuille fournisseur insuffisant - à recharger pour débloquer les réservations.",
+    provider_down: "Fournisseur temporairement injoignable - à réessayer plus tard.",
+    token_expired: "Jeton d'accès fournisseur expiré (normalement auto-renouvelé - à surveiller si récurrent).",
+    token_invalid: "Jeton d'accès fournisseur invalide (normalement auto-renouvelé - à surveiller si récurrent).",
+    token_error: "Échec de génération du jeton d'accès fournisseur.",
+};
+
+function providerErrorLabel(code: string): string {
+    if (PROVIDER_ERROR_LABELS[code]) {
+        return PROVIDER_ERROR_LABELS[code];
+    }
+    if (code.startsWith("http_")) {
+        return `Le fournisseur a répondu avec le statut HTTP ${code.slice(5)}.`;
+    }
+    return `Code fournisseur non documenté : ${code}.`;
 }
 
 export default function AdminBookingDetailPage({ params }: AdminBookingDetailPageProps) {
@@ -48,6 +78,11 @@ export default function AdminBookingDetailPage({ params }: AdminBookingDetailPag
     // Récupération des données et mutation de statut
     const { data: booking, isLoading, isError, refetch } = useBookingQuery(id);
     const cancelMutation = useCancelBookingMutation(id);
+    const refundMutation = useRefundBookingMutation(id);
+    const receiptMutation = useDownloadBookingReceiptMutation(id);
+    const resendConfirmationMutation = useResendBookingConfirmationMutation(id);
+    // Real money moves on this action - require an explicit second click before firing it.
+    const [confirmingRefund, setConfirmingRefund] = useState(false);
 
     if (isLoading) {
         return <AdminBookingDetailSkeleton />;
@@ -62,7 +97,7 @@ export default function AdminBookingDetailPage({ params }: AdminBookingDetailPag
                     Impossible de charger les détails de cette réservation (ID: {id}).
                 </p>
                 <Button asChild variant="outline" size="sm" className="rounded-xl">
-                    <Link href="/admin/bookings">
+                    <Link href="/workspace/bookings">
                         <ArrowLeft className="size-4 mr-2" />
                         Retour à la liste
                     </Link>
@@ -72,12 +107,46 @@ export default function AdminBookingDetailPage({ params }: AdminBookingDetailPag
     }
 
     const isHotel = booking.offerType === "HOTEL";
+    const needsRefund = booking.status === "FAILED" && booking.paymentCaptured && !booking.paymentRefunded;
 
+
+    const handleRefund = () => {
+        refundMutation.mutate(undefined, {
+            onSuccess: () => {
+                setConfirmingRefund(false);
+                toast.success("Paiement remboursé.");
+            },
+            onError: (error) => {
+                setConfirmingRefund(false);
+                toast.error(normalizeApiError(error).message);
+            },
+        });
+    };
 
     const handleCancel = () => {
         cancelMutation.mutate(undefined, {
             onSuccess: () => toast.success("Réservation annulée."),
             onError: () => toast.error("Erreur lors de l'annulation de la réservation."),
+        });
+    };
+
+    const handleDownloadReceipt = () => {
+        receiptMutation.mutate(undefined, {
+            onSuccess: (pdfBlob) => {
+                // Opened in a new tab (not a forced <a download>) so the browser's own PDF viewer
+                // handles both "print" and "save" from the same click.
+                const url = URL.createObjectURL(pdfBlob);
+                window.open(url, "_blank");
+                setTimeout(() => URL.revokeObjectURL(url), 60_000);
+            },
+            onError: (error) => toast.error(normalizeApiError(error).message),
+        });
+    };
+
+    const handleResendConfirmation = () => {
+        resendConfirmationMutation.mutate(undefined, {
+            onSuccess: () => toast.success("Confirmation envoyée par email au client."),
+            onError: (error) => toast.error(normalizeApiError(error).message),
         });
     };
 
@@ -93,7 +162,7 @@ export default function AdminBookingDetailPage({ params }: AdminBookingDetailPag
                             size="icon"
                             className="size-8 rounded-xl shrink-0"
                         >
-                            <Link href="/admin/bookings" aria-label="Retour">
+                            <Link href="/workspace/bookings" aria-label="Retour">
                                 <ArrowLeft className="size-4" />
                             </Link>
                         </Button>
@@ -135,19 +204,22 @@ export default function AdminBookingDetailPage({ params }: AdminBookingDetailPag
                         variant="outline"
                         size="sm"
                         className="rounded-xl gap-2 text-xs font-semibold"
-                        onClick={() => toast.info("Billet/Confirmation envoyé au client")}
+                        onClick={handleResendConfirmation}
+                        disabled={resendConfirmationMutation.isPending || booking.status !== "CONFIRMED"}
+                        title={booking.status !== "CONFIRMED" ? "Disponible uniquement pour une réservation confirmée" : undefined}
                     >
                         <Send className="size-3.5" />
-                        Envoyer Email
+                        {resendConfirmationMutation.isPending ? "Envoi…" : "Envoyer Email"}
                     </Button>
                     <Button
                         variant="outline"
                         size="sm"
                         className="rounded-xl gap-2 text-xs font-semibold"
-                        onClick={() => toast.info("Génération du reçu PDF...")}
+                        onClick={handleDownloadReceipt}
+                        disabled={receiptMutation.isPending}
                     >
                         <Download className="size-3.5" />
-                        Reçu PDF
+                        {receiptMutation.isPending ? "Génération…" : "Reçu PDF"}
                     </Button>
                 </div>
             </div>
@@ -156,9 +228,22 @@ export default function AdminBookingDetailPage({ params }: AdminBookingDetailPag
             {booking.failureReason && (
                 <div className="rounded-2xl border border-destructive/40 bg-destructive/10 p-4 text-destructive flex items-start gap-3">
                     <BadgeAlert className="size-5 shrink-0 mt-0.5" />
-                    <div className="space-y-1 text-xs sm:text-sm">
-                        <span className="font-bold block">Motif de l&apos;échec système :</span>
-                        <p>{booking.failureReason}</p>
+                    <div className="space-y-2 text-xs sm:text-sm">
+                        <div>
+                            <span className="font-bold block">Motif de l&apos;échec système :</span>
+                            <p>{booking.failureReason}</p>
+                        </div>
+                        {booking.providerErrorCode && (
+                            <div className="pt-2 border-t border-destructive/20">
+                                <span className="font-bold block flex items-center gap-1.5">
+                                    Cause fournisseur (admin)
+                                    <Badge variant="outline" className="font-mono text-[10px] rounded-md border-destructive/40 text-destructive">
+                                        {booking.providerErrorCode}
+                                    </Badge>
+                                </span>
+                                <p className="text-destructive/80">{providerErrorLabel(booking.providerErrorCode)}</p>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
@@ -420,7 +505,61 @@ export default function AdminBookingDetailPage({ params }: AdminBookingDetailPag
                                 La confirmation d&apos;une réservation est automatique (paiement et/ou
                                 fournisseur) ; seule l&apos;annulation peut être forcée manuellement.
                             </p>
+
+                            {needsRefund && (
+                                <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-800 dark:text-amber-300 space-y-1">
+                                    <span className="font-bold block">Paiement capturé, réservation échouée</span>
+                                    <p>
+                                        Le client a été débité mais le fournisseur n&apos;a pas confirmé la
+                                        réservation. Rembourse-le pour clore le dossier.
+                                    </p>
+                                </div>
+                            )}
+                            {booking.paymentRefunded && (
+                                <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs text-emerald-800 dark:text-emerald-300 font-semibold">
+                                    Paiement remboursé.
+                                </div>
+                            )}
+
                             <div className="flex flex-col gap-2">
+                                {needsRefund && !confirmingRefund && (
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="w-full rounded-xl gap-2 font-semibold border-amber-500/40 text-amber-700 dark:text-amber-400 hover:bg-amber-500/10"
+                                        onClick={() => setConfirmingRefund(true)}
+                                    >
+                                        <Undo2 className="size-4" />
+                                        Rembourser le paiement
+                                    </Button>
+                                )}
+                                {needsRefund && confirmingRefund && (
+                                    <div className="flex flex-col gap-2 rounded-xl border border-amber-500/40 bg-amber-500/5 p-2.5">
+                                        <span className="text-xs font-semibold text-amber-800 dark:text-amber-300">
+                                            Confirmer le remboursement de {formatMoney(booking.price, locale)} ?
+                                        </span>
+                                        <div className="flex gap-2">
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                className="flex-1 rounded-xl font-semibold border-amber-500/40 text-amber-700 dark:text-amber-400 hover:bg-amber-500/10"
+                                                disabled={refundMutation.isPending}
+                                                onClick={handleRefund}
+                                            >
+                                                {refundMutation.isPending ? "Remboursement…" : "Confirmer"}
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                className="flex-1 rounded-xl font-semibold"
+                                                disabled={refundMutation.isPending}
+                                                onClick={() => setConfirmingRefund(false)}
+                                            >
+                                                Annuler
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
                                 <Button
                                     size="sm"
                                     variant="destructive"

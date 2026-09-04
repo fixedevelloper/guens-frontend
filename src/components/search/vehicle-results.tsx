@@ -11,11 +11,13 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Link } from "@/i18n/navigation";
 import { formatMoney } from "@/lib/format";
 import { checkoutUrlForVehicle } from "@/lib/checkout-url";
+import { useRenderCap } from "@/hooks/use-render-cap";
 import { useVehicleStore } from "@/store/use-vehicle-store";
 import type { HarmonizedVehicleOffer } from "@/lib/api/types";
 
 export function VehicleResultsList({ offers }: { offers: HarmonizedVehicleOffer[] }) {
     const t = useTranslations("CarRentalSearch");
+    const { visible, hasMore, showMore } = useRenderCap(offers);
 
     if (offers.length === 0) {
         return (
@@ -28,10 +30,17 @@ export function VehicleResultsList({ offers }: { offers: HarmonizedVehicleOffer[
     }
 
     return (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {offers.map((offer, index) => (
-                <VehicleOfferCard key={`${offer.brand}-${offer.model}-${index}`} offer={offer} />
-            ))}
+        <div className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {visible.map((offer, index) => (
+                    <VehicleOfferCard key={`${offer.brand}-${offer.model}-${index}`} offer={offer} />
+                ))}
+            </div>
+            {hasMore && (
+                <Button variant="outline" onClick={showMore} className="mx-auto block rounded-full px-6">
+                    {t("showMoreResults")}
+                </Button>
+            )}
         </div>
     );
 }

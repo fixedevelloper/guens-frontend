@@ -153,7 +153,7 @@ export default function PartnerSettingsPage() {
                             id="companyName"
                             value={form.companyName}
                             onChange={handleChange}
-                            placeholder="Ex: GuenTours SARL"
+                            placeholder="Ex: Guens travel & tours SARL"
                             required
                         />
                     </div>

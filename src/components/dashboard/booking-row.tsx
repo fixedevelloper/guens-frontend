@@ -24,7 +24,7 @@ export function BookingRow({
   const locale = useLocale();
 
   const isHotel = booking.offerType === "HOTEL";
-  const routeLink = `${isAdmin ? "/admin" : ""}/bookings/${booking.id}`;
+  const routeLink = `${isAdmin ? "/workspace" : ""}/bookings/${booking.id}`;
 
   // Calcul propre de la date affichée
   const formattedDate = isHotel

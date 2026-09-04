@@ -60,8 +60,8 @@ export default function PaymentPage() {
         };
 
         // Narrowing de l'union discriminée. CARD/GOOGLE_PAY/APPLE_PAY/PAYPAL n'ont plus aucun champ
-        // propre à saisir ici : ils routent vers Stripe, qui crée un PaymentIntent à partir de juste
-        // ça puis collecte carte/adresse lui-même via son propre widget (voir StripeCheckoutDialog).
+        // propre à saisir ici : ils routent vers Stripe, qui crée une Checkout Session à partir de
+        // juste ça puis collecte carte/adresse lui-même via son propre widget (voir StripeCheckoutDialog).
         const payload: BookingPaymentRequest =
             values.paymentMethod === "MOBILE_MONEY"
                 ? { ...basePayload, paymentMethod: "MOBILE_MONEY", mobileNumber: String(values.mobileNumber) }
@@ -79,7 +79,8 @@ export default function PaymentPage() {
                     window.location.href = payment.authorizationRedirectUrl;
                 } else if (payment.status === "PENDING_AUTHORIZATION"
                     && payment.authorizationType === "CLIENT_ACTION" && payment.authorizationClientSecret) {
-                    // Stripe : la carte/le wallet est saisi côté client, jamais transmis à notre backend.
+                    // Stripe Embedded Checkout : la carte/le wallet est saisi côté client, jamais
+                    // transmis à notre backend.
                     setStripePayment(payment);
                 } else {
                     toast.error(
@@ -242,7 +243,6 @@ export default function PaymentPage() {
         {stripePayment?.authorizationClientSecret && (
             <StripeCheckoutDialog
                 clientSecret={stripePayment.authorizationClientSecret}
-                returnUrl={window.location.href}
                 onConfirmed={() => {
                   // La confirmation finale (SUCCEEDED) vient du webhook Stripe, pas de ce retour
                   // client - on note juste "PENDING" ici, comme pour mobile money/PayPal, pour que

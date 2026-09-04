@@ -1,39 +1,25 @@
 import createIntlMiddleware from "next-intl/middleware";
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 import { routing } from "@/i18n/routing";
 
 const intlMiddleware = createIntlMiddleware(routing);
 
-// Kept in sync with app.jwt.cookie-name (default) in application.yml / JwtProperties.
-const AUTH_COOKIE_NAME = "gt_auth";
-const PROTECTED_PATH = /^\/(?:(?:en|fr)\/)?(admin|partner)(?:\/|$)/;
-
-function loginPathFor(pathname: string): string {
-  const match = pathname.match(/^\/(en|fr)(?:\/|$)/);
-  if (match && match[1] !== routing.defaultLocale) {
-    return `/${match[1]}/login`;
-  }
-  return "/login";
-}
-
 /**
- * Runs the existing next-intl locale routing first, then - for the admin/partner dashboards only
- * - checks for the HttpOnly gt_auth cookie before letting the request through. This is only a UX
- * shortcut (skip serving/hydrating a dashboard shell that the client-side (dashboard) layouts
- * would immediately redirect away from anyway); it is NOT the source of truth for authorization -
- * the Spring API re-validates the cookie's JWT on every single request regardless. A Proxy can
- * read HttpOnly cookies (only client-side `document.cookie` is blocked), so this check works even
- * though the cookie is unreadable from the browser's JS.
+ * Only runs next-intl's locale routing. A previous version also gated /workspace and /partner
+ * here on the HttpOnly gt_auth cookie as a UX shortcut (skip serving a dashboard shell the
+ * client-side layout would immediately redirect away from) - removed because it can never work:
+ * the API (api-guentours.guens.org) and the frontend (guenstravel.com) are on unrelated domains,
+ * so gt_auth is a host-only cookie scoped to the API and is never present in requests to
+ * guenstravel.com. The check always saw "no cookie" and bounced even correctly-authenticated
+ * admins to /login (confirmed prod bug, 2026-09-01). Authorization itself was never affected -
+ * the Spring API re-validates the JWT on every request regardless - and the client-side
+ * (dashboard) layouts already redirect unauthenticated visitors via useAuth(), which does see the
+ * cookie (attached cross-origin by the API client). Revisit only if the API is ever served from
+ * the same origin as the frontend (e.g. guenstravel.com/api/* reverse-proxied to Spring), which
+ * would make the cookie shareable and this shortcut viable again.
  */
 export default function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
-  if (PROTECTED_PATH.test(pathname) && !request.cookies.has(AUTH_COOKIE_NAME)) {
-    return NextResponse.redirect(new URL(loginPathFor(pathname), request.url));
-  }
-
   return intlMiddleware(request);
 }
 

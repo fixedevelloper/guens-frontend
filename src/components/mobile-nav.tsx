@@ -47,7 +47,7 @@ export function MobileNav() {
     const isBecomeHostActive = pathname.startsWith("/become-host");
     const isDashboardActive =
         pathname.startsWith("/dashboard") ||
-        pathname.startsWith("/admin");
+        pathname.startsWith("/workspace");
 
     // Indique si l'un des sous-menus du menu "Plus" est actif
     const isMoreActive =
@@ -283,7 +283,7 @@ export function MobileNav() {
 
                             {isAdmin && (
                                 <Link
-                                    href="/admin"
+                                    href="/workspace"
                                     onClick={() => setOpen(false)}
                                     className="flex items-center justify-between p-3.5 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold text-sm transition-colors"
                                 >

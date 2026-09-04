@@ -53,7 +53,7 @@ export default function RegisterPage() {
                 ...values,
                 phone: values.phone || undefined,
             });
-            router.push(profile.role === "ADMIN" ? "/admin" : "/dashboard");
+            router.push(profile.role === "ADMIN" ? "/workspace" : "/dashboard");
         } catch (err) {
             setError(normalizeApiError(err).message);
         } finally {

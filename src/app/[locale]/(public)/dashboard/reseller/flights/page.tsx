@@ -22,7 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FlightSearchForm } from "@/components/search/flight-search-form";
-import { FlightResultsList } from "@/components/search/flight-results";
+import { FlightResultsList, FlightSearchErrorState } from "@/components/search/flight-results";
 import { FlightFilters } from "@/components/search/flight-filters";
 import { useFlightSearch } from "@/hooks/use-search";
 import { flightSearchParamsToQuery, multiCitySearchParamsToQuery, parseFlightSearchParams } from "@/lib/search-params";
@@ -203,6 +203,8 @@ function ResellerFlightsPageContent() {
                 {/* Grille Principale : Filtres + Résultats */}
                 {query.isLoading ? (
                     <DynamicFlightLoader isPending={true} />
+                ) : query.isError ? (
+                    <FlightSearchErrorState onRetry={() => query.refetch()} />
                 ) : (
                     <div className="grid gap-8 lg:grid-cols-[280px_1fr] items-start">
 

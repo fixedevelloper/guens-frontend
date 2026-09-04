@@ -1,13 +1,17 @@
-// app/[locale]/admin/users/page.tsx (ou le chemin correspondant à ta structure)
+// app/[locale]/workspace/users/page.tsx (ou le chemin correspondant à ta structure)
 "use client";
 
+import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Users, ShieldAlert } from "lucide-react";
+import { Users, ShieldAlert, Search, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 
 import { useAdminUsersQuery } from "@/hooks/use-admin";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -25,9 +29,21 @@ function initials(fullName: string | undefined) {
 export default function AdminUsersPage() {
   const t = useTranslations("Dashboard");
   const locale = useLocale();
-  const usersQuery = useAdminUsersQuery();
 
-  const userCount = usersQuery.data?.length ?? 0;
+  const [page, setPage] = useState(0);
+  const [searchInput, setSearchInput] = useState("");
+  const debouncedSearch = useDebouncedValue(searchInput, 300).trim();
+
+  const usersQuery = useAdminUsersQuery(page, debouncedSearch || undefined);
+
+  function handleSearchChange(value: string) {
+    setSearchInput(value);
+    setPage(0);
+  }
+
+  const users = usersQuery.data?.content ?? [];
+  const totalElements = usersQuery.data?.totalElements ?? 0;
+  const totalPages = usersQuery.data?.totalPages ?? 0;
 
   return (
     <div className="space-y-8">
@@ -44,9 +60,23 @@ export default function AdminUsersPage() {
         <div className="flex items-center gap-2 self-start rounded-xl border border-border/40 bg-card px-3.5 py-2 shadow-2xs sm:self-auto">
           <Users className="size-4 text-primary" />
           <span className="text-xs font-extrabold text-foreground">
-            {t("resultsCount", { count: userCount }) ?? `${userCount} utilisateurs`}
+            {t("resultsCount", { count: totalElements }) ?? `${totalElements} utilisateurs`}
           </span>
         </div>
+      </div>
+
+      {/* RECHERCHE */}
+      <div className="relative max-w-sm">
+        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder="Rechercher par nom ou email..."
+          value={searchInput}
+          onChange={(e) => handleSearchChange(e.target.value)}
+          className="pl-9"
+        />
+        {usersQuery.isFetching && !usersQuery.isLoading && (
+          <Loader2 className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-muted-foreground" />
+        )}
       </div>
 
       <Card className="rounded-2xl border-border/50 bg-card shadow-2xs overflow-hidden">
@@ -86,11 +116,13 @@ export default function AdminUsersPage() {
                 </AlertDescription>
               </Alert>
             </div>
-          ) : !usersQuery.data || usersQuery.data.length === 0 ? (
+          ) : users.length === 0 ? (
             <div className="p-12 text-center">
               <Users className="size-8 text-muted-foreground/40 mx-auto mb-3" />
               <p className="text-xs font-bold text-muted-foreground">
-                {t("noUsers") ?? "Aucun utilisateur trouvé."}
+                {debouncedSearch
+                  ? (t("noUsersMatch") ?? "Aucun utilisateur ne correspond à cette recherche.")
+                  : (t("noUsers") ?? "Aucun utilisateur trouvé.")}
               </p>
             </div>
           ) : (
@@ -105,7 +137,7 @@ export default function AdminUsersPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/35">
-                  {usersQuery.data.map((u) => {
+                  {users.map((u) => {
                     const isAdminUser = u.role === "ADMIN";
                     return (
                       <tr 
@@ -153,6 +185,38 @@ export default function AdminUsersPage() {
                   })}
                 </tbody>
               </table>
+            </div>
+          )}
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between border-t border-border/30 px-6 py-4 text-xs text-muted-foreground">
+              <span>
+                Page <strong className="text-foreground">{page + 1}</strong> sur{" "}
+                <strong className="text-foreground">{totalPages}</strong> —{" "}
+                <strong className="text-foreground">{totalElements}</strong> utilisateur(s) au total
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={page === 0}
+                  onClick={() => setPage((p) => p - 1)}
+                  className="h-8 rounded-lg px-2.5"
+                >
+                  <ChevronLeft className="size-4 mr-1" />
+                  Précédent
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={page + 1 >= totalPages}
+                  onClick={() => setPage((p) => p + 1)}
+                  className="h-8 rounded-lg px-2.5"
+                >
+                  Suivant
+                  <ChevronRight className="size-4 ml-1" />
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>

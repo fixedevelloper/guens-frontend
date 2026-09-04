@@ -85,6 +85,7 @@ export interface MultiCityFlightSearchParams {
 export interface MultiCityItineraryLeg {
   legIndex: number;
   airline: string;
+  airlineName: string | null;
   flightNumber: string;
   origin: string;
   destination: string;
@@ -92,6 +93,8 @@ export interface MultiCityItineraryLeg {
   arrivalTime: string;
   cabinClass: string;
   offerId: string;
+  /** Stops/baggage/hold detail of this leg's offer - null for providers that don't surface it. */
+  detail: FlightOfferDetail | null;
 }
 
 export interface MultiCityItinerary {
@@ -165,8 +168,51 @@ export interface ProviderQuote {
   price: Money;
 }
 
+export interface AirportInfo {
+  code: string;
+  name: string | null;
+  city: string | null;
+  terminal: string | null;
+}
+
+export interface BaggageRule {
+  paxType: string;
+  rule: string;
+  quantity: number | null;
+  size: string | null;
+}
+
+export interface FlightSegmentDetail {
+  airlineCode: string;
+  airlineName: string | null;
+  flightNumber: string;
+  cabinClass: string | null;
+  departure: AirportInfo;
+  arrival: AirportInfo;
+  departureTime: string;
+  arrivalTime: string;
+  duration: string | null;
+  layoverAfter: string | null;
+  cabinBaggage: BaggageRule[];
+  checkedBaggage: BaggageRule[];
+}
+
+/** Provider/fare-specific detail (stops, baggage, hold availability) - null for providers that
+ *  don't surface it (currently only TravelTerminus does). */
+export interface FlightOfferDetail {
+  holdAvailable: boolean | null;
+  totalDuration: string | null;
+  totalLayoverDuration: string | null;
+  segments: FlightSegmentDetail[];
+}
+
+export interface FlightProviderQuote extends ProviderQuote {
+  detail: FlightOfferDetail | null;
+}
+
 export interface HarmonizedFlightOffer {
   airline: string;
+  airlineName: string | null;
   flightNumber: string;
   origin: string;
   destination: string;
@@ -175,7 +221,7 @@ export interface HarmonizedFlightOffer {
   cabinClass: string;
   seatsAvailable: number;
   bestOfferId: string;
-  quotes: ProviderQuote[];
+  quotes: FlightProviderQuote[];
 }
 
 export interface HarmonizedHotelOffer {
@@ -321,11 +367,16 @@ export interface BookingResponse {
   eTicketNumbers: string[];
   itineraryLegs: BookingFlightLeg[];
   failureReason: string | null;
+  /** Admin-only diagnostic detail (e.g. Travel Terminus's insufficient_funds/unauthorized/
+   *  provider_down/invalid_request) - only the admin booking detail page renders this. */
+  providerErrorCode: string | null;
   /** True only when FAILED and the provider hold never got a confirmation number - safe to retry. */
   retryable: boolean;
   /** True once a payment was actually captured for this booking, even if it later failed anyway
    *  (see confirmWithProvider) - sending the payer back to search would risk a second charge. */
   paymentCaptured: boolean;
+  /** True once an admin has refunded the captured payment (see the admin booking detail page). */
+  paymentRefunded: boolean;
   travelers: BookingTravelerResponse[];
   extras: BookingExtraResponse[];
   airline: string | null;

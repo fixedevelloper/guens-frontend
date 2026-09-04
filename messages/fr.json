@@ -10,6 +10,7 @@
     "myBooking": "Mon dossier",
     "dashboard": "Tableau de bord",
     "admin": "Administration",
+    "adminPanel": "Panneau d'administration",
     "login": "Connexion",
     "register": "Créer un compte",
     "logout": "Se déconnecter",
@@ -134,6 +135,9 @@
     "editShort": "Modifier",
     "noFlightsMatch": "Aucun vol ne correspond à vos filtres",
     "tryWiderCriteria": "Essayez d'élargir vos critères de recherche.",
+    "searchFailedTitle": "Échec de la recherche",
+    "searchFailedMessage": "Cette recherche a pris trop de temps ou n'a pas pu aboutir. Veuillez réessayer.",
+    "retrySearch": "Réessayer",
     "refundableTicket": "Billet modifiable ou remboursable",
     "showDetailsAction": "Détails",
     "hideDetailsAction": "Masquer",
@@ -150,12 +154,18 @@
     "baggageLabel": "Bagages",
     "carryOnIncluded": "1 bagage à main incl.",
     "availableSeatsLabel": "Places disponibles",
-    "seatsRemaining": "{count, plural, =1 {1 siège restant} other {# sièges restants}}"
+    "seatsRemaining": "{count, plural, =1 {1 siège restant} other {# sièges restants}}",
+    "stopsCount": "{count, plural, =1 {1 escale} other {# escales}}",
+    "layoverAt": "Escale à {city} ({duration})",
+    "holdAvailableBadge": "Prix bloqué possible avant paiement",
+    "cabinBaggageLabel": "Bagage cabine",
+    "checkedBaggageLabel": "Bagage en soute"
   },
   "Filters": {
     "title": "Filtres",
     "reset": "Réinitialiser",
     "showResults": "Afficher les résultats ({count})",
+    "showMoreResults": "Afficher plus de résultats",
     "maxPrice": "Prix maximum",
     "providers": "Fournisseurs",
     "airlines": "Compagnies aériennes",
@@ -372,7 +382,8 @@
     "failureReason": "Motif : {reason}",
     "retryAction": "Réessayer",
     "searchAgainAction": "Recommencer la recherche",
-    "paymentCapturedNotice": "Votre paiement a bien été débité. Notre support va vous contacter pour régulariser cette réservation - inutile de repayer ou de refaire une recherche."
+    "paymentCapturedNotice": "Votre paiement a bien été débité. Notre support va vous contacter pour régulariser cette réservation - inutile de repayer ou de refaire une recherche.",
+    "paymentRefundedNotice": "Votre paiement a été remboursé suite à cet échec. Vous pouvez refaire une recherche en toute sécurité."
   },
   "Tickets": {
     "title": "Vos billets électroniques",
@@ -417,6 +428,7 @@
     "allBookingsTitle": "Toutes les réservations",
     "allUsersTitle": "Tous les utilisateurs",
     "noUsers": "Aucun utilisateur.",
+    "noUsersMatch": "Aucun utilisateur ne correspond à cette recherche.",
     "userName": "Nom",
     "userEmail": "E-mail",
     "userRole": "Rôle",
@@ -700,6 +712,7 @@
     "error": "Une erreur est survenue lors de la recherche de véhicules.",
     "missingParams": "Veuillez renseigner vos critères de recherche.",
     "title": "Véhicules disponibles",
+    "showMoreResults": "Afficher plus de résultats",
     "select": "Choisir",
     "noResults": "Aucun véhicule disponible pour ces critères."
   },
@@ -707,6 +720,7 @@
     "error": "Une erreur est survenue lors de la recherche de logements.",
     "missingParams": "Veuillez renseigner vos critères de recherche.",
     "title": "Logements disponibles",
+    "showMoreResults": "Afficher plus de résultats",
     "select": "Choisir",
     "noResults": "Aucun logement disponible pour ces critères."
   },

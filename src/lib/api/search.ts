@@ -12,8 +12,19 @@ import type {
 } from "./types";
 import {useQuery} from "@tanstack/react-query";
 
+// The page must show results (or a clear failure) within a 15s budget. The backend already
+// caps its own slowest step - the provider fan-out - at 12s (app.search.flight-provider-timeout-millis,
+// see FlightSearchService), leaving headroom for network + serialization. This per-call timeout
+// overrides the apiClient's generic 45s default (sized for the slowest endpoint in the app) so a
+// flight search that misses its own budget fails fast instead of leaving the loader spinning past
+// the point where the page is supposed to have an answer.
+const FLIGHT_SEARCH_TIMEOUT_MS = 15_000;
+
 export async function searchFlights(params: FlightSearchParams) {
-  const { data } = await apiClient.get<HarmonizedFlightOffer[]>("/api/search/flights", { params });
+  const { data } = await apiClient.get<HarmonizedFlightOffer[]>("/api/search/flights", {
+    params,
+    timeout: FLIGHT_SEARCH_TIMEOUT_MS,
+  });
   return data;
 }
 

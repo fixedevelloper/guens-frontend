@@ -283,7 +283,7 @@ export default function ResellersListPage() {
                       <td className="py-3.5 px-4">
                         <div className="flex flex-col">
                           <Link
-                            href={`/admin/resellers/${reseller.id}`}
+                            href={`/workspace/resellers/${reseller.id}`}
                             className="font-extrabold text-foreground hover:text-primary transition-colors text-sm"
                           >
                             {reseller.companyName}
@@ -355,7 +355,7 @@ export default function ResellersListPage() {
                             <DropdownMenuSeparator />
 
                             <DropdownMenuItem
-                              onClick={() => router.push(`/admin/resellers/${reseller.id}`)}
+                              onClick={() => router.push(`/workspace/resellers/${reseller.id}`)}
                               className="text-xs font-bold gap-2 cursor-pointer"
                             >
                               <Eye className="size-3.5 text-primary" />

@@ -52,7 +52,7 @@ function SocialLoginCallbackContent() {
     completeSocialLogin()
         .then((profile) => {
           if (profile.role === "ADMIN") {
-            router.replace("/admin");
+            router.replace("/workspace");
           } else if (PARTNER_ROLES.includes(profile.role as (typeof PARTNER_ROLES)[number])) {
             router.replace("/partner");
           } else {

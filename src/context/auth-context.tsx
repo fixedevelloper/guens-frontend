@@ -44,6 +44,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Real access is re-checked against the HttpOnly auth cookie on every API call; a stale/absent
     // cookie surfaces as a 401, which the axios interceptor turns into clearProfile().
     const profile = getStoredProfile();
+    // TEMPORARY diagnostic (prod login bug investigation) - remove once root-caused.
+    console.warn("[AuthProvider] hydration read from localStorage", profile);
     if (profile) {
       setUser(profile);
     }
@@ -73,6 +75,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             role: response.role,
             partnerId: response.partnerId,
           };
+          // TEMPORARY diagnostic (prod login bug investigation) - remove once root-caused.
+          console.warn("[AuthProvider] login resolved", { response, profile });
           saveProfile(profile);
           setUser(profile);
           return profile;

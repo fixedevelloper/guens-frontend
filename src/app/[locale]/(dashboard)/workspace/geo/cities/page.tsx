@@ -154,7 +154,7 @@ export default function AdminCitiesPage() {
                             asChild
                             className="size-8 rounded-xl border-border/60"
                         >
-                            <Link href="/admin/geo/sync">
+                            <Link href="/workspace/geo/sync">
                                 <ArrowLeft className="size-4" />
                             </Link>
                         </Button>

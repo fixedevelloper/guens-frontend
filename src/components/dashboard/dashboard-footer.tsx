@@ -16,7 +16,7 @@ export function DashboardFooter() {
 
                 {/* Copyright */}
                 <p className="text-center sm:text-left text-muted-foreground/80">
-                    &copy; {new Date().getFullYear()} GuenTours. Tous droits réservés.
+                    &copy; {new Date().getFullYear()} Guen's travel & tours. Tous droits réservés.
                 </p>
 
                 {/* Liens de support */}
