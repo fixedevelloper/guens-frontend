@@ -51,6 +51,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.warn("[AuthProvider] hydration read from localStorage", profile);
     if (profile) {
       setUser(profile);
+      // The cached profile can be stale (e.g. a reseller approved after login, or a profile cached
+      // before resellerId was part of AuthResponse) - resync it from the server in the background.
+      authApi
+        .me()
+        .then((response) => {
+          const fresh: StoredProfile = {
+            email: response.email,
+            fullName: response.fullName,
+            role: response.role,
+            partnerId: response.partnerId,
+            resellerId: response.resellerId ?? undefined,
+          };
+          saveProfile(fresh);
+          setUser(fresh);
+        })
+        .catch(() => {});
     }
     setIsHydrated(true);
     // Fire-and-forget: primes the XSRF-TOKEN cookie so it's already there by the time the user
@@ -78,6 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             fullName: response.fullName,
             role: response.role,
             partnerId: response.partnerId,
+            resellerId: response.resellerId ?? undefined,
           };
           // TEMPORARY diagnostic (prod login bug investigation) - remove once root-caused.
           console.warn("[AuthProvider] login resolved", { response, profile });
@@ -93,6 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             fullName: response.fullName,
             role: response.role,
             partnerId: response.partnerId,
+            resellerId: response.resellerId ?? undefined,
           };
           saveProfile(profile);
           setUser(profile);
@@ -111,6 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             fullName: response.fullName,
             role: response.role,
             partnerId: response.partnerId,
+            resellerId: response.resellerId ?? undefined,
           };
           saveProfile(profile);
           setUser(profile);

@@ -660,7 +660,8 @@ export interface AuthResponse {
   fullName: string;
   role: UserRole;
   partnerId?: string; // présent uniquement pour les comptes partenaires,
-  userId: string; // présent uniquement pour les comptes partenaires
+  userId: string;
+  resellerId?: string | null; // présent uniquement pour les comptes revendeurs approuvés
 }
 
 // ---------- Admin ----------

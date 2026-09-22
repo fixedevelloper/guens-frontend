@@ -57,7 +57,7 @@ export default function ResellerBookingsPage() {
 
   // Navigation vers le détail de la réservation
   const handleViewDetails = (bookingId: string) => {
-    router.push(`/dashboard/bookings/${bookingId}`);
+    router.push(`/dashboard/reseller/bookings/${bookingId}`);
   };
 
   // Calcul des métriques/KPIs rapides

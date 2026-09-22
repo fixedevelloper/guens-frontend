@@ -266,7 +266,7 @@ export default function ResellerDashboardPage() {
         <ResellerBookingsTable
           bookings={recentBookings}
           isLoading={isBookingsLoading}
-          onViewDetails={(id) => router.push(`/dashboard/bookings/${id}`)}
+          onViewDetails={(id) => router.push(`/dashboard/reseller/bookings/${id}`)}
         />
       </div>
     </div>
