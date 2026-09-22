@@ -1,9 +1,18 @@
 import { apiClient } from "./client";
 import { getRememberedContactEmail } from "@/lib/booking-contact";
-import type { BookingPaymentRequest, PaymentResponse } from "./types";
+import type { BookingPaymentRequest, ManualPaymentInfoResponse, PaymentResponse } from "./types";
 
 export async function pay(request: BookingPaymentRequest) {
   const { data } = await apiClient.post<PaymentResponse>("/api/payments", request);
+  return data;
+}
+
+/** Whether countryCode is currently in manual/agent-confirmed payment mode, and if so, which
+ *  merchant codes to show instead of the normal card/mobile-money form - see PaymentForm. */
+export async function getManualPaymentInfo(countryCode: string) {
+  const { data } = await apiClient.get<ManualPaymentInfoResponse>("/api/payments/manual-info", {
+    params: { countryCode },
+  });
   return data;
 }
 

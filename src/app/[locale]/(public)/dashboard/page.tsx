@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@/context/auth-context";
 import { useMyBookingsQuery } from "@/hooks/use-booking";
+import type { BookingResponse } from "@/lib/api/types";
 
 import {
     Plane,
@@ -33,17 +34,19 @@ export default function DashboardPage() {
     const bookingsQuery = useMyBookingsQuery();
     const [activeTab, setActiveTab] = useState<FilterTab>("ALL");
 
-    const bookings = bookingsQuery.data ?? [];
+    const bookings = useMemo(() => bookingsQuery.data ?? [], [bookingsQuery.data]);
+
+    // "À venir" = tout statut menant encore à un voyage futur ; "Historique" = le dossier est
+    // clos (FAILED/CANCELLED sont les seuls statuts terminaux de BookingStatus, il n'existe pas
+    // de statut "voyage terminé" côté backend).
+    const isUpcomingStatus = (status: BookingResponse["status"]) =>
+        status !== "FAILED" && status !== "CANCELLED";
 
     // Calcul des statistiques
     const stats = useMemo(() => {
         const total = bookings.length;
-        const upcoming = bookings.filter((b: any) =>
-            b.status === "CONFIRMED" || b.status === "PENDING" || b.status === "BOOKED"
-        ).length;
-        const completed = bookings.filter((b: any) =>
-            b.status === "COMPLETED" || b.status === "CANCELLED"
-        ).length;
+        const upcoming = bookings.filter((b: BookingResponse) => isUpcomingStatus(b.status)).length;
+        const completed = total - upcoming;
 
         return { total, upcoming, completed };
     }, [bookings]);
@@ -51,14 +54,10 @@ export default function DashboardPage() {
     // Filtrage des réservations
     const filteredBookings = useMemo(() => {
         if (activeTab === "UPCOMING") {
-            return bookings.filter((b: any) =>
-                b.status === "CONFIRMED" || b.status === "PENDING" || b.status === "BOOKED"
-            );
+            return bookings.filter((b: BookingResponse) => isUpcomingStatus(b.status));
         }
         if (activeTab === "COMPLETED") {
-            return bookings.filter((b: any) =>
-                b.status === "COMPLETED" || b.status === "CANCELLED"
-            );
+            return bookings.filter((b: BookingResponse) => !isUpcomingStatus(b.status));
         }
         return bookings;
     }, [bookings, activeTab]);
@@ -265,7 +264,7 @@ export default function DashboardPage() {
                                 /* ÉTAT 4 : LISTE DES RÉSERVATIONS */
                                 (
                                     <div className="space-y-3">
-                                        {filteredBookings.map((booking: any) => (
+                                        {filteredBookings.map((booking: BookingResponse) => (
                                             <BookingRow key={booking.id} booking={booking} />
                                         ))}
                                     </div>

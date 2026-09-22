@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import axios from "axios";
 import { useApproveResellerMutation } from "@/hooks/use-admin";
 import { Loader2, Percent, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -53,11 +54,13 @@ export const ApproveResellerModal: React.FC<ApproveResellerModalProps> = ({
 
       onSuccess();
       onClose();
-    } catch (err: any) {
+    } catch (err) {
       // Interception de l'erreur renvoyée par Axios / Spring Boot
-      setError(
-        err?.response?.data?.message || "Une erreur est survenue lors de l'approbation."
-      );
+      const message =
+        axios.isAxiosError(err) && typeof err.response?.data?.message === "string"
+          ? err.response.data.message
+          : "Une erreur est survenue lors de l'approbation.";
+      setError(message);
     }
   };
 
@@ -98,7 +101,7 @@ export const ApproveResellerModal: React.FC<ApproveResellerModalProps> = ({
               </div>
             </div>
             <p className="mt-1.5 text-[11px] text-muted-foreground font-medium flex items-center justify-between">
-              <span>Valeur envoyée à l'API :</span>
+              <span>Valeur envoyée à l&apos;API :</span>
               <span className="font-mono font-extrabold text-foreground">
                 {(parseFloat(percentage) / 100 || 0).toFixed(4)}
               </span>
@@ -135,7 +138,7 @@ export const ApproveResellerModal: React.FC<ApproveResellerModalProps> = ({
                   <span>Approbation...</span>
                 </>
               ) : (
-                <span>Confirmer l'approbation</span>
+                <span>Confirmer l&apos;approbation</span>
               )}
             </Button>
           </div>

@@ -90,6 +90,7 @@ export function AppPromo() {
                     <div className="bg-white/95 backdrop-blur-md p-5 rounded-3xl shadow-2xl border border-white/40 transform rotate-1 hover:rotate-0 transition-transform duration-500 text-center flex flex-col items-center">
                         <div className="p-2 bg-white rounded-2xl shadow-inner border border-slate-100 mb-3">
                             {Image ? (
+                                // eslint-disable-next-line jsx-a11y/alt-text -- next-qrcode's Image component has no alt prop (see IQRCode in its types); decorative QR code, the download buttons above already carry the real affordance.
                                 <Image
                                     text={appDownloadUrl}
                                     options={{

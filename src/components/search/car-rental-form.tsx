@@ -13,7 +13,7 @@ import {
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { carSearchParamsToQuery } from "@/lib/search-params";
-import {searchAirportSuggestions, searchCitySuggestions} from "@/lib/api/geo";
+import {searchCitySuggestions} from "@/lib/api/geo";
 import { PickLocationAutocomplete } from "@/components/search/pick-location-autocomplete";
 
 interface CarRentalFormProps {
@@ -37,10 +37,13 @@ export function CarRentalForm({ className = "", onSearch }: CarRentalFormProps) 
     const t = useTranslations("CarRental");
     const router = useRouter();
 
-    const today = new Date().toISOString().split("T")[0];
-    const defaultReturn = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
-        .toISOString()
-        .split("T")[0];
+    // Lazy useState initializer plutôt qu'un calcul direct dans le corps du composant : new
+    // Date()/Date.now() sont impurs (React interdit de les appeler pendant le rendu), l'initializer
+    // de useState est le seul endroit où React garantit un appel unique, au montage.
+    const [today] = useState(() => new Date().toISOString().split("T")[0]);
+    const [defaultReturn] = useState(
+        () => new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
+    );
 
     const [differentDropoff, setDifferentDropoff] = useState(false);
     const [pickupLocation, setPickupLocation] = useState("");

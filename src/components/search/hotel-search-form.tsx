@@ -64,7 +64,6 @@ export function HotelSearchForm({ defaultValues, onSearch, isSearching }: HotelS
     },
   });
 
-  const cityCode = form.watch("cityCode");
   const checkIn = form.watch("checkIn");
   const checkOut = form.watch("checkOut");
   const adults = form.watch("adults") ?? 1;

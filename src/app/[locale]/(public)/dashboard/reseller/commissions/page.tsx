@@ -47,7 +47,7 @@ export default function ResellerCommissionsPage() {
     error,
   } = useMyResellerCommissionsQuery(user?.resellerId, 0, PAGE_SIZE);
 
-  const items = page?.content ?? [];
+  const items = useMemo(() => page?.content ?? [], [page]);
 
   const filteredItems = useMemo(() => {
     return items.filter((item) => {

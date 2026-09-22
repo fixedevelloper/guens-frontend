@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import axios from "axios";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -90,13 +91,13 @@ export default function NewHotelPage() {
             await createHotelMutation.mutateAsync({ partnerId, data: form });
             toast.success("Établissement créé avec succès !");
             router.push("/partner/listings");
-        } catch (error: any) {
+        } catch (error) {
             console.error("Erreur lors de la création de l'hôtel:", error);
-            toast.error(
-                error?.response?.data?.message ||
-                error?.message ||
-                "Une erreur est survenue lors de la création de l'établissement."
-            );
+            const message =
+                axios.isAxiosError(error) && typeof error.response?.data?.message === "string"
+                    ? error.response.data.message
+                    : "Une erreur est survenue lors de la création de l'établissement.";
+            toast.error(message);
         }
     }
 

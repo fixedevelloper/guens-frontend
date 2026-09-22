@@ -3,10 +3,13 @@ import type {
   AdminUserResponse,
   BookingResponse,
   CommissionWalletBalanceResponse,
+  CreateAgentRequest,
   FeaturedDestinationAdminResponse,
   FeaturedDestinationUpsertRequest,
   HotelCityAdminResponse,
   HotelCityUpsertRequest,
+  MerchantCodeRequest,
+  MerchantCodeResponse,
   PageResponse,
   PartnerResponse,
   PartnerStatus,
@@ -16,11 +19,12 @@ import type {
   ResellerApprovalRequest,
   ResellerBooking,
   ResellerDetail,
-  ResellerResponse,
+  ResellerProfile,
   ResellerStatus,
   ResellerWithdrawal,
   ShareholderRequest,
   ShareholderResponse,
+  UpdateAgentRequest,
 } from "./types";
 
 export async function getAdminBookings() {
@@ -56,6 +60,27 @@ export async function getAdminUsers(page: number, size = 20, query?: string) {
     params: { page, size, q: query || undefined },
   });
   return data;
+}
+
+export async function getAdminAgents(page: number, size = 20) {
+  const { data } = await apiClient.get<PageResponse<AdminUserResponse>>("/api/admin/agents", {
+    params: { page, size },
+  });
+  return data;
+}
+
+export async function createAgent(payload: CreateAgentRequest) {
+  const { data } = await apiClient.post<AdminUserResponse>("/api/admin/agents", payload);
+  return data;
+}
+
+export async function updateAgent(id: string, payload: UpdateAgentRequest) {
+  const { data } = await apiClient.put<AdminUserResponse>(`/api/admin/agents/${id}`, payload);
+  return data;
+}
+
+export async function deleteAgent(id: string) {
+  await apiClient.delete(`/api/admin/agents/${id}`);
 }
 
 export async function getCommissionWallet() {
@@ -96,6 +121,37 @@ export async function createPaymentProviderRoute(payload: PaymentProviderRouteRe
 export async function updatePaymentProviderRoute(id: string, payload: PaymentProviderRouteRequest) {
   const { data } = await apiClient.put<PaymentProviderRouteResponse>(`/api/admin/payment-provider-routes/${id}`, payload);
   return data;
+}
+
+/** One-click "no payment API ready yet for this country" switch - points every payment method for
+ *  countryCode at MANUAL instead of creating/editing 5 separate rules by hand. */
+export async function enableManualMode(countryCode: string) {
+  const { data } = await apiClient.post<PaymentProviderRouteResponse[]>(
+      "/api/admin/payment-provider-routes/manual-mode",
+      { countryCode }
+  );
+  return data;
+}
+
+// ---------- Merchant codes (manual-payment page, see ManualPaymentGateway) ----------
+
+export async function getMerchantCodes() {
+  const { data } = await apiClient.get<MerchantCodeResponse[]>("/api/admin/merchant-codes");
+  return data;
+}
+
+export async function createMerchantCode(payload: MerchantCodeRequest) {
+  const { data } = await apiClient.post<MerchantCodeResponse>("/api/admin/merchant-codes", payload);
+  return data;
+}
+
+export async function updateMerchantCode(id: string, payload: MerchantCodeRequest) {
+  const { data } = await apiClient.put<MerchantCodeResponse>(`/api/admin/merchant-codes/${id}`, payload);
+  return data;
+}
+
+export async function deleteMerchantCode(id: string) {
+  await apiClient.delete(`/api/admin/merchant-codes/${id}`);
 }
 
 export async function getAdminPartners(status: PartnerStatus | undefined, page: number, size = 20) {
@@ -224,12 +280,13 @@ export async function getResellerWithdrawals(
   return data;
 }
 
-// Approbation avec fixation du taux
+// Approbation avec fixation du taux - ResellerController returns the flat shape ResellerProfile
+// already mirrors (see its own doc comment), not a {success,message,data} envelope.
 export async function approveReseller(
   resellerId: string | number,
   payload: ResellerApprovalRequest
-): Promise<ResellerResponse> {
-  const { data } = await apiClient.patch<ResellerResponse>(
+): Promise<ResellerProfile> {
+  const { data } = await apiClient.patch<ResellerProfile>(
     `/api/resellers/${resellerId}/approve`,
     payload
   );
@@ -237,8 +294,8 @@ export async function approveReseller(
 }
 
 // Rejet
-export async function rejectReseller(resellerId: string | number): Promise<ResellerResponse> {
-  const { data } = await apiClient.patch<ResellerResponse>(
+export async function rejectReseller(resellerId: string | number): Promise<ResellerProfile> {
+  const { data } = await apiClient.patch<ResellerProfile>(
     `/api/resellers/${resellerId}/reject`
   );
   return data;
@@ -248,8 +305,8 @@ export async function rejectReseller(resellerId: string | number): Promise<Resel
 export async function updateResellerCommission(
  resellerId: string | number,
   payload: ResellerApprovalRequest
-): Promise<ResellerResponse> {
-  const { data } = await apiClient.patch<ResellerResponse>(
+): Promise<ResellerProfile> {
+  const { data } = await apiClient.patch<ResellerProfile>(
     `/api/resellers/${resellerId}/commission`,
     payload
   );
@@ -257,8 +314,8 @@ export async function updateResellerCommission(
 }
 
 // Suspension
-export async function suspendReseller(resellerId: string | number): Promise<ResellerResponse> {
-  const { data } = await apiClient.patch<ResellerResponse>(
+export async function suspendReseller(resellerId: string | number): Promise<ResellerProfile> {
+  const { data } = await apiClient.patch<ResellerProfile>(
     `/api/resellers/${resellerId}/suspend`
   );
   return data;

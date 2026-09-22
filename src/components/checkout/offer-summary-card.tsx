@@ -2,12 +2,12 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { Building2, Plane, Calendar, CreditCard, Clock3, Car, Home, MapPin, Lock, Luggage } from "lucide-react";
+import { Building2, Calendar, CreditCard, Clock3, Car, Home, MapPin, Lock, Luggage } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { airlineLabel, formatDate, formatDateTime, formatMoney, providerLabel } from "@/lib/format";
+import { airlineLabel, formatDate, formatDateTime, formatMoney } from "@/lib/format";
 import { RESERVATION_FEE_AMOUNT, RESERVATION_FEE_CURRENCY } from "@/lib/api/reservation-fee";
 import { useHotelStore } from "@/store/useHotelStore";
 import { useVehicleStore } from "@/store/use-vehicle-store";

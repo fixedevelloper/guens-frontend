@@ -5,7 +5,7 @@ import {UserRole} from "../auth-storage";
 
 export type JourneyType = "ONE_WAY" | "ROUND_TRIP" | "MULTI_CITY";
 
-export type ProviderType = "TRAVELOPRO" | "SABRE" | "TRAVELPORT";
+export type ProviderType = "TRAVELOPRO" | "SABRE" | "TRAVELPORT" | "TRAVELTERMINUS" | "DIRECT";
 
 export type PassengerType = "ADULT" | "CHILD" | "INFANT";
 
@@ -18,6 +18,11 @@ export type BookingStatus =
   | "PAID"
   | "CONFIRMING"
   | "CONFIRMED"
+  /** Ticket issuance was blocked because the provider's price moved beyond the fare-jump
+   *  tolerance after payment was captured - see Booking#markPriceChanged. The customer is
+   *  emailed the new price and needs to accept a supplement or request a refund; no further
+   *  automated action happens on this booking. */
+  | "PRICE_CHANGED"
   | "FAILED"
   | "CANCELLED";
 
@@ -198,12 +203,21 @@ export interface FlightSegmentDetail {
 }
 
 /** Provider/fare-specific detail (stops, baggage, hold availability) - null for providers that
- *  don't surface it (currently only TravelTerminus does). */
+ *  don't surface it (currently only TravelTerminus does).
+ *
+ *  `return*` fields cover a round-trip's inbound leg - the offer's own top-level `departureTime`/
+ *  `arrivalTime`/`origin`/`destination` are always the outbound leg's, by design (see the backend's
+ *  FlightOffer). All null/empty for a one-way offer. */
 export interface FlightOfferDetail {
   holdAvailable: boolean | null;
   totalDuration: string | null;
   totalLayoverDuration: string | null;
   segments: FlightSegmentDetail[];
+  returnDepartureTime: string | null;
+  returnArrivalTime: string | null;
+  returnTotalDuration: string | null;
+  returnTotalLayoverDuration: string | null;
+  returnSegments: FlightSegmentDetail[];
 }
 
 export interface FlightProviderQuote extends ProviderQuote {
@@ -222,6 +236,16 @@ export interface HarmonizedFlightOffer {
   seatsAvailable: number;
   bestOfferId: string;
   quotes: FlightProviderQuote[];
+}
+
+/** One incremental SSE event from GET /api/search/flights/stream (see SearchController /
+ *  ProviderOffersEvent) - `offers` is only harmonized within this one provider's own batch, so
+ *  unlike the stream's final `search-completed` payload it can't merge the same physical flight
+ *  quoted by another provider into one multi-quote entry. Accumulate these for progressive
+ *  display, then replace them wholesale with `search-completed`'s list once it arrives. */
+export interface ProviderOffersEvent {
+  provider: ProviderType;
+  offers: HarmonizedFlightOffer[];
 }
 
 export interface HarmonizedHotelOffer {
@@ -314,6 +338,10 @@ export interface TravelerRequest {
   passportIssueCountry?: string;
   /** Passport expiry date; optional, requested by some flight booking APIs. */
   passportExpiryDate?: string;
+  /** Passport issue date; optional client-side (not every route needs a passport at all), but
+   *  TravelTerminus's real Book API rejects a passenger whose passport info is submitted without
+   *  it ("passengers.0.document.issuing_date_required"). */
+  passportIssueDate?: string;
   /** Ids from AncillaryOptionResponse picked for this traveler at the "additional options" step. */
   selectedAncillaryIds?: string[];
 }
@@ -362,6 +390,9 @@ export interface BookingResponse {
   paymentPlan: PaymentPlan;
   reservationFee: Money | null;
   amountDue: Money;
+  /** The provider's real-time price when ticket issuance was blocked for exceeding the fare-jump
+   *  tolerance - null unless status is PRICE_CHANGED. */
+  revisedPrice: Money | null;
   ticketingDeadline: string | null;
   providerConfirmationNumber: string | null;
   eTicketNumbers: string[];
@@ -390,6 +421,7 @@ export interface BookingResponse {
   checkIn: string | null;
   checkOut: string | null;
   fareClass: string | null;
+  roomQuantity: number | null;
   vehicleBrand: string | null;
   vehicleModel: string | null;
   vehicleCategory: string | null;
@@ -414,6 +446,11 @@ export interface BookingTravelerResponse {
   fullName: string;
   type: PassengerType;
   seatNumber: string | null;
+  /** True when the provider flagged this traveler as needing a passport image uploaded before
+   *  payment (see BookingService#uploadRequiredPassportImage) - Travel Terminus only today. */
+  passportImageRequired: boolean;
+  /** Set once uploaded; its mere presence means the requirement above is already satisfied. */
+  passportImageUrl: string | null;
 }
 export interface BookingExtraResponse {
   type: AncillaryType;
@@ -437,6 +474,9 @@ interface BasePaymentRequest {
   bookingId: string;
   countryCode: string; // ISO 3166-1 alpha-2
   countryCurrency: string; // ISO 4217, ex. "XAF"
+  /** Référence de transaction saisie par le client (SMS mobile money) - uniquement utile quand le
+   *  pays est en mode paiement manuel (voir GET /api/payments/manual-info), ignoré sinon. */
+  customerReference?: string;
 }
 
 // Variante Carte - Stripe (the default CARD route) collects the card itself via its own Payment
@@ -477,6 +517,90 @@ export interface PaymentResponse {
    *  passed to stripe.confirmPayment on the frontend (Stripe never sees this backend at all). */
   authorizationClientSecret: string | null;
   failureReason: string | null;
+  /** "STRIPE"/"FLUTTERWAVE"/"MANUAL"/... - the gateway this payment was routed to at creation
+   *  time. "MANUAL" means it's awaiting an agent's manual confirmation, not a gateway webhook -
+   *  see ManualPaymentGateway. */
+  providerName: string;
+  /** Transaction reference the customer typed in - only set for a manual payment. */
+  customerReference: string | null;
+}
+
+// ---------- Manual payment (agent-confirmed, see ManualPaymentGateway) ----------
+
+export interface MerchantCodeResponse {
+  id: string;
+  countryCode: string;
+  operatorName: string;
+  code: string;
+  instructions: string | null;
+  active: boolean;
+}
+
+export interface ManualPaymentInfoResponse {
+  /** True when countryCode is currently routed entirely to manual/agent-confirmed payment. */
+  manual: boolean;
+  merchantCodes: MerchantCodeResponse[];
+}
+
+/** countryCode is only read on create; operatorName/code/instructions/active left undefined on
+ *  update leave that attribute unchanged (same convention as PaymentProviderRouteRequest). */
+export interface MerchantCodeRequest {
+  countryCode?: string;
+  operatorName?: string;
+  code?: string;
+  instructions?: string;
+  active?: boolean;
+}
+
+// ---------- Agent dashboard (manual payment confirmation, see ManualPaymentGateway) ----------
+
+export interface AgentPendingPaymentResponse {
+  paymentId: string;
+  bookingId: string;
+  amount: Money;
+  paymentMethod: PaymentMethod;
+  countryCode: string;
+  customerReference: string | null;
+  payerReferenceLast4: string | null;
+  createdAt: string;
+  contactEmail: string;
+  offerType: OfferType;
+}
+
+/** Full detail for one manual payment (any status), including the entire reservation - the
+ *  AgentPendingPaymentsPage detail view. See AgentPaymentController#detail. */
+export interface AgentPaymentDetailResponse {
+  paymentId: string;
+  status: PaymentStatus;
+  amount: Money;
+  paymentMethod: PaymentMethod;
+  countryCode: string;
+  customerReference: string | null;
+  payerReferenceLast4: string | null;
+  failureReason: string | null;
+  /** Email of the agent who confirmed this payment - null until confirmed, never set on reject. */
+  confirmedByAgentEmail: string | null;
+  createdAt: string;
+  updatedAt: string;
+  booking: BookingResponse;
+}
+
+// ---------- Admin: agent accounts (see AdminAgentController) ----------
+
+export interface CreateAgentRequest {
+  email: string;
+  fullName: string;
+  phone?: string;
+}
+
+/** Any field left undefined leaves that attribute unchanged (same convention as
+ *  PaymentProviderRouteRequest/MerchantCodeRequest) - lets the activate/deactivate toggle send
+ *  just {active} without resubmitting the rest of the form. */
+export interface UpdateAgentRequest {
+  fullName?: string;
+  phone?: string;
+  email?: string;
+  active?: boolean;
 }
 
 // ---------- Admin: payment provider routing ----------
@@ -547,8 +671,9 @@ export interface AdminUserResponse {
   fullName: string;
   phone: string | null;
   role: UserRole;
-  partnerId: string | null;
+  active: boolean;
   autoProvisioned: boolean;
+  mustChangePassword: boolean;
   createdAt: string;
 }
 

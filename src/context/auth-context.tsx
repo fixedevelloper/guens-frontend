@@ -24,6 +24,9 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   isAdmin: boolean;
   isPartner: boolean;
+  /** AGENT or ADMIN - matches the backend's /api/agent/** rule (an admin can also validate manual
+   *  payments without needing a second account, see ManualPaymentGateway/AgentPaymentController). */
+  isAgent: boolean;
   isHydrated: boolean;
   login: (request: LoginRequest) => Promise<StoredProfile>;
   register: (request: RegisterRequest) => Promise<StoredProfile>;
@@ -63,6 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isAuthenticated: user !== null,
         isAdmin: user?.role === "ADMIN",
         isPartner: user !== null && PARTNER_ROLES.includes(user.role as (typeof PARTNER_ROLES)[number]),
+        isAgent: user?.role === "AGENT" || user?.role === "ADMIN",
         isHydrated,
         async login(request) {
           // The backend sets the HttpOnly gt_auth cookie on this response; there is no token in

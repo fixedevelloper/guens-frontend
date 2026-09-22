@@ -10,11 +10,6 @@ import {
     Search,
     Sparkles,
     X,
-    Mail,
-    Bell,
-    CheckCircle2,
-    ShieldCheck,
-    Building2,
     Loader2,
     ChevronDown
 } from "lucide-react";
@@ -51,7 +46,6 @@ export default function ResellerHotelsPage() {
 
 function ResellerHotelsPageContent() {
     const t = useTranslations("SearchResults");
-    const tCta = useTranslations("Cta.hotels");
     const tFilters = useTranslations("Filters");
     const locale = useLocale();
     const searchParams = useSearchParams();
@@ -141,13 +135,13 @@ function ResellerHotelsPageContent() {
             ) : query.isError ? (
                 <Alert variant="destructive" className="rounded-2xl border-destructive/20 bg-destructive/[0.01]">
                     <AlertTitle className="font-bold">{t("noResults") ?? "Erreur de chargement"}</AlertTitle>
-                    <AlertDescription>Une erreur est survenue lors de la récupération des offres d'hébergement. Veuillez réessayer.</AlertDescription>
+                    <AlertDescription>Une erreur est survenue lors de la récupération des offres d&apos;hébergement. Veuillez réessayer.</AlertDescription>
                 </Alert>
             ) : query.offers.length === 0 ? (
                 <Alert className="rounded-2xl border-border/80 bg-slate-50/20 py-8 text-center flex flex-col items-center">
                     <AlertTitle className="font-extrabold text-lg mb-1">{t("noResults") ?? "Aucun hébergement trouvé"}</AlertTitle>
                     <AlertDescription className="text-muted-foreground text-sm max-w-sm">
-                        Nous n'avons pas trouvé de chambres libres pour vos dates de séjour. Essayez de modifier vos critères de recherche.
+                        Nous n&apos;avons pas trouvé de chambres libres pour vos dates de séjour. Essayez de modifier vos critères de recherche.
                     </AlertDescription>
                 </Alert>
             ) : (

@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useState } from "react";
-import { useLocale, useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
 import {
     ArrowLeft,
     Building2,
@@ -15,13 +15,11 @@ import {
     ShieldCheck,
     XCircle,
     Clock,
-    AlertTriangle,
     Ticket,
     Users,
     PlaneTakeoff,
     PlaneLanding,
     Tag,
-    Receipt,
     BadgeAlert,
     Undo2,
 } from "lucide-react";
@@ -73,10 +71,9 @@ function providerErrorLabel(code: string): string {
 export default function AdminBookingDetailPage({ params }: AdminBookingDetailPageProps) {
     const { id } = use(params);
     const locale = useLocale();
-    const t = useTranslations("Dashboard");
 
     // Récupération des données et mutation de statut
-    const { data: booking, isLoading, isError, refetch } = useBookingQuery(id);
+    const { data: booking, isLoading, isError } = useBookingQuery(id);
     const cancelMutation = useCancelBookingMutation(id);
     const refundMutation = useRefundBookingMutation(id);
     const receiptMutation = useDownloadBookingReceiptMutation(id);

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { bookingTrackUrl } from "@/lib/api/booking";
 import type { BookingStatus } from "@/lib/api/types";
 
-const TERMINAL_STATUSES: BookingStatus[] = ["CONFIRMED", "FAILED", "CANCELLED"];
+const TERMINAL_STATUSES: BookingStatus[] = ["CONFIRMED", "FAILED", "CANCELLED", "PRICE_CHANGED"];
 
 /**
  * Subscribes to GET /api/bookings/{id}/track (Server-Sent Events) and returns the latest
@@ -23,7 +23,11 @@ export function useBookingTracking(bookingId: string | null, resubscribeKey: num
     // A previous subscription may have closed on a terminal status (e.g. FAILED); bumping
     // resubscribeKey after a retry re-runs this effect to open a fresh stream for the new attempt.
     setLiveStatus(undefined);
-    const source = new EventSource(bookingTrackUrl(bookingId));
+    // withCredentials: without it the browser sends this cross-origin EventSource request with no
+    // cookies at all, so an authenticated viewer (reseller, or any logged-in customer without a
+    // remembered guest email for this specific booking) looks anonymous to the backend and gets
+    // denied even for their own booking - see BookingService#verifyGuestAccess.
+    const source = new EventSource(bookingTrackUrl(bookingId), { withCredentials: true });
     setConnectionError(false);
 
     source.addEventListener("status", (event: MessageEvent<string>) => {

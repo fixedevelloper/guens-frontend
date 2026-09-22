@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import axios from "axios";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import {
@@ -106,16 +107,18 @@ export default function BecomeHostPage() {
 
             await createPartner(payload);
             setSuccess(true);
-        } catch (err: any) {
+        } catch (err) {
             console.error(err);
-            const status = err?.response?.status;
+            const status = axios.isAxiosError(err) ? err.response?.status : undefined;
 
             if (status === 409) {
                 setErrorMessage(t("errors.conflict"));
             } else {
-                setErrorMessage(
-                    err?.response?.data?.message || t("errors.default")
-                );
+                const message =
+                    axios.isAxiosError(err) && typeof err.response?.data?.message === "string"
+                        ? err.response.data.message
+                        : t("errors.default");
+                setErrorMessage(message);
             }
         } finally {
             setSubmitting(false);

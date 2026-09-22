@@ -165,7 +165,7 @@ export function HotelRoomsManager({ partnerId, hotelId, hotelName = "Hôtel" }: 
                             <Users className="size-5" />
                         </div>
                         <div>
-                            <p className="text-xs font-medium text-muted-foreground">Capacité d'accueil</p>
+                            <p className="text-xs font-medium text-muted-foreground">Capacité d&apos;accueil</p>
                             <p className="text-xl font-bold text-foreground mt-0.5">{totalCapacity} personnes</p>
                         </div>
                     </CardContent>
@@ -260,6 +260,10 @@ export function HotelRoomsManager({ partnerId, hotelId, hotelName = "Hôtel" }: 
                                     <TableCell className="font-semibold text-foreground">
                                         <div className="flex items-center gap-3">
                                             {room.coverImageUrl ? (
+                                                /* coverImageUrl peut être une URL externe saisie à la main (voir
+                                                   RoomForm) et pas seulement une image MinIO - next/image la
+                                                   rejetterait (hors remotePatterns), reste natif. */
+                                                // eslint-disable-next-line @next/next/no-img-element
                                                 <img
                                                     src={room.coverImageUrl}
                                                     alt={room.name}
@@ -293,14 +297,14 @@ export function HotelRoomsManager({ partnerId, hotelId, hotelName = "Hôtel" }: 
                                             </div>
                                             <div className="flex items-center gap-1.5 text-muted-foreground">
                                                 <Users className="size-3.5 text-muted-foreground" />
-                                                <span>Jusqu'à {room.maxOccupancy} pers.</span>
+                                                <span>Jusqu&apos;à {room.maxOccupancy} pers.</span>
                                             </div>
                                         </div>
                                     </TableCell>
 
                                     <TableCell>
                                         <div className="flex flex-wrap gap-1 max-w-[180px]">
-                                            {room.amenities?.slice(0, 3).map((amenity:any, idx:number) => (
+                                            {room.amenities?.slice(0, 3).map((amenity: string, idx: number) => (
                                                 <Badge
                                                     key={idx}
                                                     variant="secondary"

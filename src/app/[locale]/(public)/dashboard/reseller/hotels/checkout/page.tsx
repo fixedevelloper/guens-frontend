@@ -142,8 +142,8 @@ function ResellerCheckoutPageContent() {
 
         const travelers = applySelectedExtras(formValues.checkout.travelers);
         const callbacks = {
-            onSuccess: (booking: { bookingId: string }) => {
-                router.push(`/dashboard/reseller/payment/${booking.bookingId}`);
+            onSuccess: (booking: { id: string }) => {
+                router.push(`/dashboard/reseller/payment/${booking.id}`);
             },
             onError: (error: unknown) => {
                 toast.error(normalizeApiError(error).message);

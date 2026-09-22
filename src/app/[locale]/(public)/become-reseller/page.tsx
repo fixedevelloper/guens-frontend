@@ -2,6 +2,7 @@
 
 import { useState, ChangeEvent, FormEvent, useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import {
   Building2,
   CheckCircle2,
@@ -551,10 +552,10 @@ useEffect(() => {
           </div>
 
           <Button asChild size="lg" className="rounded-2xl font-bold text-xs w-full">
-            <a href="/dashboard">
+            <Link href="/dashboard">
               <Store className="size-4 mr-2" />
               {t("success.dashboardBtn")}
-            </a>
+            </Link>
           </Button>
         </Card>
       )}

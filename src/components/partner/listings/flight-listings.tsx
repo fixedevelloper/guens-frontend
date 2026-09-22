@@ -40,7 +40,7 @@ interface FlightListingsProps {
     onAddFlight?: () => void;
 }
 
-export function FlightListings({ partnerId, onAddFlight }: FlightListingsProps) {
+export function FlightListings({ partnerId }: FlightListingsProps) {
     const [page, setPage] = useState(0);
 
     const { data, isLoading } = useFlightsQuery(partnerId, page);

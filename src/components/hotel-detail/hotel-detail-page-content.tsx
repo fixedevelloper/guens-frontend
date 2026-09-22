@@ -41,7 +41,6 @@ interface HotelDetailPageContentProps {
 }
 
 export function HotelDetailPageContent({
-                                         hotelId,
                                          offerId,
                                          hotelName: initialHotelName = "Hôtel",
                                          rating: initialRating = 4,

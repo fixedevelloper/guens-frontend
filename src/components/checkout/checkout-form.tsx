@@ -20,7 +20,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CountrySelect } from "@/components/checkout/country-select";
+import { PassportValidityAlert } from "@/components/checkout/passport-validity-alert";
 import type { CheckoutRequest, PassengerType } from "@/lib/api/types";
+import { createPassportExpirySchema } from "@/lib/passport-validity";
 import { cn } from "@/lib/utils";
 
 // Vols uniquement : Travelopro (et les GDS en général) exigent date de naissance et nationalité
@@ -29,9 +31,12 @@ import { cn } from "@/lib/utils";
 // ont pas besoin.
 //
 // passportExpiryDate reste optionnel (certaines routes ne demandent pas de passeport), mais s'il
-// est renseigné il doit couvrir la date du voyage - un vrai rejet Travel Terminus au moment de
-// l'émission du billet ("Passport for passenger1 will be expired before travel date"), qui
-// n'apparaissait sinon qu'après capture du paiement, a montré que ça manquait ici.
+// est renseigné il doit couvrir la règle des 6 mois après la date du voyage (voir
+// lib/passport-validity.ts) - un simple ">= date du voyage" ne suffisait pas : un vrai rejet
+// Travel Terminus au moment de l'émission du billet ("Passport for passenger1 will be expired
+// before travel date"), qui n'apparaissait sinon qu'après capture du paiement, a montré que même
+// cette version faible manquait ici - et la plupart des destinations exigent en réalité 6 mois de
+// marge, pas juste "pas encore expiré ce jour-là".
 const travelerSchema = (isFlight: boolean, travelDate?: string) => z.object({
   fullName: z.string().trim().min(1, "Le nom du voyageur est requis"),
   dateOfBirth: isFlight
@@ -44,14 +49,15 @@ const travelerSchema = (isFlight: boolean, travelDate?: string) => z.object({
     ? z.string().trim().min(1, "La nationalité est requise")
     : z.string().optional(),
   passportIssueCountry: z.string().optional(),
-  passportExpiryDate: z.string().optional(),
-}).refine(
-    (traveler) => {
-      if (!isFlight || !travelDate || !traveler.passportExpiryDate) return true;
-      return traveler.passportExpiryDate >= travelDate.slice(0, 10);
-    },
-    { message: "Le passeport doit être valide à la date du voyage", path: ["passportExpiryDate"] }
-);
+  passportExpiryDate: isFlight && travelDate
+    ? z.union([z.literal(""), createPassportExpirySchema(travelDate)]).optional()
+    : z.string().optional(),
+  // Optional client-side like the other passport fields (not every route needs a passport), but
+  // TravelTerminus's real Book API rejects a passenger whose passport info is submitted without
+  // it - a real booking failed this way ("passengers.0.document.issuing_date_required") after
+  // payment had already been captured, which is a much worse place to catch this than here.
+  passportIssueDate: z.string().optional(),
+});
 
 const buildSchema = (isFlight: boolean, travelDate?: string) => z.object({
   contactEmail: z.string().trim()
@@ -109,6 +115,7 @@ export function CheckoutForm({
         nationality: "",
         passportIssueCountry: "",
         passportExpiryDate: "",
+        passportIssueDate: "",
       })),
       paymentPlan: "PAY_NOW",
     },
@@ -136,6 +143,7 @@ export function CheckoutForm({
         nationality: traveler.nationality || undefined,
         passportIssueCountry: traveler.passportIssueCountry || undefined,
         passportExpiryDate: traveler.passportExpiryDate || undefined,
+        passportIssueDate: traveler.passportIssueDate || undefined,
       })),
       paymentPlan: values.paymentPlan,
     });
@@ -377,6 +385,24 @@ export function CheckoutForm({
 
                       <FormField
                           control={form.control}
+                          name={`travelers.${index}.passportIssueDate`}
+                          render={({ field }) => (
+                              <FormItem className="col-span-1">
+                                <FormLabel className="text-xs font-bold text-muted-foreground/90">{t("passportIssueDate")}</FormLabel>
+                                <FormControl>
+                                  <Input
+                                      type="date"
+                                      className="h-11 sm:h-10 rounded-xl border-border/80 bg-background focus-visible:ring-primary/20 text-sm"
+                                      {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                          )}
+                      />
+
+                      <FormField
+                          control={form.control}
                           name={`travelers.${index}.passportExpiryDate`}
                           render={({ field }) => (
                               <FormItem className="col-span-1">
@@ -392,6 +418,18 @@ export function CheckoutForm({
                               </FormItem>
                           )}
                       />
+
+                      {/* Retour immédiat (avant soumission) sur la règle des 6 mois - le
+                          FormMessage ci-dessus ne s'affiche qu'après une tentative de soumission
+                          ou un blur, ce qui laisse un passeport insuffisant sans aucun signal
+                          pendant que le voyageur le renseigne. */}
+                      {isFlight && travelDate && (
+                          <PassportValidityAlert
+                              className="col-span-1 sm:col-span-2"
+                              passportExpiryDate={form.watch(`travelers.${index}.passportExpiryDate`)}
+                              flightDate={travelDate}
+                          />
+                      )}
                     </div>
                   </div>
               ))}
@@ -403,7 +441,7 @@ export function CheckoutForm({
                   className="w-full sm:w-auto justify-center h-11 sm:h-9 mt-1 gap-1.5 rounded-xl sm:rounded-full border-dashed border-border/80 hover:border-primary/40 hover:bg-primary/5 text-xs px-4"
                   onClick={() => append({
                     fullName: "", dateOfBirth: "", passportNumber: "", type: "ADULT",
-                    nationality: "", passportIssueCountry: "", passportExpiryDate: "",
+                    nationality: "", passportIssueCountry: "", passportExpiryDate: "", passportIssueDate: "",
                   })}
               >
                 <Plus className="size-4 sm:size-3.5" />
@@ -426,16 +464,23 @@ export function CheckoutForm({
             <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
               {(["PAY_NOW", "PAY_LATER"] as const).map((value) => {
                 const isActive = paymentPlan === value;
+                // PAY_LATER (deposit-now/pay-balance-later) is disabled for now - kept in the UI,
+                // greyed out, rather than removed, so it can be re-enabled later without redoing
+                // this section.
+                const isDisabled = value === "PAY_LATER";
                 return (
                     <button
                         key={value}
                         type="button"
-                        onClick={() => form.setValue("paymentPlan", value)}
+                        disabled={isDisabled}
+                        onClick={() => !isDisabled && form.setValue("paymentPlan", value)}
                         className={cn(
                             "relative flex items-start gap-3 rounded-2xl border p-3.5 sm:p-4 text-left transition-all outline-none duration-200 active:scale-[0.98] shadow-2xs w-full",
-                            isActive
-                                ? "border-primary bg-primary/5 ring-2 ring-primary/10"
-                                : "border-border/60 hover:border-border hover:bg-slate-50/50 dark:hover:bg-zinc-900/30"
+                            isDisabled
+                                ? "cursor-not-allowed opacity-50 border-border/40"
+                                : isActive
+                                    ? "border-primary bg-primary/5 ring-2 ring-primary/10"
+                                    : "border-border/60 hover:border-border hover:bg-slate-50/50 dark:hover:bg-zinc-900/30"
                         )}
                     >
                       <div className={cn(

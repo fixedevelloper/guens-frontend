@@ -21,11 +21,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { airlineLabel, formatDuration, formatMoney, formatTime } from "@/lib/format";
+import { airlineLabel, formatDate, formatDuration, formatMoney, formatTime } from "@/lib/format";
 import { offerStopCount } from "@/lib/filters";
 import { useRenderCap } from "@/hooks/use-render-cap";
 import { useFlightStore } from "@/store/useFlightStore";
-import type { HarmonizedFlightOffer } from "@/lib/api/types";
+import type { FlightSegmentDetail, HarmonizedFlightOffer } from "@/lib/api/types";
 import { checkoutUrlForFlight, resellerCheckoutUrlForFlight } from "@/lib/checkout-url";
 
 /** Shown when the search request itself failed (timeout, network error, 5xx) - distinct from a
@@ -87,6 +87,155 @@ export function FlightResultsList({
   );
 }
 
+/** Stop-by-stop itinerary timeline for one leg (outbound or return) of an offer's detail. Falls
+ *  back to a single departure/arrival pair (no intermediate segments) when the provider's own
+ *  `segments` list is empty - happens for providers that don't surface stop-level detail at all,
+ *  never for a leg that's genuinely missing (callers only render this when they have a leg to show). */
+function FlightLegTimeline({
+                             segments,
+                             fallbackDepartureTime,
+                             fallbackArrivalTime,
+                             fallbackOrigin,
+                             fallbackDestination,
+                             fallbackAirlineName,
+                             fallbackFlightNumber,
+                             locale,
+                             t,
+                           }: {
+  segments: FlightSegmentDetail[];
+  fallbackDepartureTime: string;
+  fallbackArrivalTime: string;
+  fallbackOrigin: string;
+  fallbackDestination: string;
+  fallbackAirlineName: string;
+  fallbackFlightNumber: string;
+  locale: string;
+  t: ReturnType<typeof useTranslations>;
+}) {
+  return (
+      <div className="flex items-start gap-3 rounded-2xl border border-border/60 bg-background p-3.5 shadow-xs sm:gap-4 sm:p-4">
+        <div className="flex flex-col items-center gap-1 pt-1">
+          <div className="size-2.5 rounded-full bg-primary ring-4 ring-primary/10 sm:size-3" />
+          <div className="h-14 w-0.5 bg-gradient-to-b from-primary via-border to-primary" />
+          <div className="size-2.5 rounded-full border-2 border-primary bg-background ring-4 ring-primary/10 sm:size-3" />
+        </div>
+
+        <div className="flex-1 space-y-3 text-xs sm:space-y-4">
+          {segments.length > 0 ? (
+              segments.map((segment, index) => (
+                  <div key={`${segment.flightNumber}-${index}`} className="space-y-3 sm:space-y-4">
+                    {/* Départ du segment */}
+                    <div>
+                      <div className="flex items-center gap-2">
+                    <span className="text-xs font-black text-foreground sm:text-sm">
+                      {formatTime(segment.departureTime, locale)}
+                    </span>
+                        <span className="font-bold uppercase text-foreground">
+                      {segment.departure.code}
+                    </span>
+                      </div>
+                      <p className="mt-0.5 text-[11px] text-muted-foreground sm:text-xs">
+                        {segment.departure.city ?? t("departureAirport", { code: segment.departure.code })}
+                      </p>
+                    </div>
+
+                    {/* Segment de vol */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border/30 bg-muted/40 p-2 text-[11px] font-medium text-muted-foreground sm:p-2.5">
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        <Plane className="size-3.5 text-primary" />
+                        <span>
+                      {segment.airlineName ?? airlineLabel(segment.airlineCode)} • {t("flightPrefix")} {segment.flightNumber}
+                    </span>
+                      </div>
+                      {segment.duration && (
+                          <div className="flex items-center gap-1">
+                            <Clock className="size-3 text-primary" />
+                            <span>{t("durationLabel", { duration: segment.duration })}</span>
+                          </div>
+                      )}
+                    </div>
+
+                    {/* Arrivée du segment */}
+                    <div>
+                      <div className="flex items-center gap-2">
+                    <span className="text-xs font-black text-foreground sm:text-sm">
+                      {formatTime(segment.arrivalTime, locale)}
+                    </span>
+                        <span className="font-bold uppercase text-foreground">
+                      {segment.arrival.code}
+                    </span>
+                      </div>
+                      <p className="mt-0.5 text-[11px] text-muted-foreground sm:text-xs">
+                        {segment.arrival.city ?? t("arrivalAirport", { code: segment.arrival.code })}
+                      </p>
+                    </div>
+
+                    {/* Escale avant le segment suivant */}
+                    {index < segments.length - 1 && (
+                        <div className="flex items-center gap-2 rounded-xl border border-dashed border-amber-500/40 bg-amber-500/5 px-3 py-1.5 text-[11px] font-semibold text-amber-700 dark:text-amber-400">
+                          <Clock className="size-3.5 shrink-0" />
+                          {t("layoverAt", {
+                            city: segment.arrival.city ?? segment.arrival.code,
+                            duration: segment.layoverAfter ?? "",
+                          })}
+                        </div>
+                    )}
+                  </div>
+              ))
+          ) : (
+              <>
+                {/* Départ */}
+                <div>
+                  <div className="flex items-center gap-2">
+                <span className="text-xs font-black text-foreground sm:text-sm">
+                  {formatTime(fallbackDepartureTime, locale)}
+                </span>
+                    <span className="font-bold uppercase text-foreground">
+                  {fallbackOrigin}
+                </span>
+                  </div>
+                  <p className="mt-0.5 text-[11px] text-muted-foreground sm:text-xs">
+                    {t("departureAirport", { code: fallbackOrigin })}
+                  </p>
+                </div>
+
+                {/* Vol central */}
+                <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border/30 bg-muted/40 p-2 text-[11px] font-medium text-muted-foreground sm:p-2.5">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <Plane className="size-3.5 text-primary" />
+                    <span>
+                  {fallbackAirlineName} • {t("flightPrefix")} {fallbackFlightNumber}
+                </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Clock className="size-3 text-primary" />
+                    <span>
+                  {t("durationLabel", { duration: formatDuration(fallbackDepartureTime, fallbackArrivalTime) })}
+                </span>
+                  </div>
+                </div>
+
+                {/* Arrivée */}
+                <div>
+                  <div className="flex items-center gap-2">
+                <span className="text-xs font-black text-foreground sm:text-sm">
+                  {formatTime(fallbackArrivalTime, locale)}
+                </span>
+                    <span className="font-bold uppercase text-foreground">
+                  {fallbackDestination}
+                </span>
+                  </div>
+                  <p className="mt-0.5 text-[11px] text-muted-foreground sm:text-xs">
+                    {t("arrivalAirport", { code: fallbackDestination })}
+                  </p>
+                </div>
+              </>
+          )}
+        </div>
+      </div>
+  );
+}
+
 export const FlightOfferCard = memo(function FlightOfferCard({
                                   offer,
                                   locale,
@@ -114,6 +263,8 @@ export const FlightOfferCard = memo(function FlightOfferCard({
   // of this card. Null for providers that don't surface it (only TravelTerminus does today).
   const detail = cheapestQuote?.detail ?? null;
   const segments = detail?.segments ?? [];
+  const returnSegments = detail?.returnSegments ?? [];
+  const hasReturnLeg = Boolean(detail?.returnDepartureTime && detail?.returnArrivalTime);
   const stopCount = offerStopCount(offer);
   const firstSegmentCabinBaggage =
       segments[0]?.cabinBaggage.find((b) => b.paxType === "Adult") ?? segments[0]?.cabinBaggage[0] ?? null;
@@ -218,6 +369,19 @@ export const FlightOfferCard = memo(function FlightOfferCard({
               </div>
             </div>
 
+            {/* Résumé du vol retour - visible sans déplier "Détails", sinon un aller-retour
+                n'affiche jamais rien sur son trajet du retour dans la vue compacte. */}
+            {hasReturnLeg && detail?.returnDepartureTime && detail?.returnArrivalTime && (
+                <div className="flex items-center gap-1.5 rounded-full bg-muted/40 px-3 py-1.5 text-[11px] font-semibold text-foreground">
+                  <Plane className="size-3 rotate-[-90deg] text-primary" />
+                  {t("returnSummary", {
+                    date: formatDate(detail.returnDepartureTime, locale),
+                    departure: formatTime(detail.returnDepartureTime, locale),
+                    arrival: formatTime(detail.returnArrivalTime, locale),
+                  })}
+                </div>
+            )}
+
             {/* Assurance & Bouton Détails */}
             <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/40 pt-3.5 text-xs text-muted-foreground sm:pt-4">
             <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 sm:text-[11px]">
@@ -317,127 +481,45 @@ export const FlightOfferCard = memo(function FlightOfferCard({
                 {t("detailedItinerary")}
               </h5>
 
-              {/* Chronologie du trajet */}
-              <div className="flex items-start gap-3 rounded-2xl border border-border/60 bg-background p-3.5 shadow-xs sm:gap-4 sm:p-4">
-                <div className="flex flex-col items-center gap-1 pt-1">
-                  <div className="size-2.5 rounded-full bg-primary ring-4 ring-primary/10 sm:size-3" />
-                  <div className="h-14 w-0.5 bg-gradient-to-b from-primary via-border to-primary" />
-                  <div className="size-2.5 rounded-full border-2 border-primary bg-background ring-4 ring-primary/10 sm:size-3" />
-                </div>
+              {/* Chronologie du trajet aller (sous-titrée seulement quand il y a aussi un
+                  retour à distinguer - un aller simple n'a qu'un seul trajet, pas besoin
+                  de le nommer) */}
+              {hasReturnLeg && (
+                  <p className="text-[11px] font-extrabold uppercase tracking-wider text-primary">
+                    {t("outboundFlightLabel")}
+                  </p>
+              )}
+              <FlightLegTimeline
+                  segments={segments}
+                  fallbackDepartureTime={offer.departureTime}
+                  fallbackArrivalTime={offer.arrivalTime}
+                  fallbackOrigin={offer.origin}
+                  fallbackDestination={offer.destination}
+                  fallbackAirlineName={displayAirlineName}
+                  fallbackFlightNumber={offer.flightNumber}
+                  locale={locale}
+                  t={t}
+              />
 
-                <div className="flex-1 space-y-3 text-xs sm:space-y-4">
-                  {segments.length > 0 ? (
-                      segments.map((segment, index) => (
-                          <div key={`${segment.flightNumber}-${index}`} className="space-y-3 sm:space-y-4">
-                            {/* Départ du segment */}
-                            <div>
-                              <div className="flex items-center gap-2">
-                            <span className="text-xs font-black text-foreground sm:text-sm">
-                              {formatTime(segment.departureTime, locale)}
-                            </span>
-                                <span className="font-bold uppercase text-foreground">
-                              {segment.departure.code}
-                            </span>
-                              </div>
-                              <p className="mt-0.5 text-[11px] text-muted-foreground sm:text-xs">
-                                {segment.departure.city ?? t("departureAirport", { code: segment.departure.code })}
-                              </p>
-                            </div>
-
-                            {/* Segment de vol */}
-                            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border/30 bg-muted/40 p-2 text-[11px] font-medium text-muted-foreground sm:p-2.5">
-                              <div className="flex items-center gap-1.5 sm:gap-2">
-                                <Plane className="size-3.5 text-primary" />
-                                <span>
-                              {segment.airlineName ?? airlineLabel(segment.airlineCode)} • {t("flightPrefix")} {segment.flightNumber}
-                            </span>
-                              </div>
-                              {segment.duration && (
-                                  <div className="flex items-center gap-1">
-                                    <Clock className="size-3 text-primary" />
-                                    <span>{t("durationLabel", { duration: segment.duration })}</span>
-                                  </div>
-                              )}
-                            </div>
-
-                            {/* Arrivée du segment */}
-                            <div>
-                              <div className="flex items-center gap-2">
-                            <span className="text-xs font-black text-foreground sm:text-sm">
-                              {formatTime(segment.arrivalTime, locale)}
-                            </span>
-                                <span className="font-bold uppercase text-foreground">
-                              {segment.arrival.code}
-                            </span>
-                              </div>
-                              <p className="mt-0.5 text-[11px] text-muted-foreground sm:text-xs">
-                                {segment.arrival.city ?? t("arrivalAirport", { code: segment.arrival.code })}
-                              </p>
-                            </div>
-
-                            {/* Escale avant le segment suivant */}
-                            {index < segments.length - 1 && (
-                                <div className="flex items-center gap-2 rounded-xl border border-dashed border-amber-500/40 bg-amber-500/5 px-3 py-1.5 text-[11px] font-semibold text-amber-700 dark:text-amber-400">
-                                  <Clock className="size-3.5 shrink-0" />
-                                  {t("layoverAt", {
-                                    city: segment.arrival.city ?? segment.arrival.code,
-                                    duration: segment.layoverAfter ?? "",
-                                  })}
-                                </div>
-                            )}
-                          </div>
-                      ))
-                  ) : (
-                      <>
-                        {/* Départ */}
-                        <div>
-                          <div className="flex items-center gap-2">
-                        <span className="text-xs font-black text-foreground sm:text-sm">
-                          {formatTime(offer.departureTime, locale)}
-                        </span>
-                            <span className="font-bold uppercase text-foreground">
-                          {offer.origin}
-                        </span>
-                          </div>
-                          <p className="mt-0.5 text-[11px] text-muted-foreground sm:text-xs">
-                            {t("departureAirport", { code: offer.origin })}
-                          </p>
-                        </div>
-
-                        {/* Vol central */}
-                        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border/30 bg-muted/40 p-2 text-[11px] font-medium text-muted-foreground sm:p-2.5">
-                          <div className="flex items-center gap-1.5 sm:gap-2">
-                            <Plane className="size-3.5 text-primary" />
-                            <span>
-                          {displayAirlineName} • {t("flightPrefix")} {offer.flightNumber}
-                        </span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Clock className="size-3 text-primary" />
-                            <span>
-                          {t("durationLabel", { duration: formatDuration(offer.departureTime, offer.arrivalTime) })}
-                        </span>
-                          </div>
-                        </div>
-
-                        {/* Arrivée */}
-                        <div>
-                          <div className="flex items-center gap-2">
-                        <span className="text-xs font-black text-foreground sm:text-sm">
-                          {formatTime(offer.arrivalTime, locale)}
-                        </span>
-                            <span className="font-bold uppercase text-foreground">
-                          {offer.destination}
-                        </span>
-                          </div>
-                          <p className="mt-0.5 text-[11px] text-muted-foreground sm:text-xs">
-                            {t("arrivalAirport", { code: offer.destination })}
-                          </p>
-                        </div>
-                      </>
-                  )}
-                </div>
-              </div>
+              {/* Chronologie du trajet retour */}
+              {hasReturnLeg && detail?.returnDepartureTime && detail?.returnArrivalTime && (
+                  <>
+                    <p className="pt-1 text-[11px] font-extrabold uppercase tracking-wider text-primary">
+                      {t("returnFlightLabel")}
+                    </p>
+                    <FlightLegTimeline
+                        segments={returnSegments}
+                        fallbackDepartureTime={detail.returnDepartureTime}
+                        fallbackArrivalTime={detail.returnArrivalTime}
+                        fallbackOrigin={offer.destination}
+                        fallbackDestination={offer.origin}
+                        fallbackAirlineName={displayAirlineName}
+                        fallbackFlightNumber={offer.flightNumber}
+                        locale={locale}
+                        t={t}
+                    />
+                  </>
+              )}
 
               {/* Grille d'informations pratiques */}
               <div className="grid grid-cols-1 gap-2.5 text-xs xs:grid-cols-2 sm:grid-cols-3 sm:gap-3">

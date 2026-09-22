@@ -55,6 +55,18 @@ export async function retryBooking(bookingId: string) {
   return data;
 }
 
+/**
+ * Re-checks price with the provider for a still-pending FLIGHT booking, without booking anything -
+ * powers the countdown/price-refresh banner on the booking detail page while waiting for payment.
+ * Always returns the booking's current state (refreshed price if one came back different).
+ */
+export async function priceCheck(bookingId: string) {
+  const { data } = await apiClient.get<BookingResponse>(`/api/bookings/${bookingId}/price-check`, {
+    params: { email: getRememberedContactEmail() ?? undefined },
+  });
+  return data;
+}
+
 /** Live baggage/meals/seats/cancellation-policy detail for a confirmed flight booking, straight
  *  from the provider - null when unavailable (not a flight, not provider-confirmed yet, or the
  *  provider doesn't support this). The booking page falls back to what's already on the booking. */
@@ -62,6 +74,26 @@ export async function getFlightOrderDetail(bookingId: string) {
   const { data } = await apiClient.get<FlightOrderDetail | null>(`/api/bookings/${bookingId}/flight-order-detail`, {
     params: { email: getRememberedContactEmail() ?? undefined },
   });
+  return data;
+}
+
+/**
+ * Uploads a required passport image for one traveler (see BookingTravelerResponse
+ * #passportImageRequired) before payment - the provider forwards it automatically right after
+ * Book. Returns the updated booking so the caller can re-check whether every requirement is now
+ * satisfied without a second round-trip.
+ */
+export async function uploadRequiredPassportImage(bookingId: string, travelerIndex: number, file: File) {
+  const formData = new FormData();
+  formData.append("file", file);
+  const { data } = await apiClient.post<BookingResponse>(
+    `/api/bookings/${bookingId}/travelers/${travelerIndex}/passport-image`,
+    formData,
+    {
+      params: { email: getRememberedContactEmail() ?? undefined },
+      headers: { "Content-Type": "multipart/form-data" },
+    }
+  );
   return data;
 }
 

@@ -34,6 +34,10 @@ const STATUS_CONFIG: Record<
     variant: "outline",
     className: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/40 font-bold",
   },
+  PRICE_CHANGED: {
+    variant: "outline",
+    className: "bg-orange-500/10 text-orange-600 border-orange-500/20 dark:bg-orange-950/40 dark:text-orange-400 dark:border-orange-800/40 font-bold",
+  },
   FAILED: {
     variant: "destructive",
   },

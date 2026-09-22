@@ -15,13 +15,17 @@ export function StepSummaryValidation({ form }: StepSummaryValidationProps) {
                     Vérification de la fiche
                 </h3>
                 <p className="text-xs text-muted-foreground">
-                    Vérifiez les informations saisies avant de créer l'établissement.
+                    Vérifiez les informations saisies avant de créer l&apos;établissement.
                 </p>
             </div>
 
             <div className="rounded-xl border bg-muted/20 p-4 space-y-4">
                 {form.coverImageUrl && (
                     <div className="relative h-40 w-full overflow-hidden rounded-lg">
+                        {/* coverImageUrl peut être une URL externe saisie à la main (voir
+                            StepGeneralInfo) et pas seulement une image MinIO - next/image la
+                            rejetterait (hors remotePatterns), reste natif. */}
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                             src={form.coverImageUrl}
                             alt="Couverture de l'hôtel"

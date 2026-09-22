@@ -6,11 +6,11 @@ import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
   Search,
-  X,
   ArrowLeftRight,
   Calendar,
   Users,
   Filter,
+  Loader2,
   PlaneTakeoff
 } from "lucide-react";
 
@@ -22,7 +22,7 @@ import { FlightSearchForm } from "@/components/search/flight-search-form";
 import { FlightResultsList, FlightSearchErrorState } from "@/components/search/flight-results";
 import { FlightFilters } from "@/components/search/flight-filters";
 import { NewsletterSignup } from "@/components/newsletter-signup";
-import { useFlightSearch } from "@/hooks/use-search";
+import { useFlightSearchStream } from "@/hooks/use-search";
 import { useIsDesktop } from "@/hooks/use-media-query";
 import { useFlightStore } from "@/store/useFlightStore";
 import {
@@ -78,7 +78,7 @@ function FlightsPageContent() {
   const isDesktop = useIsDesktop();
 
   const params = useMemo(() => parseFlightSearchParams(searchParams), [searchParams]);
-  const query = useFlightSearch(params);
+  const stream = useFlightSearchStream(params);
 
   // --- Synchronisation avec le store ---
   const setStoreSearchParams = useFlightStore((state) => state.setSearchParams);
@@ -93,33 +93,37 @@ function FlightsPageContent() {
   }, [params, setStoreSearchParams]);
 
   useEffect(() => {
-    setStoreLoading(query.isLoading);
-  }, [query.isLoading, setStoreLoading]);
+    setStoreLoading(stream.isSearching);
+  }, [stream.isSearching, setStoreLoading]);
 
   useEffect(() => {
-    if (query.isError) {
+    if (stream.error) {
       setStoreError(t("noResults") ?? "Impossible de charger les résultats de vol.");
     }
-  }, [query.isError, setStoreError, t]);
+  }, [stream.error, setStoreError, t]);
 
   useEffect(() => {
-    if (query.data) {
-      setStoreSearchResults(query.data);
-    }
-  }, [query.data, setStoreSearchResults]);
+    setStoreSearchResults(stream.offers);
+  }, [stream.offers, setStoreSearchResults]);
   // --- Fin synchronisation ---
 
   const filterOptions = useMemo(
-      () => computeFlightFilterOptions(query.data ?? []),
-      [query.data]
+      () => computeFlightFilterOptions(stream.offers),
+      [stream.offers]
   );
 
   const filteredOffers = useMemo(
-      () => filterFlightOffers(query.data ?? [], filters),
-      [query.data, filters]
+      () => filterFlightOffers(stream.offers, filters),
+      [stream.offers, filters]
   );
 
-  const isResultsEmpty = (query.data?.length ?? 0) > 0 && filteredOffers.length === 0;
+  const isResultsEmpty = stream.offers.length > 0 && filteredOffers.length === 0;
+  // Only block the whole page behind the full loader before the very first offer arrives -
+  // once at least one provider has answered, render what's in so far and keep filling in the
+  // rest in the background (see the "still searching" banner below), instead of making the
+  // fastest provider's results wait behind the slowest one the way the old blocking REST call did.
+  const showFullPageLoader = stream.isSearching && stream.offers.length === 0 && !stream.error;
+  const showStillSearchingBanner = stream.isSearching && stream.offers.length > 0;
   // Desktop's edit panel is a plain inline block, not an overlay - only lock scroll for the
   // actual full-screen mobile sheets (see the isDesktop guards on MobileDialogSheet below).
   const showMobileOverlay = (editing || isMobileFilterOpen) && !isDesktop;
@@ -233,10 +237,10 @@ function FlightsPageContent() {
               </div>
           )}
 
-          {query.isLoading ? (
+          {showFullPageLoader ? (
               <DynamicFlightLoader isPending />
-          ) : query.isError ? (
-              <FlightSearchErrorState onRetry={() => query.refetch()} />
+          ) : stream.error && stream.offers.length === 0 ? (
+              <FlightSearchErrorState onRetry={stream.retry} />
           ) : (
               <div className="grid items-start gap-8 lg:grid-cols-[280px_1fr]">
                 <aside className="hidden max-h-[calc(100dvh-7rem)] overflow-y-auto rounded-3xl border border-border/60 bg-background/90 p-5 shadow-xs backdrop-blur-sm lg:sticky lg:top-24 lg:block">
@@ -244,6 +248,12 @@ function FlightsPageContent() {
                 </aside>
 
                 <main className="min-w-0 space-y-4">
+                  {showStillSearchingBanner && (
+                      <div className="flex items-center gap-2 rounded-2xl border border-border/60 bg-background/80 px-4 py-2.5 text-xs font-medium text-muted-foreground backdrop-blur-sm">
+                        <Loader2 className="size-3.5 shrink-0 animate-spin text-primary" />
+                        <span>{t("searchingMoreProviders")}</span>
+                      </div>
+                  )}
                   {isResultsEmpty ? (
                       <EmptyResults t={t} tFilters={tFilters} onReset={() => setFilters(DEFAULT_FLIGHT_FILTERS)} />
                   ) : (

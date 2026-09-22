@@ -139,7 +139,7 @@ export function DashboardShell({
               <span>Devenir revendeur</span>
             </div>
             <p className="text-[11px] text-muted-foreground font-medium leading-relaxed">
-              Gagnez des commissions sur vos ventes de billets et d'hôtels.
+              Gagnez des commissions sur vos ventes de billets et d&apos;hôtels.
             </p>
             <Button
               asChild
@@ -190,7 +190,7 @@ export function DashboardShell({
             variant="outline"
             className="rounded-lg bg-emerald-500/10 text-emerald-600 border-emerald-500/20 px-1.5 py-0.5 text-[9px] font-black tracking-wide shrink-0"
           >
-            AGENT
+            REVENDEUR
           </Badge>
         ) : null}
       </div>

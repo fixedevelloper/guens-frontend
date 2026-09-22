@@ -6,7 +6,6 @@ import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Car } from "lucide-react";
 
-import { useRouter } from "@/i18n/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useVehicleSearch } from "@/hooks/use-search";
@@ -36,7 +35,6 @@ export default function CarRentalSearchPage() {
 function CarRentalSearchPageContent() {
     const t = useTranslations("CarRentalSearch");
     const searchParams = useSearchParams();
-    const router = useRouter();
 
     const params = useMemo(() => parseVehicleSearchParams(searchParams), [searchParams]);
     const query = useVehicleSearch(params);

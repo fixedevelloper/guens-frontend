@@ -4,7 +4,7 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Search, X, ArrowRight, Calendar, Users } from "lucide-react";
+import { Search, X, Calendar, Users } from "lucide-react";
 
 import { useRouter } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";

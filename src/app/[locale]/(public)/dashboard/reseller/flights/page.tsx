@@ -3,7 +3,6 @@
 
 import { Suspense, useMemo, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
 import {
     Search,
     X,
@@ -14,7 +13,8 @@ import {
     PlaneTakeoff,
     Sparkles,
     ShieldCheck,
-    Building2
+    Building2,
+    Loader2
 } from "lucide-react";
 
 import { useRouter } from "@/i18n/navigation";
@@ -24,7 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { FlightSearchForm } from "@/components/search/flight-search-form";
 import { FlightResultsList, FlightSearchErrorState } from "@/components/search/flight-results";
 import { FlightFilters } from "@/components/search/flight-filters";
-import { useFlightSearch } from "@/hooks/use-search";
+import { useFlightSearchStream } from "@/hooks/use-search";
 import { flightSearchParamsToQuery, multiCitySearchParamsToQuery, parseFlightSearchParams } from "@/lib/search-params";
 import { DEFAULT_FLIGHT_FILTERS, computeFlightFilterOptions, filterFlightOffers } from "@/lib/filters";
 import type { FlightSearchParams, MultiCityFlightSearchParams } from "@/lib/api/types";
@@ -50,7 +50,6 @@ export default function ResellerFlightsPage() {
 }
 
 function ResellerFlightsPageContent() {
-    const t = useTranslations("SearchResults");
     const searchParams = useSearchParams();
     const router = useRouter();
 
@@ -59,12 +58,12 @@ function ResellerFlightsPageContent() {
     const [filters, setFilters] = useState(DEFAULT_FLIGHT_FILTERS);
 
     const params = useMemo(() => parseFlightSearchParams(searchParams), [searchParams]);
-    const query = useFlightSearch(params);
+    const stream = useFlightSearchStream(params);
 
-    const filterOptions = useMemo(() => computeFlightFilterOptions(query.data ?? []), [query.data]);
+    const filterOptions = useMemo(() => computeFlightFilterOptions(stream.offers), [stream.offers]);
     const filteredOffers = useMemo(
-        () => filterFlightOffers(query.data ?? [], filters),
-        [query.data, filters]
+        () => filterFlightOffers(stream.offers, filters),
+        [stream.offers, filters]
     );
 
     // Verrouillage du scroll en arrière-plan lorsque les tiroirs mobiles sont ouverts
@@ -93,7 +92,12 @@ function ResellerFlightsPageContent() {
         router.push(`/dashboard/reseller/flights/multi-city?${multiCitySearchParamsToQuery(next)}`);
     }
 
-    const isFilteredOut = (query.data?.length ?? 0) > 0 && filteredOffers.length === 0;
+    const isFilteredOut = stream.offers.length > 0 && filteredOffers.length === 0;
+    // Only block the whole page behind the full loader before the very first offer arrives - once
+    // at least one provider has answered, render what's in so far (see the customer /flights page,
+    // same pattern) instead of waiting for the slowest provider.
+    const showFullPageLoader = stream.isSearching && stream.offers.length === 0 && !stream.error;
+    const showStillSearchingBanner = stream.isSearching && stream.offers.length > 0;
 
     return (
         <div className="min-h-screen bg-slate-50/50 dark:bg-zinc-950/30 pb-28 lg:pb-12 overflow-x-hidden">
@@ -136,7 +140,7 @@ function ResellerFlightsPageContent() {
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <ShieldCheck className="size-4 text-emerald-600" />
-                        <span>Tarifs d'agences & commissions B2B appliqués</span>
+                        <span>Tarifs d&apos;agences & commissions B2B appliqués</span>
                     </div>
                 </div>
 
@@ -193,7 +197,7 @@ function ResellerFlightsPageContent() {
                                     defaultValues={params ?? undefined}
                                     onSearch={handleSearch}
                                     onMultiCitySearch={handleMultiCitySearch}
-                                    isSearching={query.isLoading}
+                                    isSearching={stream.isSearching}
                                 />
                             </CardContent>
                         </Card>
@@ -201,10 +205,10 @@ function ResellerFlightsPageContent() {
                 )}
 
                 {/* Grille Principale : Filtres + Résultats */}
-                {query.isLoading ? (
+                {showFullPageLoader ? (
                     <DynamicFlightLoader isPending={true} />
-                ) : query.isError ? (
-                    <FlightSearchErrorState onRetry={() => query.refetch()} />
+                ) : stream.error && stream.offers.length === 0 ? (
+                    <FlightSearchErrorState onRetry={stream.retry} />
                 ) : (
                     <div className="grid gap-8 lg:grid-cols-[280px_1fr] items-start">
 
@@ -215,6 +219,12 @@ function ResellerFlightsPageContent() {
 
                         {/* Résultats de recherche ou Empty State */}
                         <main className="min-w-0 space-y-4">
+                            {showStillSearchingBanner && (
+                                <div className="flex items-center gap-2 rounded-2xl border border-border/60 bg-background/80 px-4 py-2.5 text-xs font-medium text-muted-foreground backdrop-blur-sm">
+                                    <Loader2 className="size-3.5 shrink-0 animate-spin text-primary" />
+                                    <span>Recherche en cours auprès d&apos;autres fournisseurs...</span>
+                                </div>
+                            )}
                             {isFilteredOut ? (
                                 <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border/80 bg-background/50 p-8 text-center backdrop-blur-xs">
                                     <div className="relative mb-4 flex size-16 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -227,7 +237,7 @@ function ResellerFlightsPageContent() {
                                         Aucun vol ne correspond à vos filtres
                                     </h3>
                                     <p className="mt-1.5 max-w-sm text-xs text-muted-foreground">
-                                        Essayez d'élargir vos critères de prix ou de compagnies pour afficher les tarifs revendeur disponibles.
+                                        Essayez d&apos;élargir vos critères de prix ou de compagnies pour afficher les tarifs revendeur disponibles.
                                     </p>
                                     <Button
                                         onClick={() => setFilters(DEFAULT_FLIGHT_FILTERS)}
@@ -294,7 +304,7 @@ function ResellerFlightsPageContent() {
                                 defaultValues={params ?? undefined}
                                 onSearch={handleSearch}
                                 onMultiCitySearch={handleMultiCitySearch}
-                                isSearching={query.isLoading}
+                                isSearching={stream.isSearching}
                             />
                         </div>
                     </div>

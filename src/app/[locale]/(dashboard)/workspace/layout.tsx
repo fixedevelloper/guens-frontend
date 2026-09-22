@@ -2,7 +2,7 @@
 
 import React, { useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { Banknote, LayoutDashboard, Receipt, Users, Building2, Database, Store, PieChart, CreditCard, MapPin } from "lucide-react";
+import { Banknote, LayoutDashboard, Receipt, Users, Building2, Database, Store, PieChart, CreditCard, MapPin, Landmark, UserCog } from "lucide-react";
 
 import { useRouter } from "@/i18n/navigation";
 import { useAuth } from "@/context/auth-context";
@@ -31,11 +31,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: "/workspace", label: t("navOverview") ?? "Vue d'ensemble", icon: LayoutDashboard },
     { href: "/workspace/bookings", label: t("navBookings") ?? "Réservations", icon: Receipt },
     { href: "/workspace/users", label: t("navUsers") ?? "Utilisateurs", icon: Users },
+    { href: "/workspace/agents", label: t("navAgents") ?? "Agents", icon: UserCog },
     { href: "/workspace/partners", label: t("navPartners") ?? "Partenaires", icon: Building2 },
     { href: "/workspace/resellers", label: t("navResellers") ?? "Revendeurs", icon: Store },
     { href: "/workspace/commission", label: t("navCommission") ?? "Commissions", icon: Banknote },
     { href: "/workspace/shareholders", label: t("navShareholders") ?? "Actionnaires", icon: PieChart },
     { href: "/workspace/payment-providers", label: t("navPaymentProviders") ?? "Fournisseurs de paiement", icon: CreditCard },
+    { href: "/workspace/merchant-codes", label: t("navMerchantCodes") ?? "Codes marchands", icon: Landmark },
     { href: "/workspace/geo/sync", label: t("navGeo") ?? "Données Géo", icon: Database },
     { href: "/workspace/destinations", label: t("navDestinations") ?? "Destinations", icon: MapPin },
   ];

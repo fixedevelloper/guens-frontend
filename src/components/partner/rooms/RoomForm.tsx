@@ -50,7 +50,7 @@ interface RoomFormProps {
     onSubmit: (payload: RoomTypeRequestPayload) => Promise<void>;
 }
 
-export function RoomForm({ hotelId, initialData, isEditing = false,isLoading=false, onSubmit }: RoomFormProps) {
+export function RoomForm({ hotelId, initialData, isEditing = false, onSubmit }: RoomFormProps) {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -117,7 +117,7 @@ export function RoomForm({ hotelId, initialData, isEditing = false,isLoading=fal
             await onSubmit(payload);
             toast.success(isEditing ? "Chambre mise à jour !" : "Chambre ajoutée avec succès !");
             router.push(`/partner/listings/hotels/${hotelId}/rooms`);
-        } catch (error: any) {
+        } catch (error) {
             console.error("Erreur d'enregistrement:", error);
         } finally {
             setIsSubmitting(false);
@@ -295,6 +295,10 @@ export function RoomForm({ hotelId, initialData, isEditing = false,isLoading=fal
 
                             {form.coverImageUrl ? (
                                 <div className="relative aspect-video w-full max-h-56 rounded-2xl overflow-hidden border bg-muted/20 group shadow-sm">
+                                    {/* coverImageUrl peut être une URL externe saisie à la main (champ
+                                        juste en dessous) et pas seulement une image MinIO choisie via la
+                                        modale - next/image la rejetterait (hors remotePatterns), reste natif. */}
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img
                                         src={form.coverImageUrl}
                                         alt="Couverture de la chambre"
@@ -340,7 +344,7 @@ export function RoomForm({ hotelId, initialData, isEditing = false,isLoading=fal
                                         className="gap-2 shrink-0 rounded-xl border-dashed hover:border-primary hover:bg-primary/5"
                                     >
                                         <ImageIcon className="size-4 text-primary" />
-                                        Galerie d'images
+                                        Galerie d&apos;images
                                     </Button>
                                 </div>
                             )}

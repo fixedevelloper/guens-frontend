@@ -108,6 +108,9 @@ function GalleryImage({ src, alt, className }: { src: string; alt: string; class
   }
 
   return (
+    // Photos hôtel du fournisseur/GDS, domaines CDN tiers arbitraires non énumérables dans
+    // remotePatterns - reste natif par choix (voir next.config.ts, images.remotePatterns).
+    // eslint-disable-next-line @next/next/no-img-element
     <img
       src={src}
       alt={alt}

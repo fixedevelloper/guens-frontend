@@ -99,7 +99,7 @@ function ResetPasswordPageContent() {
                         />
                     </div>
                     <span className="font-black text-base tracking-wider uppercase text-white drop-shadow-sm">
-            Guen's Travel
+            Guen&apos;s Travel
           </span>
                 </Link>
 
@@ -142,7 +142,7 @@ function ResetPasswordPageContent() {
                                 />
                             </div>
                             <span className="font-black text-sm tracking-wider uppercase text-foreground">
-                Guen's Travel
+                Guen&apos;s Travel
               </span>
                         </Link>
 

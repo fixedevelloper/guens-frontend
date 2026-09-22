@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CreditCard, Loader2, Plus, Power } from "lucide-react";
+import { CreditCard, Loader2, Plus, Power, Wrench } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +29,7 @@ import type { PaymentMethod, PaymentProviderRouteResponse } from "@/lib/api/type
 import {
     useAvailablePaymentProvidersQuery,
     useCreatePaymentProviderRouteMutation,
+    useEnableManualModeMutation,
     usePaymentProviderRoutesQuery,
     useUpdatePaymentProviderRouteMutation,
 } from "@/hooks/use-admin";
@@ -46,15 +47,35 @@ const EMPTY_FORM: FormState = { countryCode: "", paymentMethod: "CARD", provider
 export default function AdminPaymentProvidersPage() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [form, setForm] = useState<FormState>(EMPTY_FORM);
+    const [isManualModeDialogOpen, setIsManualModeDialogOpen] = useState(false);
+    const [manualModeCountryCode, setManualModeCountryCode] = useState("");
 
     const { data: routes, isLoading, isError } = usePaymentProviderRoutesQuery();
     const { data: availableProviders } = useAvailablePaymentProvidersQuery();
     const createMutation = useCreatePaymentProviderRouteMutation();
     const updateMutation = useUpdatePaymentProviderRouteMutation();
+    const enableManualModeMutation = useEnableManualModeMutation();
 
     function openCreateDialog() {
         setForm({ ...EMPTY_FORM, providerName: availableProviders?.[0] ?? "" });
         setIsDialogOpen(true);
+    }
+
+    function openManualModeDialog() {
+        setManualModeCountryCode("");
+        setIsManualModeDialogOpen(true);
+    }
+
+    function handleEnableManualMode(e: React.FormEvent) {
+        e.preventDefault();
+        const countryCode = manualModeCountryCode.trim().toUpperCase();
+        enableManualModeMutation.mutate(countryCode, {
+            onSuccess: () => {
+                toast.success(`Mode manuel activé pour ${countryCode} (les 5 moyens de paiement pointent vers MANUAL).`);
+                setIsManualModeDialogOpen(false);
+            },
+            onError: (error) => toast.error(normalizeApiError(error).message),
+        });
     }
 
     function handleSubmit(e: React.FormEvent) {
@@ -102,10 +123,20 @@ export default function AdminPaymentProvidersPage() {
                     </p>
                 </div>
 
-                <Button onClick={openCreateDialog} className="rounded-xl font-bold text-xs gap-2 h-9 shrink-0">
-                    <Plus className="size-4" />
-                    Ajouter une règle
-                </Button>
+                <div className="flex items-center gap-2 shrink-0">
+                    <Button
+                        onClick={openManualModeDialog}
+                        variant="outline"
+                        className="rounded-xl font-bold text-xs gap-2 h-9 border-amber-500/40 text-amber-700 hover:bg-amber-500/10 dark:text-amber-400"
+                    >
+                        <Wrench className="size-4" />
+                        Activer le mode manuel
+                    </Button>
+                    <Button onClick={openCreateDialog} className="rounded-xl font-bold text-xs gap-2 h-9">
+                        <Plus className="size-4" />
+                        Ajouter une règle
+                    </Button>
+                </div>
             </div>
 
             {/* Table */}
@@ -258,6 +289,56 @@ export default function AdminPaymentProvidersPage() {
                             <Button type="submit" disabled={createMutation.isPending || !form.providerName} className="rounded-xl gap-2">
                                 {createMutation.isPending && <Loader2 className="size-4 animate-spin" />}
                                 Ajouter
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialogue d'activation du mode manuel */}
+            <Dialog open={isManualModeDialogOpen} onOpenChange={setIsManualModeDialogOpen}>
+                <DialogContent className="max-w-md rounded-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Activer le mode manuel pour un pays</DialogTitle>
+                    </DialogHeader>
+
+                    <form onSubmit={handleEnableManualMode} className="space-y-4">
+                        <p className="text-sm text-muted-foreground">
+                            Les 5 moyens de paiement (Carte, Mobile Money, Google Pay, Apple Pay, PayPal) de
+                            ce pays seront routés vers <strong>MANUAL</strong> : le client paiera un code
+                            marchand affiché sur la page de paiement, puis un agent validera le paiement à la
+                            main. Pensez à configurer des codes marchands pour ce pays sur la page{" "}
+                            <strong>Codes marchands</strong>.
+                        </p>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="manualModeCountryCode">Pays (code ISO2) *</Label>
+                            <Input
+                                id="manualModeCountryCode"
+                                maxLength={2}
+                                required
+                                value={manualModeCountryCode}
+                                onChange={(e) => setManualModeCountryCode(e.target.value)}
+                                placeholder="ex: CM"
+                            />
+                        </div>
+
+                        <DialogFooter className="pt-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setIsManualModeDialogOpen(false)}
+                                className="rounded-xl"
+                            >
+                                Annuler
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={enableManualModeMutation.isPending || manualModeCountryCode.trim().length !== 2}
+                                className="rounded-xl gap-2"
+                            >
+                                {enableManualModeMutation.isPending && <Loader2 className="size-4 animate-spin" />}
+                                Activer
                             </Button>
                         </DialogFooter>
                     </form>

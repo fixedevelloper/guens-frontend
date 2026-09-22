@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
@@ -232,12 +233,12 @@ export default function HotelImagesPage({ params }: PageProps) {
                                         : "border-border/50 hover:border-border"
                                 )}
                             >
-                                <img
+                                <Image
                                     src={img.url}
                                     alt={img.name ?? t("imageAlt")}
-                                    loading="lazy"
-                                    decoding="async"
-                                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                    fill
+                                    sizes="(max-width: 768px) 50vw, 25vw"
+                                    className="object-cover transition-transform duration-300 group-hover:scale-105"
                                 />
 
                                 {/* Badge Couverture */}

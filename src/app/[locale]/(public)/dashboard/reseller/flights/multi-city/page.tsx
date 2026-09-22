@@ -3,11 +3,9 @@
 
 import { Suspense, useMemo, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
 import {
     Search,
     X,
-    Calendar,
     Users,
     Filter,
     PlaneTakeoff,
@@ -54,7 +52,6 @@ export default function ResellerMultiCityFlightsPage() {
 }
 
 function ResellerMultiCityFlightsContent() {
-    const t = useTranslations("SearchResults");
     const searchParams = useSearchParams();
     const router = useRouter();
 
@@ -144,7 +141,7 @@ function ResellerMultiCityFlightsContent() {
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <ShieldCheck className="size-4 text-emerald-600" />
-                        <span>Tarifs d'agences B2B appliqués</span>
+                        <span>Tarifs d&apos;agences B2B appliqués</span>
                     </div>
                 </div>
 
@@ -234,7 +231,7 @@ function ResellerMultiCityFlightsContent() {
                                         Aucun vol ne correspond à ces critères
                                     </h3>
                                     <p className="mt-1.5 max-w-sm text-xs text-muted-foreground">
-                                        Ajustez vos filtres pour voir davantage d'itinéraires multi-destinations.
+                                        Ajustez vos filtres pour voir davantage d&apos;itinéraires multi-destinations.
                                     </p>
                                     <Button
                                         onClick={() => setFilters(DEFAULT_FLIGHT_FILTERS)}

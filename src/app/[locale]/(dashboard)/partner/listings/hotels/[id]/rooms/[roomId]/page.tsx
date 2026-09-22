@@ -93,7 +93,7 @@ export default function RoomTypeDetailPage() {
                 </div>
                 <h2 className="text-lg font-bold">Type de chambre introuvable</h2>
                 <p className="text-xs text-muted-foreground">
-                    Ce type de chambre n'existe pas ou a été supprimé.
+                    Ce type de chambre n&apos;existe pas ou a été supprimé.
                 </p>
                 <Button asChild size="sm" variant="outline" className="rounded-xl text-xs font-bold">
                     <Link href={`/partner/listings/hotels/${hotelId}/rooms`}>

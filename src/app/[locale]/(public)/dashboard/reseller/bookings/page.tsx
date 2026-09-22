@@ -84,7 +84,7 @@ export default function ResellerBookingsPage() {
                 {t("resellerBookings") ?? "Mes Ventes"}
               </h1>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Suivez l'ensemble des réservations effectuées en tant que revendeur
+                Suivez l&apos;ensemble des réservations effectuées en tant que revendeur
               </p>
             </div>
           </div>

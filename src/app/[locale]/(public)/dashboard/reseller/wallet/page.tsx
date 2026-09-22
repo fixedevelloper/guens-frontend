@@ -72,7 +72,7 @@ export default function ResellerWalletPage() {
 
   const { data: commissionsPage } = useMyResellerCommissionsQuery(resellerId, 0, 100);
 
-  const withdrawals = withdrawalsPage?.content ?? [];
+  const withdrawals = useMemo(() => withdrawalsPage?.content ?? [], [withdrawalsPage]);
   const isLoading = isBalanceLoading || isWithdrawalsLoading;
 
   const pendingBalance = useMemo(

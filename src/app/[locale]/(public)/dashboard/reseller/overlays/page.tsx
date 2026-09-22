@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { useTranslations } from "next-intl";
 import {
   LayoutDashboard,
@@ -50,8 +50,8 @@ export default function ResellerDashboardPage() {
   const isLoading = isProfileLoading || isBalanceLoading || isBookingsLoading || isCommissionsLoading;
   const isFetching = isProfileFetching;
 
-  const bookings = bookingsPage?.content ?? [];
-  const commissions = commissionsPage?.content ?? [];
+  const bookings = useMemo(() => bookingsPage?.content ?? [], [bookingsPage]);
+  const commissions = useMemo(() => commissionsPage?.content ?? [], [commissionsPage]);
 
   const currency = bookings[0]?.currency || commissions[0]?.currency || "XAF";
   const totalCommissions = useMemo(

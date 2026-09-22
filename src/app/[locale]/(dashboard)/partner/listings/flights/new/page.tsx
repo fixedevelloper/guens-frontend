@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -11,7 +12,6 @@ import {
     Check,
     Loader2,
     Info,
-    AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -83,7 +83,7 @@ export default function NewFlightPage() {
         const [depH, depM] = departureTime.split(":").map(Number);
         const [arrH, arrM] = arrivalTime.split(":").map(Number);
 
-        let depMinutes = depH * 60 + depM;
+        const depMinutes = depH * 60 + depM;
         let arrMinutes = arrH * 60 + arrM;
 
         // Prise en compte du vol de nuit (décollage à 23h00, atterrissage à 02h00 J+1)
@@ -155,11 +155,13 @@ export default function NewFlightPage() {
             await createFlightMutation.mutateAsync(payload as FlightFormData);
             toast.success(`Vol ${cleanFlightNumber} créé avec succès !`);
             router.push("/partner/listings");
-        } catch (error: any) {
+        } catch (error) {
             console.error("Erreur de création de vol:", error);
-            toast.error(
-                error?.response?.data?.message || "Échec de la création du vol. Veuillez réessayer."
-            );
+            const message =
+                axios.isAxiosError(error) && typeof error.response?.data?.message === "string"
+                    ? error.response.data.message
+                    : "Échec de la création du vol. Veuillez réessayer.";
+            toast.error(message);
         }
     };
 
@@ -197,7 +199,7 @@ export default function NewFlightPage() {
                         Informations du plan de vol
                     </CardTitle>
                     <CardDescription className="text-xs">
-                        Renseignez les détails d'exploitation, l'itinéraire et les fréquences hebdomadaires.
+                        Renseignez les détails d&apos;exploitation, l&apos;itinéraire et les fréquences hebdomadaires.
                     </CardDescription>
                 </CardHeader>
 
@@ -226,7 +228,7 @@ export default function NewFlightPage() {
 
                                 <div className="space-y-1.5">
                                     <Label htmlFor="aircraftType" className="text-xs font-bold">
-                                        Type d'appareil *
+                                        Type d&apos;appareil *
                                     </Label>
                                     <Select value={aircraftType} onValueChange={setAircraftType}>
                                         <SelectTrigger className="rounded-xl text-xs h-10">
@@ -312,7 +314,7 @@ export default function NewFlightPage() {
 
                                 <div className="space-y-1.5">
                                     <Label htmlFor="arrivalTime" className="text-xs font-bold flex items-center gap-1">
-                                        <Clock className="size-3.5 text-primary" /> Heure d'arrivée *
+                                        <Clock className="size-3.5 text-primary" /> Heure d&apos;arrivée *
                                     </Label>
                                     <Input
                                         id="arrivalTime"
@@ -341,7 +343,7 @@ export default function NewFlightPage() {
                             <div className="flex items-center justify-between">
                                 <h2 className="text-xs font-black uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                                     <Calendar className="size-3.5 text-primary" />
-                                    4. Jours d'exploitation hebdomadaire *
+                                    4. Jours d&apos;exploitation hebdomadaire *
                                 </h2>
                                 <Button
                                     type="button"

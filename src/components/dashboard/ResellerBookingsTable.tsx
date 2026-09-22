@@ -110,7 +110,7 @@ export const ResellerBookingsTable: React.FC<ResellerBookingsTableProps> = ({
           Aucune réservation trouvée
         </h3>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          Les ventes attribuées à ce revendeur s'afficheront ici.
+          Les ventes attribuées à ce revendeur s&apos;afficheront ici.
         </p>
       </div>
     );

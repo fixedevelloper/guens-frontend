@@ -20,7 +20,6 @@ import {
   AlertCircle,
   Percent,
   Wallet,
-  TrendingUp,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -51,7 +50,7 @@ import {
   useRejectResellerMutation,
   useSuspendResellerMutation,
 } from "@/hooks/use-admin";
-import { Reseller, ResellerResponse, ResellerStatus } from "@/lib/api/types";
+import { Reseller, ResellerStatus } from "@/lib/api/types";
 import { ApproveResellerModal } from "@/components/dashboard/ApproveResellerModal";
 
 
@@ -128,7 +127,7 @@ export default function ResellersListPage() {
         item.email.toLowerCase().includes(query) ||
         item.promoCode.toLowerCase().includes(query)
     );
-  }, [data?.content, searchQuery]);
+  }, [data, searchQuery]);
 
   // GESTION DU REJET / SUSPENSION
   const handleConfirmAction = async () => {
@@ -191,7 +190,7 @@ export default function ResellersListPage() {
                 <button
                   key={tab.id}
                   onClick={() => {
-                    setSelectedStatus(tab.id as any);
+                    setSelectedStatus(tab.id as ResellerStatus | "ALL");
                     setPage(0); // Réinitialiser à la première page
                   }}
                   className={cn(

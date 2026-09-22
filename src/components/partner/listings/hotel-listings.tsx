@@ -121,7 +121,7 @@ export function HotelListings({ partnerId }: { partnerId: string }) {
                             Aucun hôtel enregistré
                         </h3>
                         <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
-                            Vous n'avez encore publié aucun établissement. Ajoutez votre premier hôtel
+                            Vous n&apos;avez encore publié aucun établissement. Ajoutez votre premier hôtel
                             pour commencer à recevoir des réservations.
                         </p>
 
@@ -155,6 +155,10 @@ export function HotelListings({ partnerId }: { partnerId: string }) {
                                         <TableCell className="font-medium text-foreground">
                                             <div className="flex items-center gap-3">
                                                 {hotel.coverImageUrl ? (
+                                                    /* coverImageUrl peut être une URL externe saisie à la main (voir
+                                                       StepGeneralInfo) et pas seulement une image MinIO - next/image la
+                                                       rejetterait (hors remotePatterns), reste natif. */
+                                                    // eslint-disable-next-line @next/next/no-img-element
                                                     <img
                                                         src={hotel.coverImageUrl}
                                                         alt={hotel.name}
@@ -232,7 +236,7 @@ export function HotelListings({ partnerId }: { partnerId: string }) {
                                                             className="cursor-pointer gap-2.5"
                                                         >
                                                             <Pencil className="size-4 text-muted-foreground" />
-                                                            <span>Éditer l'hôtel</span>
+                                                            <span>Éditer l&apos;hôtel</span>
                                                         </Link>
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem asChild>
@@ -241,7 +245,7 @@ export function HotelListings({ partnerId }: { partnerId: string }) {
                                                             className="cursor-pointer gap-2.5"
                                                         >
                                                             <Eye className="size-4 text-muted-foreground" />
-                                                            <span>Detail l'hôtel</span>
+                                                            <span>Detail l&apos;hôtel</span>
                                                         </Link>
                                                     </DropdownMenuItem>
 
@@ -278,7 +282,7 @@ export function HotelListings({ partnerId }: { partnerId: string }) {
                                                             ) : (
                                                                 <Ban className="size-4" />
                                                             )}
-                                                            <span>Suspendre l'hôtel</span>
+                                                            <span>Suspendre l&apos;hôtel</span>
                                                         </DropdownMenuItem>
                                                     ) : (
                                                         <DropdownMenuItem
@@ -291,7 +295,7 @@ export function HotelListings({ partnerId }: { partnerId: string }) {
                                                             ) : (
                                                                 <Play className="size-4" />
                                                             )}
-                                                            <span>Activer l'hôtel</span>
+                                                            <span>Activer l&apos;hôtel</span>
                                                         </DropdownMenuItem>
                                                     )}
 

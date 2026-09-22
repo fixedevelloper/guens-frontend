@@ -64,7 +64,7 @@ export function StepGeneralInfo({
 
             {/* Nom de l'hôtel */}
             <div className="space-y-2">
-                <Label htmlFor="name">Nom de l'hôtel *</Label>
+                <Label htmlFor="name">Nom de l&apos;hôtel *</Label>
                 <Input
                     id="name"
                     name="name"
@@ -101,12 +101,16 @@ export function StepGeneralInfo({
             <div className="space-y-2">
                 <Label htmlFor="coverImageUrl" className="flex items-center gap-1.5">
                     <ImageIcon className="size-4 text-muted-foreground" />
-                    Image de couverture de l'établissement
+                    Image de couverture de l&apos;établissement
                 </Label>
 
                 {form.coverImageUrl ? (
                     /* Aperçu si une image est sélectionnée */
                     <div className="relative aspect-video w-full max-h-56 rounded-2xl overflow-hidden border bg-muted/20 group shadow-sm">
+                        {/* coverImageUrl peut être une URL externe saisie à la main (champ juste
+                            en dessous) et pas seulement une image MinIO choisie via la modale -
+                            next/image la rejetterait (hors remotePatterns), reste natif. */}
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                             src={form.coverImageUrl}
                             alt="Couverture de l'hôtel"
@@ -153,7 +157,7 @@ export function StepGeneralInfo({
                             className="gap-2 shrink-0 rounded-xl border-dashed hover:border-primary hover:bg-primary/5"
                         >
                             <ImageIcon className="size-4 text-primary" />
-                            Galerie d'images
+                            Galerie d&apos;images
                         </Button>
                     </div>
                 )}
@@ -161,7 +165,7 @@ export function StepGeneralInfo({
 
             {/* Description */}
             <div className="space-y-2">
-                <Label htmlFor="description">Description de l'établissement</Label>
+                <Label htmlFor="description">Description de l&apos;établissement</Label>
                 <Textarea
                     id="description"
                     name="description"

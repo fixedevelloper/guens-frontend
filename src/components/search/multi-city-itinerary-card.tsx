@@ -8,7 +8,6 @@ import { useRouter } from "@/i18n/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { airlineLabel, formatDateTime, formatMoney, providerLabel } from "@/lib/format";
 import { checkoutUrlForMultiCityItinerary } from "@/lib/checkout-url";
 import type { MultiCityItinerary } from "@/lib/api/types";

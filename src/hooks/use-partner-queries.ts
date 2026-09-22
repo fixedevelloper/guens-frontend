@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import * as partnerApi from "@/lib/api/partner";
 import {HotelFormData} from "../types/hotel-form";
-import {createFlight, createHotel} from "../lib/api/partner";
+import {createHotel} from "../lib/api/partner";
 import {RoomTypeRequestPayload} from "../components/partner/rooms/RoomForm";
 import {
     AvailabilityFormData, BookingResponse,
@@ -11,11 +11,10 @@ import {
     PageResponse, PartnerUpdateRequest,
     PropertyAvailabilityFormData,
     PropertyFormData,
-    RoomAvailabilityFormData, UpdatePartnerDto,
+    RoomAvailabilityFormData,
     VehicleAvailabilityFormData,
     VehicleRegistrationRequest
 } from "../lib/api/types";
-import {PartnerRegistrationRequest} from "@/types/partner";
 
 
 

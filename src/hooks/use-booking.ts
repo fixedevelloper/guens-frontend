@@ -76,6 +76,17 @@ export function useCancelBookingMutation(bookingId: string) {
   });
 }
 
+export function useUploadRequiredPassportImageMutation(bookingId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ travelerIndex, file }: { travelerIndex: number; file: File }) =>
+      bookingApi.uploadRequiredPassportImage(bookingId, travelerIndex, file),
+    onSuccess: (data) => {
+      queryClient.setQueryData(["booking", bookingId], data);
+    },
+  });
+}
+
 export function useRetryBookingMutation(bookingId: string) {
   const queryClient = useQueryClient();
   return useMutation({
@@ -83,5 +94,24 @@ export function useRetryBookingMutation(bookingId: string) {
     onSuccess: (data) => {
       queryClient.setQueryData(["booking", bookingId], data);
     },
+  });
+}
+
+/** Every 15 minutes while `enabled` (i.e. still PENDING_PAYMENT - see BookingTrackingPage),
+ *  re-verifies the price with the supplier so a customer who takes a while to pay (manual mobile
+ *  money, bank transfer...) doesn't get a stale amount by the time an agent books it for real.
+ *  This is NOT a hold-expiry countdown - that's a separate, pre-existing backend job
+ *  (BookingService#cancelExpiredHolds, tied to ticketingDeadline) this query never touches.
+ *  useQuery (v5) has no onSuccess, so the caller syncs `data` into the shared ["booking", bookingId]
+ *  cache itself once it changes, rather than this hook owning that effect. */
+export const PRICE_REVALIDATION_INTERVAL_MS = 15 * 60 * 1000;
+
+export function usePriceCheckQuery(bookingId: string | null, enabled: boolean) {
+  return useQuery({
+    queryKey: ["booking-price-check", bookingId],
+    queryFn: () => bookingApi.priceCheck(bookingId as string),
+    enabled: enabled && bookingId !== null,
+    refetchInterval: PRICE_REVALIDATION_INTERVAL_MS,
+    staleTime: 0,
   });
 }

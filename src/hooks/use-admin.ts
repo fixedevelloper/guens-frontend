@@ -2,14 +2,16 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import * as adminApi from "@/lib/api/admin";
 import type {
+  CreateAgentRequest,
   FeaturedDestinationUpsertRequest,
   HotelCityUpsertRequest,
+  MerchantCodeRequest,
   PartnerStatus,
   PaymentProviderRouteRequest,
   ResellerApprovalRequest,
   ResellerStatus,
   ShareholderRequest,
-  UpdateCommissionPayload,
+  UpdateAgentRequest,
 } from "@/lib/api/types";
 
 export function useAdminBookingsQuery() {
@@ -51,6 +53,45 @@ export function useAdminUsersQuery(page: number, query?: string) {
     queryKey: ["admin-users", page, query],
     queryFn: () => adminApi.getAdminUsers(page, 20, query),
     placeholderData: (previousData) => previousData,
+  });
+}
+
+export function useAdminAgentsQuery(page: number) {
+  return useQuery({
+    queryKey: ["admin-agents", page],
+    queryFn: () => adminApi.getAdminAgents(page, 20),
+    placeholderData: (previousData) => previousData,
+  });
+}
+
+export function useCreateAgentMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: CreateAgentRequest) => adminApi.createAgent(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-agents"] });
+    },
+  });
+}
+
+export function useUpdateAgentMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: UpdateAgentRequest }) =>
+      adminApi.updateAgent(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-agents"] });
+    },
+  });
+}
+
+export function useDeleteAgentMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => adminApi.deleteAgent(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-agents"] });
+    },
   });
 }
 
@@ -113,6 +154,54 @@ export function useUpdatePaymentProviderRouteMutation() {
       adminApi.updatePaymentProviderRoute(id, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["payment-provider-routes"] });
+    },
+  });
+}
+
+export function useEnableManualModeMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (countryCode: string) => adminApi.enableManualMode(countryCode),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["payment-provider-routes"] });
+    },
+  });
+}
+
+export function useMerchantCodesQuery() {
+  return useQuery({
+    queryKey: ["merchant-codes"],
+    queryFn: () => adminApi.getMerchantCodes(),
+  });
+}
+
+export function useCreateMerchantCodeMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: MerchantCodeRequest) => adminApi.createMerchantCode(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["merchant-codes"] });
+    },
+  });
+}
+
+export function useUpdateMerchantCodeMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: MerchantCodeRequest }) =>
+      adminApi.updateMerchantCode(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["merchant-codes"] });
+    },
+  });
+}
+
+export function useDeleteMerchantCodeMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => adminApi.deleteMerchantCode(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["merchant-codes"] });
     },
   });
 }
@@ -314,7 +403,7 @@ export function useApproveResellerMutation() {
       payload: ResellerApprovalRequest;
     }) => adminApi.approveReseller(resellerId, payload),
     onSuccess: (reseller) => {
-      queryClient.invalidateQueries({ queryKey: resellerKeys.detail(String(reseller.data.id)) });
+      queryClient.invalidateQueries({ queryKey: resellerKeys.detail(String(reseller.id)) });
       queryClient.invalidateQueries({ queryKey: resellerKeys.lists() });
     },
   });
@@ -327,7 +416,7 @@ export function useRejectResellerMutation() {
   return useMutation({
     mutationFn: (resellerId: string) => adminApi.rejectReseller(resellerId),
     onSuccess: (reseller) => {
-      queryClient.invalidateQueries({ queryKey: resellerKeys.detail(String(reseller.data.id)) });
+      queryClient.invalidateQueries({ queryKey: resellerKeys.detail(String(reseller.id)) });
       queryClient.invalidateQueries({ queryKey: resellerKeys.lists() });
     },
   });
@@ -346,7 +435,7 @@ export function useUpdateCommissionMutation() {
       payload: ResellerApprovalRequest;
     }) => adminApi.updateResellerCommission(resellerId, payload),
     onSuccess: (reseller) => {
-      queryClient.invalidateQueries({ queryKey: resellerKeys.detail(String(reseller.data.id)) });
+      queryClient.invalidateQueries({ queryKey: resellerKeys.detail(String(reseller.id)) });
     },
   });
 }
@@ -358,7 +447,7 @@ export function useSuspendResellerMutation() {
   return useMutation({
     mutationFn: (resellerId: string) => adminApi.suspendReseller(resellerId),
     onSuccess: (reseller) => {
-      queryClient.invalidateQueries({ queryKey: resellerKeys.detail(String(reseller.data.id)) });
+      queryClient.invalidateQueries({ queryKey: resellerKeys.detail(String(reseller.id)) });
       queryClient.invalidateQueries({ queryKey: resellerKeys.lists() });
     },
   });

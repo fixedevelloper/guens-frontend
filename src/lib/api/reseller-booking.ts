@@ -9,20 +9,19 @@ export interface ResellerBookingCheckoutMultiCity{
     customAmount:number
 }
 export interface ResellerBookingResponse {
-    bookingId: string;
-    status: string;
-    providerConfirmationNumber: string | null;
+    id: string;
+    resellerId: string;
+    contactEmail: string;
+    offerType: string;
+    summary: string;
     ticketingDeadline: string | null;
-    amountDue: number;
-    currency: string;
-}
-export interface ResellerTicketResponse {
-    bookingId: string;
-    status: string;
     pnrCode: string | null;
-    eTicketNumbers: string[];
+    totalAmount: number;
+    currency: string;
+    status: string;
+    travelerCount: number;
+    createdAt: string;
 }
-
 export async function createBookingtHold(payload: ResellerBookingCheckout) {
     const { data } = await apiClient.post<ResellerBookingResponse>(
         "/api/reseller/bookings",
@@ -37,24 +36,6 @@ export async function createBookingMultiCityHold(payload: ResellerBookingCheckou
     const { data } = await apiClient.post<ResellerBookingResponse>(
         "/api/reseller/bookings/multi-city",
         payload.checkout
-    );
-    return data;
-}
-
-export async function payBooking(
-    bookingId: string,
-    payload: { paymentMethod: string; payerReference: string }
-) {
-    const { data } = await apiClient.post<ResellerBookingResponse>(
-        `/api/reseller/bookings/${bookingId}/pay`,
-        payload
-    );
-    return data;
-}
-
-export async function getBookingStatus(bookingId: string) {
-    const { data } = await apiClient.get<ResellerTicketResponse>(
-        `/api/reseller/bookings/${bookingId}`
     );
     return data;
 }

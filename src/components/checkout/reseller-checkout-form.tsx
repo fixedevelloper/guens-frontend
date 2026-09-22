@@ -4,7 +4,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray, useForm } from "react-hook-form";
 import { useTranslations } from "next-intl";
-import { Plus, Trash2, User, Mail, Phone, CreditCard, Calendar, ShieldCheck, Check, Banknote } from "lucide-react";
+import { Plus, Trash2, User, Mail, CreditCard, ShieldCheck, Check, Banknote } from "lucide-react";
 import { z } from "zod";
 import { Resolver } from "react-hook-form";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +36,10 @@ const travelerSchema = (isFlight: boolean) => z.object({
   nationality: isFlight ? z.string().trim().min(1, "La nationalité est requise") : z.string().optional(),
   passportIssueCountry: z.string().optional(),
   passportExpiryDate: z.string().optional(),
+  // Optional client-side like the other passport fields, but TravelTerminus's real Book API
+  // rejects a passenger whose passport info is submitted without it
+  // ("passengers.0.document.issuing_date_required") - see checkout-form.tsx's own copy of this.
+  passportIssueDate: z.string().optional(),
 });
 
 // Schéma pour CheckoutRequest
@@ -107,6 +111,7 @@ export function ResellerCheckoutForm({
           nationality: "",
           passportIssueCountry: "",
           passportExpiryDate: "",
+          passportIssueDate: "",
         })),
         paymentPlan: "PAY_NOW",
       },
@@ -357,6 +362,23 @@ export function ResellerCheckoutForm({
                       />
                       <FormField
                           control={form.control}
+                          name={`checkout.travelers.${index}.passportIssueDate`}
+                          render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs font-bold text-muted-foreground/90">{t("passportIssueDate")}</FormLabel>
+                                <FormControl>
+                                  <Input
+                                      type="date"
+                                      className="rounded-xl border-border/80 bg-background focus-visible:ring-primary/20"
+                                      {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                          )}
+                      />
+                      <FormField
+                          control={form.control}
                           name={`checkout.travelers.${index}.passportExpiryDate`}
                           render={({ field }) => (
                               <FormItem>
@@ -384,7 +406,7 @@ export function ResellerCheckoutForm({
                   className="mt-1 gap-1.5 rounded-full border-dashed border-border/80 hover:border-primary/40 hover:bg-primary/5 text-xs px-4"
                   onClick={() => append({
                     fullName: "", dateOfBirth: "", passportNumber: "", type: "ADULT",
-                    nationality: "", passportIssueCountry: "", passportExpiryDate: "",
+                    nationality: "", passportIssueCountry: "", passportExpiryDate: "", passportIssueDate: "",
                   })}
               >
                 <Plus className="size-3.5" />

@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
+import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
 import {
   ArrowLeft,
   Building2,
@@ -13,7 +12,6 @@ import {
   Wallet,
   Percent,
   TrendingUp,
-  Calendar,
   CheckCircle2,
   XCircle,
   Ban,
@@ -21,11 +19,9 @@ import {
   Edit3,
   Loader2,
   Plane,
-  ArrowUpRight,
   Clock,
   FileText,
   AlertCircle,
-  Check,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -53,7 +49,7 @@ import {
   useUpdateCommissionMutation,
   useSuspendResellerMutation,
 } from "@/hooks/use-admin"; // Ajustez selon votre structure
-import { ResellerStatus } from "@/lib/api/types";
+import { ResellerBooking, ResellerStatus, ResellerWithdrawal } from "@/lib/api/types";
 
 
 const STATUS_CONFIG: Record<
@@ -97,7 +93,6 @@ export default function ResellerDetailPage() {
   const { data: bookingsData, isLoading: isLoadingBookings } = useAdminResellerBookingsQuery(resellerId);
   const { data: withdrawalsData, isLoading: isLoadingWithdrawals } = useAdminResellerWithdrawalsQuery(resellerId);
 
-  const approveMutation = useApproveResellerMutation();
   const suspendMutation = useSuspendResellerMutation();
 
   if (isLoading) {
@@ -208,7 +203,7 @@ export default function ResellerDetailPage() {
         <Card className="rounded-2xl border-border/60 shadow-2xs">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-xs font-extrabold text-muted-foreground uppercase tracking-wider">
-              Chiffre d'Affaires Généré
+              Chiffre d&apos;Affaires Généré
             </CardTitle>
             <TrendingUp className="size-4 text-primary" />
           </CardHeader>
@@ -288,7 +283,7 @@ export default function ResellerDetailPage() {
               <CardHeader>
                 <CardTitle className="text-sm font-black flex items-center gap-2">
                   <Building2 className="size-4 text-primary" />
-                  <span>Informations de l'Entreprise & Contact</span>
+                  <span>Informations de l&apos;Entreprise & Contact</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
@@ -347,7 +342,7 @@ export default function ResellerDetailPage() {
                     rel="noreferrer"
                     className="p-3 rounded-xl border border-border/50 bg-muted/30 flex items-center justify-between hover:bg-muted/50 transition-colors group"
                   >
-                    <span className="text-xs font-bold text-foreground">Document d'immatriculation / Logo</span>
+                    <span className="text-xs font-bold text-foreground">Document d&apos;immatriculation / Logo</span>
                     <ExternalLink className="size-4 text-primary group-hover:translate-x-0.5 transition-transform" />
                   </a>
                 ) : (
@@ -408,7 +403,7 @@ export default function ResellerDetailPage() {
                       </td>
                     </tr>
                   ) : (
-                    bookings.map((booking: any) => (
+                    bookings.map((booking: ResellerBooking) => (
                       <tr key={booking.id} className="hover:bg-muted/30">
                         <td className="py-3 px-4 font-mono font-extrabold text-primary">
                           {booking.pnrNumber || booking.id.substring(0, 8)}
@@ -465,7 +460,7 @@ export default function ResellerDetailPage() {
                       </td>
                     </tr>
                   ) : (
-                    withdrawals.map((item: any) => (
+                    withdrawals.map((item: ResellerWithdrawal) => (
                       <tr key={item.id} className="hover:bg-muted/30">
                         <td className="py-3 px-4 font-mono font-bold">{item.id.substring(0, 8)}</td>
                         <td className="py-3 px-4 font-black">{item.amount?.toLocaleString()} XAF</td>
@@ -599,8 +594,12 @@ function EditCommissionModalDialog({
         await updateCommissionMutation.mutateAsync({ resellerId, payload: { commissionRate } });
       }
       onSuccess();
-    } catch (err: any) {
-      setError(err?.response?.data?.message || "Une erreur est survenue lors de l'enregistrement.");
+    } catch (err) {
+      const message =
+        axios.isAxiosError(err) && typeof err.response?.data?.message === "string"
+          ? err.response.data.message
+          : "Une erreur est survenue lors de l'enregistrement.";
+      setError(message);
     }
   };
 

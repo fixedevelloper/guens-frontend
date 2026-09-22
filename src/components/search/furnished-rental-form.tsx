@@ -14,7 +14,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { furnishedRentalSearchParamsToQuery } from "@/lib/search-params";
 import { PickLocationAutocomplete } from "@/components/search/pick-location-autocomplete";
-import {searchAirportSuggestions, searchCitySuggestions} from "@/lib/api/geo";
+import {searchCitySuggestions} from "@/lib/api/geo";
 
 interface FurnishedRentalFormProps {
     className?: string;
@@ -38,10 +38,13 @@ export function FurnishedRentalForm({
     const t = useTranslations("FurnishedRental");
     const router = useRouter();
 
-    const today = new Date().toISOString().split("T")[0];
-    const defaultCheckOut = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000)
-        .toISOString()
-        .split("T")[0];
+    // Lazy useState initializer plutôt qu'un calcul direct dans le corps du composant : new
+    // Date()/Date.now() sont impurs (React interdit de les appeler pendant le rendu), l'initializer
+    // de useState est le seul endroit où React garantit un appel unique, au montage.
+    const [today] = useState(() => new Date().toISOString().split("T")[0]);
+    const [defaultCheckOut] = useState(
+        () => new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
+    );
 
     const [location, setLocation] = useState("");
     const [checkInDate, setCheckInDate] = useState(today);

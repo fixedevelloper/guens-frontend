@@ -8,6 +8,7 @@ const PROFILE_KEY = "guentours.profile";
 export type UserRole =
   | "CUSTOMER"
   | "ADMIN"
+  | "AGENT"
   | "PARTNER_AIRLINE"
   | "PARTNER_HOTEL"
   | "PARTNER_CAR_RENTAL"

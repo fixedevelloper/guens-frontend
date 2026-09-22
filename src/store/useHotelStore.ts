@@ -1,7 +1,7 @@
 // store/use-hotel-store.ts
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { HarmonizedHotelOffer, HotelDescription, HotelDetail, HotelImage, RoomOffer } from "@/lib/api/types";
+import { HarmonizedHotelOffer, HotelDetail, RoomOffer } from "@/lib/api/types";
 
 // --- Panier ---
 

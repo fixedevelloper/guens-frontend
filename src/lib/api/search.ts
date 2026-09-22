@@ -10,31 +10,50 @@ import type {
   RoomOffer,
   SeatMapResponse, VehicleSearchParams,
 } from "./types";
-import {useQuery} from "@tanstack/react-query";
 
-// The page must show results (or a clear failure) within a 15s budget. The backend already
-// caps its own slowest step - the provider fan-out - at 12s (app.search.flight-provider-timeout-millis,
-// see FlightSearchService), leaving headroom for network + serialization. This per-call timeout
-// overrides the apiClient's generic 45s default (sized for the slowest endpoint in the app) so a
-// flight search that misses its own budget fails fast instead of leaving the loader spinning past
-// the point where the page is supposed to have an answer.
-const FLIGHT_SEARCH_TIMEOUT_MS = 15_000;
+// Must stay above the backend's own provider fan-out budget
+// (app.search.flight-provider-timeout-millis / FLIGHT_SEARCH_PROVIDER_TIMEOUT_MILLIS, see
+// FlightSearchService) plus headroom for network + serialization, or this fires first and aborts
+// a search the backend was still legitimately working on - which is exactly what happened here:
+// this was 15s (matching a backend budget of 12s at the time), the backend budget was since
+// raised to 52s (.env) without updating this constant to match, so every search that took the
+// backend more than 15s got aborted client-side, retried once (see QueryProvider's global
+// `retry: 1`), and aborted again - two cancelled requests, no result, for a search the backend
+// would have answered within its own 52s budget. 60s covers the current 52s backend budget with
+// margin; if that budget changes again, this needs to move with it.
+const FLIGHT_SEARCH_TIMEOUT_MS = 60_000;
 
-export async function searchFlights(params: FlightSearchParams) {
+export async function searchFlights(params: FlightSearchParams, signal?: AbortSignal) {
   const { data } = await apiClient.get<HarmonizedFlightOffer[]>("/api/search/flights", {
     params,
     timeout: FLIGHT_SEARCH_TIMEOUT_MS,
+    signal,
   });
   return data;
 }
 
-export async function searchMultiCityFlights(params: MultiCityFlightSearchParams) {
-  const { data } = await apiClient.post<MultiCityItinerary[]>("/api/search/flights/multi-city", params);
+/** Base URL for the SSE flight-search stream (see SearchController#searchFlightsStream) -
+ *  consumed directly with EventSource, not axios, so params are serialized manually here
+ *  (undefined fields dropped, matching what axios's own `params` serialization already does
+ *  for the plain {@link searchFlights} call above). */
+export function flightSearchStreamUrl(params: FlightSearchParams) {
+  const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== null) {
+      query.set(key, String(value));
+    }
+  }
+  return `${base}/api/search/flights/stream?${query.toString()}`;
+}
+
+export async function searchMultiCityFlights(params: MultiCityFlightSearchParams, signal?: AbortSignal) {
+  const { data } = await apiClient.post<MultiCityItinerary[]>("/api/search/flights/multi-city", params, { signal });
   return data;
 }
 
-export async function searchHotels(params: HotelSearchParams) {
-  const { data } = await apiClient.get<HotelSearchResult>("/api/search/hotels", { params });
+export async function searchHotels(params: HotelSearchParams, signal?: AbortSignal) {
+  const { data } = await apiClient.get<HotelSearchResult>("/api/search/hotels", { params, signal });
   return data;
 }
 
@@ -60,14 +79,14 @@ export async function getHotelRooms(offerId: string) {
 }
 
 
-export async function searchVehicles(params: VehicleSearchParams) {
-  const { data } = await apiClient.get<HarmonizedVehicleOffer[]>("/api/search/vehicles", { params });
+export async function searchVehicles(params: VehicleSearchParams, signal?: AbortSignal) {
+  const { data } = await apiClient.get<HarmonizedVehicleOffer[]>("/api/search/vehicles", { params, signal });
   return data;
 }
 // Ajout dans hooks/use-search.ts, sur exactement le modèle de useVehicleSearch
 
-export async function searchProperties(params: PropertySearchParams) {
-  const { data } = await apiClient.get<HarmonizedPropertyOffer[]>("/api/search/properties", { params });
+export async function searchProperties(params: PropertySearchParams, signal?: AbortSignal) {
+  const { data } = await apiClient.get<HarmonizedPropertyOffer[]>("/api/search/properties", { params, signal });
   return data;
 }
 

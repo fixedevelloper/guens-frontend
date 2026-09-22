@@ -102,8 +102,8 @@ export default function GeoSyncAdminPage() {
             <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-900 dark:text-amber-200 text-xs flex items-start gap-3">
                 <AlertCircle className="size-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                 <p className="leading-relaxed">
-                    La mise à jour de la base de données géo s'effectue automatiquement tous les 30 jours.
-                    Utilisez les actions ci-dessous pour **forcer un rechargement immédiat** des référentiels d'aéroports et de villes depuis les fournisseurs externes.
+                    La mise à jour de la base de données géo s&apos;effectue automatiquement tous les 30 jours.
+                    Utilisez les actions ci-dessous pour **forcer un rechargement immédiat** des référentiels d&apos;aéroports et de villes depuis les fournisseurs externes.
                 </p>
             </div>
 
@@ -127,7 +127,7 @@ export default function GeoSyncAdminPage() {
                             Référentiel Aéroports
                         </CardTitle>
                         <CardDescription className="text-xs">
-                            Met à jour les codes IATA, noms d'aéroports, villes rattachées et positions géographiques.
+                            Met à jour les codes IATA, noms d&apos;aéroports, villes rattachées et positions géographiques.
                         </CardDescription>
                     </CardHeader>
 
@@ -169,7 +169,7 @@ export default function GeoSyncAdminPage() {
                             Référentiel Villes & Destinations
                         </CardTitle>
                         <CardDescription className="text-xs">
-                            Recharge la liste des villes éligibles aux réservations d'hôtels et destinations touristiques.
+                            Recharge la liste des villes éligibles aux réservations d&apos;hôtels et destinations touristiques.
                         </CardDescription>
                     </CardHeader>
 

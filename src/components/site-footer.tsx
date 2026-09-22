@@ -129,7 +129,7 @@ export function SiteFooter() {
 
           {/* Barre de Copyright Basse */}
           <div className="mt-16 border-t border-neutral-900 pt-6 flex flex-col items-center gap-4 text-xs text-neutral-500 sm:flex-row sm:justify-between">
-            <p>© {year} Guen's Travel & Tours. {t("rights")}</p>
+            <p>© {year} Guen&apos;s Travel & Tours. {t("rights")}</p>
             <div className="flex items-center gap-6 font-medium">
               <Link href="/legal/terms" className="hover:text-neutral-300 transition-colors">{t("supportTerms")}</Link>
               <Link href="/legal/privacy" className="hover:text-neutral-300 transition-colors">{t("supportPrivacy")}</Link>

@@ -56,7 +56,7 @@ export function StepAmenitiesPolicies({ form, onChange, onToggleAmenity }: StepA
 
             <div className="grid gap-4 sm:grid-cols-2 pt-2">
                 <div className="space-y-2">
-                    <Label htmlFor="checkInTime">Heure d'arrivée (Check-in)</Label>
+                    <Label htmlFor="checkInTime">Heure d&apos;arrivée (Check-in)</Label>
                     <Input
                         id="checkInTime"
                         name="checkInTime"

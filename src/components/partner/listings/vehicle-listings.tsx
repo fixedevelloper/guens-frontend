@@ -150,6 +150,10 @@ export function VehicleListings({ partnerId }: VehicleListingsProps) {
                                                 <div className="flex items-center gap-3">
                                                     <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary/10 text-primary">
                                                         {vehicle.coverImageUrl || vehicle.coverImageUrl ? (
+                                                            /* coverImageUrl peut être une URL externe saisie à la main
+                                                               et pas seulement une image MinIO - next/image la
+                                                               rejetterait (hors remotePatterns), reste natif. */
+                                                            // eslint-disable-next-line @next/next/no-img-element
                                                             <img
                                                                 src={vehicle.coverImageUrl || vehicle.coverImageUrl}
                                                                 alt={`${vehicle.brand} ${vehicle.model}`}

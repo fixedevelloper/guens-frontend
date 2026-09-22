@@ -64,6 +64,8 @@ export default function LoginPage() {
 
             if (profile.role === "ADMIN") {
                 router.push("/workspace");
+            } else if (profile.role === "AGENT") {
+                router.push("/agent");
             } else if (
                 PARTNER_ROLES.includes(profile.role as (typeof PARTNER_ROLES)[number])
             ) {
@@ -102,7 +104,7 @@ export default function LoginPage() {
                         />
                     </div>
                     <span className="font-black text-base uppercase tracking-wider text-white drop-shadow-sm">
-            Guen's Travel
+            Guen&apos;s Travel
           </span>
                 </Link>
 
@@ -154,7 +156,7 @@ export default function LoginPage() {
                                 />
                             </div>
                             <span className="font-black text-xs uppercase tracking-wider text-foreground sm:text-sm">
-                Guen's Travel
+                Guen&apos;s Travel
               </span>
                         </Link>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import axios from "axios";
 import { useRouter } from "next/navigation";
 import {
     ChevronLeft,
@@ -207,13 +208,13 @@ export default function NewPropertyPage() {
             await createPropertyMutation.mutateAsync(payload);
             toast.success("Résidence meublée créée avec succès !");
             router.push("/partner/listings");
-        } catch (error: any) {
+        } catch (error) {
             console.error("Erreur lors de la création de la résidence:", error);
-            toast.error(
-                error?.response?.data?.message ||
-                error?.message ||
-                "Impossible de créer la résidence meublée pour le moment."
-            );
+            const message =
+                axios.isAxiosError(error) && typeof error.response?.data?.message === "string"
+                    ? error.response.data.message
+                    : "Impossible de créer la résidence meublée pour le moment.";
+            toast.error(message);
         }
     }
 
@@ -250,7 +251,7 @@ export default function NewPropertyPage() {
                             <div className="space-y-4 animate-in fade-in-50 duration-200">
                                 <div className="space-y-2">
                                     <Label htmlFor="title" className="text-xs font-bold">
-                                        Titre de l'annonce *
+                                        Titre de l&apos;annonce *
                                     </Label>
                                     <Input
                                         id="title"
@@ -265,7 +266,7 @@ export default function NewPropertyPage() {
 
                                 <div className="space-y-2">
                                     <Label htmlFor="propertyType" className="text-xs font-bold">
-                                        Type d'hébergement *
+                                        Type d&apos;hébergement *
                                     </Label>
                                     <Select
                                         value={form.propertyType}
@@ -523,9 +524,9 @@ export default function NewPropertyPage() {
                                         <div className="p-3 bg-primary/10 rounded-full text-primary mb-3 group-hover:scale-110 transition-transform">
                                             <UploadCloud className="size-6" />
                                         </div>
-                                        <span className="text-xs font-bold">Sélectionner l'image de couverture</span>
+                                        <span className="text-xs font-bold">Sélectionner l&apos;image de couverture</span>
                                         <span className="text-[10px] text-muted-foreground mt-1">
-                                            Ouvre la galerie pour choisir ou téléverser l'image principale
+                                            Ouvre la galerie pour choisir ou téléverser l&apos;image principale
                                         </span>
                                     </button>
                                 )}

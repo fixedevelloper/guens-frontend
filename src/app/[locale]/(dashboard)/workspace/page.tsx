@@ -7,7 +7,6 @@ import { Link } from "@/i18n/navigation";
 import { useAdminBookingsQuery, useAdminUsersQuery, useCommissionWalletQuery } from "@/hooks/use-admin";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BookingRow } from "@/components/dashboard/booking-row";
 import { formatMoney } from "@/lib/format";
@@ -57,9 +56,9 @@ export default function AdminOverviewPage() {
             <p className="text-[10px] font-bold text-muted-foreground tracking-wider uppercase truncate">
               {t("totalBookings") ?? "Réservations"}
             </p>
-            <p className="text-xl font-black text-foreground tracking-tight">
+            <div className="text-xl font-black text-foreground tracking-tight">
               {isLoading ? <Skeleton className="h-6 w-12 rounded-md" /> : (bookingsQuery.data?.length ?? 0)}
-            </p>
+            </div>
           </div>
         </div>
 
@@ -72,7 +71,7 @@ export default function AdminOverviewPage() {
             <p className="text-[10px] font-bold text-muted-foreground tracking-wider uppercase truncate">
               {t("totalRevenue") ?? "Volume d'affaires"}
             </p>
-            <p className="text-xl font-black text-foreground tracking-tight">
+            <div className="text-xl font-black text-foreground tracking-tight">
               {isLoading ? (
                 <Skeleton className="h-6 w-24 rounded-md" />
               ) : bookingsQuery.data ? (
@@ -80,7 +79,7 @@ export default function AdminOverviewPage() {
               ) : (
                 "-"
               )}
-            </p>
+            </div>
           </div>
         </div>
 
@@ -122,9 +121,9 @@ export default function AdminOverviewPage() {
             <p className="text-[10px] font-bold text-muted-foreground tracking-wider uppercase truncate">
               {t("totalUsers") ?? "Utilisateurs"}
             </p>
-            <p className="text-xl font-black text-foreground tracking-tight">
+            <div className="text-xl font-black text-foreground tracking-tight">
               {isLoading ? <Skeleton className="h-6 w-12 rounded-md" /> : (usersQuery.data?.totalElements ?? 0)}
-            </p>
+            </div>
           </div>
         </div>
 

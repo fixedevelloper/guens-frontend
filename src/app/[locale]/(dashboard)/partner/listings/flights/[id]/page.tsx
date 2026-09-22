@@ -107,7 +107,7 @@ export default function FlightDetailPage() {
                 </div>
                 <h2 className="text-lg font-bold">Vol introuvable</h2>
                 <p className="text-xs text-muted-foreground">
-                    Ce vol n'existe pas ou a été supprimé.
+                    Ce vol n&apos;existe pas ou a été supprimé.
                 </p>
                 <Button asChild size="sm" variant="outline" className="rounded-xl text-xs font-bold">
                     <Link href="/partner/listings">
@@ -253,7 +253,7 @@ export default function FlightDetailPage() {
                         {/* Destination */}
                         <div className="space-y-1 md:text-right">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                                Aéroport d'arrivée
+                                Aéroport d&apos;arrivée
                             </span>
                             <div className="text-3xl font-black font-mono tracking-widest text-primary">
                                 {flight.destinationAirportCode}
@@ -279,7 +279,7 @@ export default function FlightDetailPage() {
                     </CardHeader>
                     <CardContent className="space-y-3">
                         <p className="text-xs text-muted-foreground">
-                            Jours d'opération programmés pour ce vol :
+                            Jours d&apos;opération programmés pour ce vol :
                         </p>
                         <div className="grid grid-cols-7 gap-1.5">
                             {[1, 2, 3, 4, 5, 6, 7].map((dayId) => {
@@ -332,7 +332,7 @@ export default function FlightDetailPage() {
                         </div>
 
                         <div className="flex items-center justify-between py-1.5">
-                            <span className="text-muted-foreground font-medium">Statut d'exploitation</span>
+                            <span className="text-muted-foreground font-medium">Statut d&apos;exploitation</span>
                             <span className="flex items-center gap-1 font-bold">
                                 {isActive ? (
                                     <>

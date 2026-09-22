@@ -28,7 +28,7 @@ export default function AdminBookingsPage() {
             {t("allBookingsTitle") ?? "Toutes les réservations"}
           </h1>
           <p className="text-xs text-muted-foreground/80 font-medium mt-0.5">
-            Gérez et supervisez l'intégralité des billets d'avion et nuitées d'hôtel.
+            Gérez et supervisez l&apos;intégralité des billets d&apos;avion et nuitées d&apos;hôtel.
           </p>
         </div>
         

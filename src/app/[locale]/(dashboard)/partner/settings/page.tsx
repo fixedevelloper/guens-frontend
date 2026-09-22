@@ -124,7 +124,7 @@ export default function PartnerSettingsPage() {
                 {/* Légal / Immuable */}
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
-                        <Label htmlFor="registrationNumber">N° d'immatriculation (RCCM/NIF)</Label>
+                        <Label htmlFor="registrationNumber">N° d&apos;immatriculation (RCCM/NIF)</Label>
                         <Input
                             id="registrationNumber"
                             value={partner.registrationNumber ?? ""}
@@ -148,7 +148,7 @@ export default function PartnerSettingsPage() {
                 {/* Informations entreprise & contact principal */}
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
-                        <Label htmlFor="companyName">Nom de l'entreprise</Label>
+                        <Label htmlFor="companyName">Nom de l&apos;entreprise</Label>
                         <Input
                             id="companyName"
                             value={form.companyName}
@@ -235,7 +235,7 @@ export default function PartnerSettingsPage() {
 
                 {/* Description */}
                 <div className="space-y-2">
-                    <Label htmlFor="description">Description de l'activité</Label>
+                    <Label htmlFor="description">Description de l&apos;activité</Label>
                     <Textarea
                         id="description"
                         rows={4}

@@ -103,7 +103,7 @@ export function PropertyListings({ partnerId }: { partnerId: string }) {
                         </div>
                         <h3 className="text-sm font-bold text-foreground">Aucun logement enregistré</h3>
                         <p className="text-xs text-muted-foreground mt-1 max-w-sm font-medium">
-                            Vous n'avez pas encore publié de résidence meublée ou d'appartement.
+                            Vous n&apos;avez pas encore publié de résidence meublée ou d&apos;appartement.
                         </p>
                         <Button size="sm" asChild className="mt-4 rounded-xl font-bold text-xs h-9 px-4">
                             <Link href="/partner/listings/properties/new">

@@ -83,8 +83,8 @@ export function HotelAmenities({ amenities }: HotelAmenitiesProps) {
 
         // Si la clé existe dans i18n on traduit, sinon on affiche le texte brut du fournisseur
         let label = facility;
-        if (t.has(facility as any)) {
-          label = t(facility as any);
+        if (t.has(facility)) {
+          label = t(facility as Parameters<typeof t>[0]);
         }
 
         return (

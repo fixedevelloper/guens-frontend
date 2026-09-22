@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import NextImage from "next/image";
 import {
     Image as ImageIcon,
     Upload,
@@ -226,12 +227,12 @@ export function ImageSelectModal({
                                                         : "border-transparent hover:border-muted-foreground/30"
                                                 }`}
                                             >
-                                                <img
+                                                <NextImage
                                                     src={img.url}
                                                     alt={img.name}
-                                                    loading="lazy"
-                                                    decoding="async"
-                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                    fill
+                                                    sizes="(max-width: 768px) 33vw, 25vw"
+                                                    className="object-cover group-hover:scale-105 transition-transform duration-300"
                                                 />
                                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity p-2 flex flex-col justify-end">
                                                     <span className="text-[11px] text-white truncate font-medium">
@@ -269,7 +270,7 @@ export function ImageSelectModal({
                                 </div>
                                 <div>
                                     <p className="font-semibold text-sm">Cliquez ou glissez une image ici</p>
-                                    <p className="text-xs text-muted-foreground mt-1">PNG, JPG, WEBP jusqu'à 10MB</p>
+                                    <p className="text-xs text-muted-foreground mt-1">PNG, JPG, WEBP jusqu&apos;à 10MB</p>
                                 </div>
                             </label>
                         </div>
@@ -277,6 +278,9 @@ export function ImageSelectModal({
                         {/* Aperçu de l'image importée en fichier */}
                         {filePreview && (
                             <div className="relative h-40 w-full rounded-xl overflow-hidden border">
+                                {/* blob: URL (URL.createObjectURL, ligne 125) - next/image ne peut pas
+                                    l'optimiser (ni remotePatterns ni fichier local), reste natif. */}
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img src={filePreview} alt="Aperçu" className="w-full h-full object-cover" />
                                 <button
                                     onClick={() => {
@@ -302,7 +306,7 @@ export function ImageSelectModal({
                         <div className="space-y-2">
                             <Label htmlFor="url" className="flex items-center gap-1.5">
                                 <LinkIcon className="size-3.5 text-muted-foreground" />
-                                Lien direct vers l'image
+                                Lien direct vers l&apos;image
                             </Label>
                             <Input
                                 id="url"

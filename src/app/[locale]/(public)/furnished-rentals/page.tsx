@@ -11,7 +11,6 @@ import {
     BedDouble,
     KeyRound,
     Wifi,
-    Tv,
     Utensils,
     Waves,
     Lock,

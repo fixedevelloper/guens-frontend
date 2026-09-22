@@ -74,6 +74,9 @@ export function CoverImagePicker({
             {/* Zone d'affichage si une image est sélectionnée */}
             {value ? (
                 <div className="relative group rounded-2xl overflow-hidden border border-border bg-muted/30 aspect-video max-h-72 w-full flex items-center justify-center">
+                    {/* value peut être une data: URL (FileReader.readAsDataURL, aperçu local avant
+                        upload) - next/image ne peut pas l'optimiser, reste natif. */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                         src={value}
                         alt="Aperçu de la couverture"
@@ -90,7 +93,7 @@ export function CoverImagePicker({
                             className="rounded-xl gap-2 shadow-lg"
                         >
                             <Trash2 className="size-4" />
-                            Supprimer l'image
+                            Supprimer l&apos;image
                         </Button>
                     </div>
 
