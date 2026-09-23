@@ -26,6 +26,8 @@ import {
     type ResellerCheckoutFormValues,
 } from "@/components/checkout/reseller-checkout-form";
 import {ResellerBookingCheckout, ResellerBookingCheckoutMultiCity} from "@/lib/api/reseller-booking";
+import { useAuth } from "@/context/auth-context";
+import { useResellerProfileQuery } from "@/hooks/use-rellers-queries";
 
 const MAX_SEATS = 9;
 
@@ -55,6 +57,10 @@ function ResellerCheckoutPageContent() {
     const router = useRouter();
 
     const offer = useMemo(() => parseOfferSummary(searchParams), [searchParams]);
+    // Marge maximum fixée par l'admin (Reseller.commissionRate) - plafonne la marge du formulaire.
+    const { user } = useAuth();
+    const { data: resellerProfile } = useResellerProfileQuery(user?.resellerId);
+    const maxMarkupRate = Number(resellerProfile?.commissionRate ?? 0);
 
     const needsSeatSelection = offer?.offerType === "FLIGHT";
     const [seatCount, setSeatCount] = useState(1);
@@ -153,7 +159,7 @@ function ResellerCheckoutPageContent() {
         if (offer.offerType === "MULTI_CITY_FLIGHT") {
             // 1. Payload typé ResellerBookingCheckoutMultiCity
             const payload: ResellerBookingCheckoutMultiCity = {
-                customAmount: formValues.customAmount,
+                markupRate: (Number(formValues.markupPercent) || 0) / 100,
                 checkout: {
                     ...formValues.checkout,
                     travelers,
@@ -165,7 +171,7 @@ function ResellerCheckoutPageContent() {
         } else {
             // 2. Payload typé ResellerBookingCheckout
             const payload: ResellerBookingCheckout = {
-                customAmount: formValues.customAmount,
+                markupRate: (Number(formValues.markupPercent) || 0) / 100,
                 checkout: {
                     ...formValues.checkout,
                     travelers,
@@ -321,10 +327,13 @@ function ResellerCheckoutPageContent() {
 
                 <div className="rounded-2xl border border-border/60 bg-background p-5 sm:p-6 shadow-sm">
                     <ResellerCheckoutForm
+                        key={maxMarkupRate}
                         onSubmit={handleSubmit}
                         isSubmitting={isSubmitting}
                         travelerCount={needsSeatSelection ? seatCount : undefined}
                         seatLabelsByTraveler={seatLabelsByTraveler}
+                        maxMarkupRate={maxMarkupRate}
+                        resellerPrice={{ amount: Number(offer.amount), currency: offer.currency }}
                     />
                 </div>
             </div>

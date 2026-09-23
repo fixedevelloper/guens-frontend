@@ -64,11 +64,15 @@ const buildCheckoutRequestSchema = (isFlight: boolean) => z.object({
   paymentPlan: z.enum(["PAY_NOW", "PAY_LATER"]),
 });
 
-const buildSchema = (isFlight: boolean) => z.object({
+// Marge du revendeur en pourcentage (5 = 5 %), appliquée côté serveur sur son prix revendeur
+// (prix fournisseur + frais revendeur) - plafonnée par la marge maximum fixée par l'admin.
+const buildSchema = (isFlight: boolean, maxMarkupPercent: number) => z.object({
   checkout: buildCheckoutRequestSchema(isFlight),
-  customAmount: z.preprocess(
+  markupPercent: z.preprocess(
       (val) => (val === "" || val === null || val === undefined ? 0 : Number(val)),
-      z.number().min(0, "Le montant doit être supérieur ou égal à 0")
+      z.number()
+          .min(0, "La marge doit être supérieure ou égale à 0")
+          .max(maxMarkupPercent, `La marge ne peut pas dépasser ${maxMarkupPercent} %`)
   ).default(0),
 });
 
@@ -84,6 +88,10 @@ interface ResellerCheckoutFormProps {
   isSubmitting: boolean;
   /** Rend date de naissance et nationalité obligatoires par voyageur - requis par les fournisseurs de vols. */
   isFlight?: boolean;
+  /** Marge maximum fixée par l'admin, en fraction (0.05 = 5 %) - Reseller.commissionRate. */
+  maxMarkupRate?: number;
+  /** Prix revendeur affiché pour l'offre, pour l'aperçu du prix client. */
+  resellerPrice?: { amount: number; currency: string };
 }
 
 export function ResellerCheckoutForm({
@@ -92,11 +100,15 @@ export function ResellerCheckoutForm({
                                         onSubmit,
                                         isSubmitting,
                                         isFlight = false,
+                                        maxMarkupRate = 0,
+                                        resellerPrice,
                                       }: ResellerCheckoutFormProps) {
   const t = useTranslations("Checkout");
+  // Arrondi à 2 décimales pour éviter 0.07 * 100 = 7.000000000000001 dans le message de limite.
+  const maxMarkupPercent = Math.round(maxMarkupRate * 10000) / 100;
 
   const form = useForm<ResellerCheckoutFormValues>({
-    resolver: zodResolver(buildSchema(isFlight)) as unknown as Resolver<ResellerCheckoutFormValues>,
+    resolver: zodResolver(buildSchema(isFlight, maxMarkupPercent)) as unknown as Resolver<ResellerCheckoutFormValues>,
     defaultValues: {
       checkout: {
         contactEmail: "",
@@ -115,7 +127,7 @@ export function ResellerCheckoutForm({
         })),
         paymentPlan: "PAY_NOW",
       },
-      customAmount: 0,
+      markupPercent: 0,
     },
   });
 
@@ -125,6 +137,12 @@ export function ResellerCheckoutForm({
   });
 
   const paymentPlan = form.watch("checkout.paymentPlan");
+  const markupPercent = Number(form.watch("markupPercent")) || 0;
+  const markupPreview = resellerPrice
+      ? Math.round(resellerPrice.amount * Math.min(Math.max(markupPercent, 0), maxMarkupPercent)) / 100
+      : null;
+  const formatMoney = (amount: number, currency: string) =>
+      new Intl.NumberFormat("fr-FR", { style: "currency", currency, maximumFractionDigits: 2 }).format(amount);
 
   function handleSubmit(values: ResellerCheckoutFormValues) {
     onSubmit(values);
@@ -465,29 +483,31 @@ export function ResellerCheckoutForm({
               </div>
             </div>
 
-            {/* Champ Montant Personnalisé (Option B2B Revendeur) */}
+            {/* Marge revendeur (plafonnée par l'admin) */}
             <div className="p-4 rounded-2xl border border-primary/20 bg-primary/5 space-y-3">
               <div className="flex items-center gap-2">
                 <Banknote className="size-4 text-primary" />
                 <span className="text-xs font-bold text-foreground uppercase tracking-wider">
-                Surcharges & Ajustement Tarifaire
+                Ma marge sur cette vente
               </span>
               </div>
 
               <FormField
                   control={form.control}
-                  name="customAmount"
+                  name="markupPercent"
                   render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-xs font-medium text-muted-foreground">
-                          Montant personnalisé / Prix ajusté
+                          Marge ajoutée au prix revendeur (%) - maximum autorisé : {maxMarkupPercent} %
                         </FormLabel>
                         <FormControl>
                           <Input
                               type="number"
-                              step="any"
+                              step="0.1"
                               min="0"
+                              max={maxMarkupPercent}
                               placeholder="0"
+                              disabled={maxMarkupPercent <= 0}
                               className="rounded-xl border-border/80 bg-background font-semibold focus-visible:ring-primary/20"
                               {...field}
                           />
@@ -496,6 +516,38 @@ export function ResellerCheckoutForm({
                       </FormItem>
                   )}
               />
+
+              {maxMarkupPercent <= 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Aucune marge n&apos;est autorisée sur votre compte pour le moment - contactez l&apos;administrateur.
+                  </p>
+              )}
+
+              {resellerPrice && markupPreview !== null && (
+                  <div className="grid grid-cols-3 gap-2 rounded-xl bg-background/80 p-3 text-xs">
+                    <div>
+                      <span className="block text-muted-foreground">Prix revendeur</span>
+                      <span className="font-semibold text-foreground">
+                        {formatMoney(resellerPrice.amount, resellerPrice.currency)}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="block text-muted-foreground">Ma marge</span>
+                      <span className="font-semibold text-primary">
+                        +{formatMoney(markupPreview, resellerPrice.currency)}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="block text-muted-foreground">Prix client</span>
+                      <span className="font-bold text-foreground">
+                        {formatMoney(resellerPrice.amount + markupPreview, resellerPrice.currency)}
+                      </span>
+                    </div>
+                    <p className="col-span-3 text-[11px] text-muted-foreground">
+                      Aperçu sur le prix de l&apos;offre, hors options. Le montant final est calculé par le serveur.
+                    </p>
+                  </div>
+              )}
             </div>
           </div>
 

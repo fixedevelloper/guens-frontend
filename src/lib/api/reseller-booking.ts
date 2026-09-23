@@ -1,12 +1,14 @@
 import { apiClient } from "./client";
 import {CheckoutRequest, MultiCityCheckoutRequest} from "@/lib/api/types";
+/** markupRate : marge du revendeur en fraction (0.05 = 5 %), plafonnée côté serveur par la marge
+ *  maximum fixée par l'admin. Le prix final est toujours calculé par le serveur. */
 export interface ResellerBookingCheckout {
     checkout: CheckoutRequest;
-    customAmount:number
+    markupRate: number;
 }
 export interface ResellerBookingCheckoutMultiCity{
     checkout: MultiCityCheckoutRequest;
-    customAmount:number
+    markupRate: number;
 }
 export interface ResellerBookingResponse {
     id: string;
@@ -21,13 +23,15 @@ export interface ResellerBookingResponse {
     status: string;
     travelerCount: number;
     createdAt: string;
+    markupRate: number | null;
+    markupAmount: number | null;
 }
 export async function createBookingtHold(payload: ResellerBookingCheckout) {
     const { data } = await apiClient.post<ResellerBookingResponse>(
         "/api/reseller/bookings",
         {
             checkoutRequest: payload.checkout,
-            customAmount: payload.customAmount,
+            markupRate: payload.markupRate,
         }
     );
     return data;
@@ -35,7 +39,10 @@ export async function createBookingtHold(payload: ResellerBookingCheckout) {
 export async function createBookingMultiCityHold(payload: ResellerBookingCheckoutMultiCity) {
     const { data } = await apiClient.post<ResellerBookingResponse>(
         "/api/reseller/bookings/multi-city",
-        payload.checkout
+        {
+            checkoutRequest: payload.checkout,
+            markupRate: payload.markupRate,
+        }
     );
     return data;
 }

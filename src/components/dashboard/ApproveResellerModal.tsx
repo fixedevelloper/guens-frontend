@@ -74,14 +74,14 @@ export const ApproveResellerModal: React.FC<ApproveResellerModalProps> = ({
           </h3>
         </div>
         <p className="text-xs text-muted-foreground font-medium">
-          Définissez la commission accordée à{" "}
-          <span className="font-extrabold text-foreground">{resellerName}</span>.
+          Définissez la marge maximum que{" "}
+          <span className="font-extrabold text-foreground">{resellerName}</span> pourra ajouter sur son prix revendeur à chaque vente.
         </p>
 
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
           <div>
             <label className="block text-xs font-bold text-foreground mb-1.5">
-              Taux de commission (%)
+              Marge maximum (%)
             </label>
             <div className="relative">
               <Input

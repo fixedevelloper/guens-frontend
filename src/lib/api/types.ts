@@ -1161,14 +1161,24 @@ export interface ResellerDetail {
   updatedAt: string;
 }
 
+/** Miroir de ResellerBookingResponse (GET /api/resellers/{id}/bookings). */
 export interface ResellerBooking {
   id: string;
-  pnrNumber?: string;
-  passengerName: string;
+  resellerId: string;
+  contactEmail: string;
+  offerType: string;
+  summary: string;
+  ticketingDeadline: string | null;
+  pnrCode: string | null;
   totalAmount: number;
-  commissionAmount: number;
+  currency: string;
   status: string;
+  travelerCount: number;
   createdAt: string;
+  /** Marge choisie par le revendeur pour cette vente (0.05 = 5 %), null sur les ventes d'avant la marge. */
+  markupRate: number | null;
+  /** Marge du revendeur sur cette vente = sa commission (null sur les ventes d'avant la marge). */
+  markupAmount: number | null;
 }
 
 export interface ResellerWithdrawal {

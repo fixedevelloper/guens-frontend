@@ -228,7 +228,7 @@ export default function ResellersListPage() {
               <tr className="border-b border-border/40 bg-muted/40 text-[11px] font-black uppercase text-muted-foreground tracking-wider">
                 <th className="py-3.5 px-4">Entreprise / Contact</th>
                 <th className="py-3.5 px-4">Code Promo</th>
-                <th className="py-3.5 px-4">Commission</th>
+                <th className="py-3.5 px-4">Marge max</th>
                 <th className="py-3.5 px-4">Ventes / Portefeuille</th>
                 <th className="py-3.5 px-4">Statut</th>
                 <th className="py-3.5 px-4 text-right">Actions</th>

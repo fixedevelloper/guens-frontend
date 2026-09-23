@@ -170,7 +170,7 @@ export default function ResellerDetailPage() {
             className="rounded-xl font-bold text-xs gap-1.5"
           >
             <Edit3 className="size-3.5" />
-            <span>Modifier Taux ({((reseller.commissionRate ?? 0) * 100).toFixed(1)}%)</span>
+            <span>Marge max ({((reseller.commissionRate ?? 0) * 100).toFixed(1)}%)</span>
           </Button>
 
           {reseller.status !== "APPROVED" && (
@@ -352,15 +352,15 @@ export default function ResellerDetailPage() {
 
               <div className="border-t border-border/40 pt-4">
                 <h3 className="text-xs font-black uppercase text-muted-foreground tracking-wider mb-2">
-                  Paramètres de Commission
+                  Marge revendeur
                 </h3>
                 <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-800 dark:text-emerald-300">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold">Commission Actuelle</span>
+                    <span className="text-xs font-bold">Marge maximum autorisée</span>
                     <span className="text-lg font-black">{((reseller.commissionRate ?? 0) * 100).toFixed(1)}%</span>
                   </div>
                   <p className="text-[11px] opacity-80 mt-1">
-                    Génère {((reseller.commissionRate ?? 0) * 10000).toLocaleString()} XAF par tranche de 100 000 XAF vendus.
+                    Le revendeur peut ajouter jusqu&apos;à {((reseller.commissionRate ?? 0) * 100).toFixed(1)}% sur son prix revendeur ; cette marge est sa commission.
                   </p>
                 </div>
               </div>
@@ -374,7 +374,7 @@ export default function ResellerDetailPage() {
             <div className="p-4 border-b border-border/40">
               <h3 className="text-sm font-black">Réservations attribuées</h3>
               <p className="text-xs text-muted-foreground">
-                Billets achetés par les clients avec le code promo <span className="font-mono font-bold text-foreground">{reseller.promoCode}</span>
+                Ventes réalisées par le revendeur depuis son espace
               </p>
             </div>
             <div className="overflow-x-auto">
@@ -382,9 +382,9 @@ export default function ResellerDetailPage() {
                 <thead>
                   <tr className="border-b border-border/40 bg-muted/40 text-[11px] font-black uppercase text-muted-foreground">
                     <th className="py-3 px-4">Réf. PNR</th>
-                    <th className="py-3 px-4">Passager</th>
-                    <th className="py-3 px-4">Montant Billet</th>
-                    <th className="py-3 px-4">Commission Générée</th>
+                    <th className="py-3 px-4">Client / Produit</th>
+                    <th className="py-3 px-4">Montant client</th>
+                    <th className="py-3 px-4">Marge revendeur</th>
                     <th className="py-3 px-4">Date</th>
                   </tr>
                 </thead>
@@ -399,19 +399,29 @@ export default function ResellerDetailPage() {
                   ) : bookings.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="py-8 text-center text-muted-foreground">
-                        Aucune réservation enregistrée pour ce code promo.
+                        Aucune vente enregistrée pour ce revendeur.
                       </td>
                     </tr>
                   ) : (
                     bookings.map((booking: ResellerBooking) => (
                       <tr key={booking.id} className="hover:bg-muted/30">
                         <td className="py-3 px-4 font-mono font-extrabold text-primary">
-                          {booking.pnrNumber || booking.id.substring(0, 8)}
+                          {booking.pnrCode || booking.id.substring(0, 8)}
                         </td>
-                        <td className="py-3 px-4 font-bold">{booking.passengerName || "N/A"}</td>
-                        <td className="py-3 px-4">{booking.totalAmount?.toLocaleString()} XAF</td>
+                        <td className="py-3 px-4">
+                          <span className="block font-bold">{booking.contactEmail || "N/A"}</span>
+                          <span className="block text-[11px] text-muted-foreground">
+                            {booking.summary} · {booking.travelerCount} voyageur(s)
+                          </span>
+                        </td>
+                        <td className="py-3 px-4">{booking.totalAmount?.toLocaleString()} {booking.currency}</td>
                         <td className="py-3 px-4 font-black text-emerald-600">
-                          +{(booking.commissionAmount ?? 0).toLocaleString()} XAF
+                          +{(booking.markupAmount ?? 0).toLocaleString()} {booking.currency}
+                          {booking.markupRate != null && (
+                            <span className="ml-1 text-[11px] font-medium text-muted-foreground">
+                              ({(booking.markupRate * 100).toFixed(1)}%)
+                            </span>
+                          )}
                         </td>
                         <td className="py-3 px-4 text-muted-foreground">
                           {new Date(booking.createdAt).toLocaleDateString("fr-FR")}
@@ -609,17 +619,17 @@ function EditCommissionModalDialog({
         <DialogHeader>
           <DialogTitle className="text-lg font-black flex items-center gap-2">
             <Percent className="size-5 text-primary" />
-            <span>{isApproval ? "Approuver & Fixer la commission" : "Modifier le taux de commission"}</span>
+            <span>{isApproval ? "Approuver & fixer la marge maximum" : "Modifier la marge maximum"}</span>
           </DialogTitle>
           <DialogDescription className="text-xs text-muted-foreground font-medium pt-1">
-            Définissez le pourcentage que le revendeur percevra sur chaque réservation.
+            Pourcentage maximum que le revendeur pourra ajouter sur son prix revendeur à chaque vente - cette marge constitue sa commission.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
           <div>
             <label className="block text-xs font-bold text-foreground mb-1.5">
-              Nouveau taux de commission (%)
+              Nouvelle marge maximum (%)
             </label>
             <div className="relative">
               <Input
