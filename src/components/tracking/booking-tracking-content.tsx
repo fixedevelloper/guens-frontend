@@ -15,6 +15,7 @@ import {
   Ticket,
   RotateCw,
   Search,
+  BedDouble,
   Luggage,
   UtensilsCrossed,
   Armchair,
@@ -40,6 +41,7 @@ import {
   useRetryBookingMutation,
 } from "@/hooks/use-booking";
 import { useBookingTracking } from "@/hooks/use-booking-tracking";
+import { useHotelStore } from "@/store/useHotelStore";
 import { normalizeApiError } from "@/lib/api/client";
 import { airlineLabel, formatDateTime, formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -91,6 +93,9 @@ export function BookingTrackingContent({
   const tPayment = useTranslations("Payment");
   const locale = useLocale();
   const router = useRouter();
+  // Page de l'hôtel où la chambre a été choisie : après l'échec d'une réservation d'hôtel (chambre
+  // partie ou prix changé), on y ramène pour en choisir une autre plutôt qu'à une nouvelle recherche.
+  const lastHotelDetailPath = useHotelStore((state) => state.lastHotelDetailPath);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
   // Incrémenté après un "Réessayer" réussi pour rouvrir le flux SSE, fermé côté client dès
   // qu'un statut FAILED est reçu (terminal) - sans ça, la tentative relancée ne recevrait
@@ -107,6 +112,10 @@ export function BookingTrackingContent({
   const queryClient = useQueryClient();
 
   const status = tracking.liveStatus ?? bookingQuery.data?.status;
+  // Vol confirmé dont le fournisseur n'a encore envoyé aucun numéro de billet (Travel Terminus émet
+  // en différé) : "confirmé" ne veut pas encore dire "billets émis".
+  const awaitingTickets = status === "CONFIRMED" && bookingQuery.data?.offerType === "FLIGHT"
+      && (bookingQuery.data?.eTicketNumbers?.length ?? 0) === 0;
   const previousStatusRef = useRef<BookingStatus | undefined>(undefined);
 
   // Ce timer n'est PAS un compte à rebours avant annulation de la réservation (ça, c'est un job
@@ -232,7 +241,7 @@ export function BookingTrackingContent({
   }
 
   const canCancel = status !== "CANCELLED" && status !== "FAILED" && status !== "PENDING_HOLD"
-      && status !== "PRICE_CHANGED";
+      && status !== "PRICE_CHANGED" && status !== "CANCEL_REQUESTED";
   const inProgress = IN_PROGRESS_STATUSES.includes(status) && !tracking.connectionError;
   const needsPayment = status === "PENDING_PAYMENT" || status === "DEPOSIT_PAID";
 
@@ -271,7 +280,7 @@ export function BookingTrackingContent({
           </CardHeader>
 
           <div className="p-5 sm:p-6 border-b border-border/40">
-            <BookingStepper status={status} />
+            <BookingStepper status={status} awaitingTickets={awaitingTickets} />
           </div>
 
           <CardContent className="p-5 sm:p-6 space-y-6">
@@ -343,7 +352,7 @@ export function BookingTrackingContent({
                   <div className="space-y-1">
                     <span className="font-bold text-foreground block">{t("realtimeUpdateTitle")}</span>
                     <p className="text-xs text-muted-foreground/90">
-                      {t(`statusDescription.${status}`)}
+                      {awaitingTickets ? t("statusDescription.CONFIRMED_AWAITING_TICKETS") : t(`statusDescription.${status}`)}
                     </p>
                   </div>
                 </div>
@@ -383,6 +392,17 @@ export function BookingTrackingContent({
                                     <RotateCw className="size-3.5" />
                                 )}
                                 {t("retryAction")}
+                              </Button>
+                          )}
+                          {booking.offerType === "HOTEL" && !booking.retryable && lastHotelDetailPath && (
+                              <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  className="rounded-xl font-bold gap-1.5"
+                                  onClick={() => router.push(lastHotelDetailPath)}
+                              >
+                                <BedDouble className="size-3.5" />
+                                {t("chooseAnotherRoomAction")}
                               </Button>
                           )}
                           <Button
@@ -563,7 +583,11 @@ export function BookingTrackingContent({
                         </Button>
                     )}
                   </div>
-                  <TicketList bookingId={bookingId} enabled={status === "CONFIRMED"} />
+                  <TicketList
+                      bookingId={bookingId}
+                      enabled={status === "CONFIRMED"}
+                      awaitingIssuance={awaitingTickets}
+                  />
                 </div>
             )}
 

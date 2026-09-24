@@ -28,6 +28,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useHotelDetail, useHotelRooms } from "@/hooks/use-search";
 import { useHotelStore } from "@/store/useHotelStore";
+import { usePathname } from "@/i18n/navigation";
 import type { HotelDetail } from "@/lib/api/types";
 
 interface HotelDetailPageContentProps {
@@ -58,6 +59,14 @@ export function HotelDetailPageContent({
   const setRoomOffers = useHotelStore((state) => state.setRoomOffers);
   const setLoading = useHotelStore((state) => state.setLoading);
   const setError = useHotelStore((state) => state.setError);
+  const setLastHotelDetailPath = useHotelStore((state) => state.setLastHotelDetailPath);
+  const pathname = usePathname();
+
+  // Mémorise cette page (avec ses paramètres de recherche) pour y revenir choisir une autre chambre
+  // si la réservation échoue (chambre partie entre-temps) - cf. booking-tracking-content.tsx.
+  useEffect(() => {
+    setLastHotelDetailPath(`${pathname}${window.location.search}`);
+  }, [pathname, setLastHotelDetailPath]);
 
   // 1. Récupération des offres de chambres
   const {

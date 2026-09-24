@@ -5,7 +5,6 @@ import { useLocale, useTranslations } from "next-intl";
 import {
     Banknote,
     Hash,
-    ArrowUpRight,
     ArrowDownLeft,
     RefreshCw,
     Search,
@@ -36,6 +35,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import type { CommissionType } from "@/lib/api/types";
 import { formatMoney } from "@/lib/format";
 
 export default function AdminCommissionPage() {
@@ -45,7 +45,7 @@ export default function AdminCommissionPage() {
 
     // États locaux pour le filtrage et la pagination
     const [search, setSearch] = useState("");
-    const [statusFilter, setStatusFilter] = useState<string>("all");
+    const [typeFilter, setTypeFilter] = useState<CommissionType | "all">("all");
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 8;
 
@@ -54,16 +54,17 @@ export default function AdminCommissionPage() {
     const entries = walletData?.entries ?? [];
 
     // Filtrage dynamique des transactions
+    const query = search.trim().toLowerCase();
     const filteredEntries = entries.filter((entry) => {
         const matchesSearch =
-            entry.reference?.toLowerCase().includes(search.toLowerCase()) ||
-            entry.description?.toLowerCase().includes(search.toLowerCase()) ||
-            entry.id.toLowerCase().includes(search.toLowerCase());
+            !query ||
+            entry.bookingId.toLowerCase().includes(query) ||
+            entry.offerType.toLowerCase().includes(query) ||
+            entry.providerType.toLowerCase().includes(query);
 
-        const matchesStatus =
-            statusFilter === "all" || entry.status?.toLowerCase() === statusFilter.toLowerCase();
+        const matchesType = typeFilter === "all" || entry.commissionType === typeFilter;
 
-        return matchesSearch && matchesStatus;
+        return matchesSearch && matchesType;
     });
 
     // Pagination
@@ -167,10 +168,10 @@ export default function AdminCommissionPage() {
                         <CardHeader className="gap-4 border-b sm:flex-row sm:items-center sm:justify-between">
                             <div>
                                 <CardTitle className="text-lg font-semibold">
-                                    {t("transactionHistory") ?? "Historique des commissions"}
+                                    {t("transactionHistory")}
                                 </CardTitle>
                                 <CardDescription>
-                                    {t("transactionSubtitle") ?? "Liste détaillée des commissions perçues et ajustements."}
+                                    {t("transactionSubtitle")}
                                 </CardDescription>
                             </div>
 
@@ -179,7 +180,7 @@ export default function AdminCommissionPage() {
                                 <div className="relative">
                                     <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
                                     <Input
-                                        placeholder={t("searchPlaceholder") ?? "Rechercher une référence..."}
+                                        placeholder={t("searchPlaceholder")}
                                         value={search}
                                         onChange={(e) => {
                                             setSearch(e.target.value);
@@ -190,21 +191,20 @@ export default function AdminCommissionPage() {
                                 </div>
 
                                 <Select
-                                    value={statusFilter}
+                                    value={typeFilter}
                                     onValueChange={(val) => {
-                                        setStatusFilter(val);
+                                        setTypeFilter(val as CommissionType | "all");
                                         setCurrentPage(1);
                                     }}
                                 >
-                                    <SelectTrigger className="w-full sm:w-36">
+                                    <SelectTrigger className="w-full sm:w-48">
                                         <Filter className="mr-2 size-4 text-muted-foreground" />
-                                        <SelectValue placeholder="Statut" />
+                                        <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="all">Tous les statuts</SelectItem>
-                                        <SelectItem value="completed">Complété</SelectItem>
-                                        <SelectItem value="pending">En attente</SelectItem>
-                                        <SelectItem value="failed">Échoué</SelectItem>
+                                        <SelectItem value="all">{t("commissionTypeAll")}</SelectItem>
+                                        <SelectItem value="BOOKING_FEE">{t("commissionTypeBOOKING_FEE")}</SelectItem>
+                                        <SelectItem value="RESERVATION_FEE">{t("commissionTypeRESERVATION_FEE")}</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -214,94 +214,59 @@ export default function AdminCommissionPage() {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>{t("type") ?? "Type"}</TableHead>
-                                        <TableHead>{t("reference") ?? "Référence"}</TableHead>
-                                        <TableHead>{t("date") ?? "Date"}</TableHead>
-                                        <TableHead>{t("status") ?? "Statut"}</TableHead>
-                                        <TableHead className="text-right">{t("amount") ?? "Montant"}</TableHead>
+                                        <TableHead>{t("type")}</TableHead>
+                                        <TableHead>{t("reference")}</TableHead>
+                                        <TableHead>{t("date")}</TableHead>
+                                        <TableHead>{t("offer")}</TableHead>
+                                        <TableHead className="text-right">{t("amount")}</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {paginatedEntries.length > 0 ? (
-                                        paginatedEntries.map((entry) => {
-                                            const isCredit = entry.type === "CREDIT" || entry.amount?.amount > 0;
-
-                                            return (
-                                                <TableRow key={entry.id} className="hover:bg-muted/50">
-                                                    {/* Type / Sens de la transaction */}
-                                                    <TableCell>
-                                                        <div className="flex items-center gap-2">
-                                                            <div
-                                                                className={`flex size-8 items-center justify-center rounded-full ${
-                                                                    isCredit
-                                                                        ? "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20"
-                                                                        : "bg-rose-500/10 text-rose-600 dark:bg-rose-500/20"
-                                                                }`}
-                                                            >
-                                                                {isCredit ? (
-                                                                    <ArrowDownLeft className="size-4" />
-                                                                ) : (
-                                                                    <ArrowUpRight className="size-4" />
-                                                                )}
-                                                            </div>
-                                                            <span className="font-medium">
-                                {entry.description || (isCredit ? "Commission" : "Retrait")}
-                              </span>
+                                        paginatedEntries.map((entry) => (
+                                            <TableRow key={entry.id} className="hover:bg-muted/50">
+                                                {/* Type de commission - toujours un crédit du wallet */}
+                                                <TableCell>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="flex size-8 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20">
+                                                            <ArrowDownLeft className="size-4" />
                                                         </div>
-                                                    </TableCell>
+                                                        <span className="font-medium">
+                                                            {t(`commissionType${entry.commissionType}`)}
+                                                        </span>
+                                                    </div>
+                                                </TableCell>
 
-                                                    {/* Référence */}
-                                                    <TableCell className="font-mono text-xs text-muted-foreground">
-                                                        {entry.reference || entry.id}
-                                                    </TableCell>
+                                                {/* Réservation à l'origine de la commission */}
+                                                <TableCell className="font-mono text-xs text-muted-foreground">
+                                                    {entry.bookingId}
+                                                </TableCell>
 
-                                                    {/* Date */}
-                                                    <TableCell className="text-sm text-muted-foreground">
-                                                        {entry.createdAt
-                                                            ? new Date(entry.createdAt).toLocaleDateString(locale, {
-                                                                day: "2-digit",
-                                                                month: "short",
-                                                                year: "numeric",
-                                                                hour: "2-digit",
-                                                                minute: "2-digit",
-                                                            })
-                                                            : "-"}
-                                                    </TableCell>
+                                                <TableCell className="text-sm text-muted-foreground">
+                                                    {new Date(entry.createdAt).toLocaleDateString(locale, {
+                                                        day: "2-digit",
+                                                        month: "short",
+                                                        year: "numeric",
+                                                        hour: "2-digit",
+                                                        minute: "2-digit",
+                                                    })}
+                                                </TableCell>
 
-                                                    {/* Statut avec Badge */}
-                                                    <TableCell>
-                                                        <Badge
-                                                            variant={
-                                                                entry.status === "COMPLETED"
-                                                                    ? "default"
-                                                                    : entry.status === "PENDING"
-                                                                        ? "outline"
-                                                                        : "destructive"
-                                                            }
-                                                            className="capitalize"
-                                                        >
-                                                            {entry.status ? entry.status.toLowerCase() : "complété"}
-                                                        </Badge>
-                                                    </TableCell>
+                                                <TableCell>
+                                                    <Badge variant="outline">
+                                                        {entry.offerType} · {entry.providerType}
+                                                    </Badge>
+                                                </TableCell>
 
-                                                    {/* Montant */}
-                                                    <TableCell
-                                                        className={`text-right font-semibold ${
-                                                            isCredit
-                                                                ? "text-emerald-600 dark:text-emerald-400"
-                                                                : "text-slate-900 dark:text-slate-100"
-                                                        }`}
-                                                    >
-                                                        {isCredit ? "+" : ""}
-                                                        {formatMoney(entry.amount, locale)}
-                                                    </TableCell>
-                                                </TableRow>
-                                            );
-                                        })
+                                                <TableCell className="text-right font-semibold text-emerald-600 dark:text-emerald-400">
+                                                    +{formatMoney(entry.amount, locale)}
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
                                     ) : (
                                         <TableRow>
                                             <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
-                                                {t("noTransactionsFound") ?? "Aucune transaction trouvée."}
+                                                {t("noTransactionsFound")}
                                             </TableCell>
                                         </TableRow>
                                     )}
@@ -313,7 +278,7 @@ export default function AdminCommissionPage() {
                         {totalPages > 1 && (
                             <div className="flex items-center justify-between border-t px-6 py-4">
                                 <p className="text-xs text-muted-foreground">
-                                    Page {currentPage} sur {totalPages}
+                                    {t("paginationLabel", { current: currentPage, total: totalPages })}
                                 </p>
                                 <div className="flex items-center gap-2">
                                     <Button

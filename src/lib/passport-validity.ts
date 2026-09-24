@@ -120,3 +120,51 @@ export function createPassportExpirySchema(
       });
     });
 }
+
+/** The passport fields a checkout traveler carries (all optional date-only `YYYY-MM-DD` strings). */
+export interface PassportDocumentFields {
+  passportNumber?: string;
+  passportIssueCountry?: string;
+  passportIssueDate?: string;
+  passportExpiryDate?: string;
+  dateOfBirth?: string;
+}
+
+/** Today as a local `YYYY-MM-DD` string - date-only strings of that shape compare correctly as text. */
+function todayDateOnly(): string {
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}
+
+/**
+ * A passport, once its number is entered, is sent as a whole to the airline - and Travel Terminus's
+ * Book rejects it (after payment has been taken) unless it's complete and consistent: number of at
+ * most 20 letters/digits, issuing country, issue date (after the date of birth, not in the future)
+ * and expiry date. Meant for a traveler schema's `.superRefine()`; reports each issue on its own
+ * field. The expiry's validity against the travel dates is `createPassportExpirySchema`'s job.
+ */
+export function checkPassportDocument(traveler: PassportDocumentFields, ctx: z.RefinementCtx) {
+  const number = traveler.passportNumber?.trim();
+  if (!number) {
+    return;
+  }
+  if (!/^[A-Za-z0-9]{1,20}$/.test(number)) {
+    ctx.addIssue({ code: "custom", path: ["passportNumber"],
+      message: "Lettres et chiffres uniquement (20 max), comme sur le passeport" });
+  }
+  if (!traveler.passportIssueCountry?.trim()) {
+    ctx.addIssue({ code: "custom", path: ["passportIssueCountry"], message: "Le pays de délivrance est requis avec un passeport" });
+  }
+  if (!traveler.passportExpiryDate?.trim()) {
+    ctx.addIssue({ code: "custom", path: ["passportExpiryDate"], message: "La date d'expiration est requise avec un passeport" });
+  }
+  const issued = traveler.passportIssueDate?.trim();
+  if (!issued) {
+    ctx.addIssue({ code: "custom", path: ["passportIssueDate"], message: "La date de délivrance est requise avec un passeport" });
+  } else if (issued > todayDateOnly()) {
+    ctx.addIssue({ code: "custom", path: ["passportIssueDate"], message: "La date de délivrance ne peut pas être dans le futur" });
+  } else if (traveler.dateOfBirth && issued <= traveler.dateOfBirth) {
+    ctx.addIssue({ code: "custom", path: ["passportIssueDate"], message: "La date de délivrance doit être après la date de naissance" });
+  }
+}

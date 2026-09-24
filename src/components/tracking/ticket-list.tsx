@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Printer, Ticket, CheckCircle2, Calendar, FileText, ChevronDown, Download, Send } from "lucide-react";
+import { Printer, Ticket, CheckCircle2, Calendar, FileText, ChevronDown, Download, Send, Clock } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -94,10 +94,16 @@ function ShareByEmailForm({ ticket, onClose }: { ticket: ETicket; onClose: () =>
   );
 }
 
-export function TicketList({ bookingId, enabled }: { bookingId: string; enabled: boolean }) {
+/** awaitingIssuance : vol confirmé dont le fournisseur n'a encore envoyé aucun numéro de billet
+ *  (émission différée, ex. Travel Terminus) - le serveur vérifie toutes les 10 minutes. */
+export function TicketList({ bookingId, enabled, awaitingIssuance = false }: {
+  bookingId: string;
+  enabled: boolean;
+  awaitingIssuance?: boolean;
+}) {
   const t = useTranslations("Tickets");
   const locale = useLocale();
-  const { data, isLoading } = useTicketsQuery(bookingId, enabled);
+  const { data, isLoading } = useTicketsQuery(bookingId, enabled, awaitingIssuance ? 60_000 : 2000);
   const [expandedTicketId, setExpandedTicketId] = useState<string | null>(null);
   const [sharingTicketId, setSharingTicketId] = useState<string | null>(null);
 
@@ -115,6 +121,18 @@ export function TicketList({ bookingId, enabled }: { bookingId: string; enabled:
             </div>
             <Skeleton className="h-9 w-24 rounded-xl" />
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if ((!data || data.length === 0) && awaitingIssuance) {
+    return (
+      <div className="flex items-start gap-3 p-4 rounded-2xl border border-amber-500/25 bg-amber-500/[0.06]">
+        <Clock className="size-5 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+        <div className="space-y-1">
+          <p className="text-sm font-bold text-foreground">{t("awaitingIssuanceTitle")}</p>
+          <p className="text-xs text-muted-foreground leading-relaxed">{t("awaitingIssuanceDesc")}</p>
         </div>
       </div>
     );

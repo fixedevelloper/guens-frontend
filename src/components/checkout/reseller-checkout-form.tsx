@@ -21,14 +21,22 @@ import {
 } from "@/components/ui/select";
 import { CountrySelect } from "@/components/checkout/country-select";
 import type { PassengerType } from "@/lib/api/types";
+import { checkPassportDocument } from "@/lib/passport-validity";
 import { cn } from "@/lib/utils";
+import type { TravelerIdentity } from "@/lib/traveler-identities";
 
 // Vols uniquement : Travelopro (et les GDS en général) exigent date de naissance et nationalité
 // pour chaque passager - confirmé par des tests réels ("PassengerNationality details is required
 // for this airline"). Ce formulaire est aussi utilisé pour les checkouts hôtel revendeur, où ces
 // champs restent optionnels.
 const travelerSchema = (isFlight: boolean) => z.object({
-  fullName: z.string().trim().min(1, "Le nom du voyageur est requis"),
+  firstName: z.string().trim().min(1, "Le prénom est requis"),
+  lastName: z.string().trim().min(1, "Le nom est requis"),
+  // Genre tel que sur le passeport : exigé par les compagnies (TravelTerminus en dérive le titre
+  // MR/MS/MASTER/MISS). Non choisi = undefined, jamais "" (que l'API refuserait).
+  gender: isFlight
+    ? z.enum(["MALE", "FEMALE"], { error: "Le sexe est requis" })
+    : z.enum(["MALE", "FEMALE"]).optional(),
   dateOfBirth: isFlight ? z.string().trim().min(1, "La date de naissance est requise") : z.string().optional(),
   passportNumber: z.string().optional(),
   type: z.enum(["ADULT", "CHILD", "INFANT"]),
@@ -40,6 +48,9 @@ const travelerSchema = (isFlight: boolean) => z.object({
   // rejects a passenger whose passport info is submitted without it
   // ("passengers.0.document.issuing_date_required") - see checkout-form.tsx's own copy of this.
   passportIssueDate: z.string().optional(),
+}).superRefine((traveler, ctx) => {
+  // Vol : un passeport saisi doit être complet et cohérent (voir checkPassportDocument).
+  if (isFlight) checkPassportDocument(traveler, ctx);
 });
 
 // Schéma pour CheckoutRequest
@@ -55,7 +66,10 @@ const buildCheckoutRequestSchema = (isFlight: boolean) => z.object({
       .trim()
       .min(1, "Le nom du contact est requis"),
 
-  contactPhone: z.string().trim().optional(),
+  // Vol : les compagnies exigent un mobile de contact avec son indicatif (TravelTerminus le refuse sinon).
+  contactPhone: isFlight
+      ? z.string().trim().min(6, "Le mobile de contact est requis pour un vol (avec l'indicatif, ex. +237)")
+      : z.string().trim().optional(),
 
   travelers: z
       .array(travelerSchema(isFlight))
@@ -82,6 +96,8 @@ export type ResellerCheckoutFormValues = z.infer<ReturnType<typeof buildSchema>>
 interface ResellerCheckoutFormProps {
   /** Nombre de voyageurs à préremplir (défaut 1). */
   travelerCount?: number;
+  /** Noms et types déjà saisis à l'étape des options (vols) - préremplissent les voyageurs. */
+  initialTravelers?: TravelerIdentity[];
   /** Code du siège réel choisi (ex. "1A") pour chaque voyageur, même index que travelerCount. */
   seatLabelsByTraveler?: (string | undefined)[];
   onSubmit: (request: ResellerBookingCheckout) => void;
@@ -96,6 +112,7 @@ interface ResellerCheckoutFormProps {
 
 export function ResellerCheckoutForm({
                                         travelerCount = 1,
+                                        initialTravelers,
                                         seatLabelsByTraveler,
                                         onSubmit,
                                         isSubmitting,
@@ -115,10 +132,12 @@ export function ResellerCheckoutForm({
         contactFullName: "",
         contactPhone: "",
         travelers: Array.from({ length: Math.max(1, travelerCount) }, (_, i) => ({
-          fullName: "",
+          firstName: initialTravelers?.[i]?.firstName ?? "",
+          lastName: initialTravelers?.[i]?.lastName ?? "",
+          gender: undefined,
           dateOfBirth: "",
           passportNumber: "",
-          type: "ADULT" as const,
+          type: initialTravelers?.[i]?.type ?? ("ADULT" as const),
           seatNumber: seatLabelsByTraveler?.[i] ?? "",
           nationality: "",
           passportIssueCountry: "",
@@ -272,13 +291,14 @@ export function ResellerCheckoutForm({
                     <div className="grid gap-4 sm:grid-cols-2">
                       <FormField
                           control={form.control}
-                          name={`checkout.travelers.${index}.fullName`}
+                          name={`checkout.travelers.${index}.firstName`}
                           render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="text-xs font-bold text-muted-foreground/90">{t("fullName")}</FormLabel>
+                                <FormLabel className="text-xs font-bold text-muted-foreground/90">{t("firstName")}</FormLabel>
                                 <FormControl>
                                   <Input
-                                      placeholder="Nom complet (tel que sur le passeport)"
+                                      placeholder="Prénom(s) (tels que sur le passeport)"
+                                      autoComplete="given-name"
                                       className="rounded-xl border-border/80 bg-background focus-visible:ring-primary/20"
                                       {...field}
                                   />
@@ -287,6 +307,46 @@ export function ResellerCheckoutForm({
                               </FormItem>
                           )}
                       />
+                      <FormField
+                          control={form.control}
+                          name={`checkout.travelers.${index}.lastName`}
+                          render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs font-bold text-muted-foreground/90">{t("lastName")}</FormLabel>
+                                <FormControl>
+                                  <Input
+                                      placeholder="Nom(s) de famille (tels que sur le passeport)"
+                                      autoComplete="family-name"
+                                      className="rounded-xl border-border/80 bg-background focus-visible:ring-primary/20"
+                                      {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                          )}
+                      />
+                      <FormField
+                          control={form.control}
+                          name={`checkout.travelers.${index}.gender`}
+                          render={({ field }) => (
+                              <FormItem className="col-span-1">
+                                <FormLabel className="text-xs font-bold text-muted-foreground/90">{t("gender")}</FormLabel>
+                                <Select value={field.value ?? ""} onValueChange={field.onChange}>
+                                  <FormControl>
+                                    <SelectTrigger className="rounded-xl border-border/80 bg-background focus:ring-primary/20">
+                                      <SelectValue placeholder={t("genderPlaceholder")} />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent className="rounded-xl">
+                                    <SelectItem value="MALE">{t("genderMale")}</SelectItem>
+                                    <SelectItem value="FEMALE">{t("genderFemale")}</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                          )}
+                      />
+
                       <FormField
                           control={form.control}
                           name={`checkout.travelers.${index}.type`}
@@ -423,7 +483,7 @@ export function ResellerCheckoutForm({
                   size="sm"
                   className="mt-1 gap-1.5 rounded-full border-dashed border-border/80 hover:border-primary/40 hover:bg-primary/5 text-xs px-4"
                   onClick={() => append({
-                    fullName: "", dateOfBirth: "", passportNumber: "", type: "ADULT",
+                    firstName: "", lastName: "", gender: undefined, dateOfBirth: "", passportNumber: "", type: "ADULT",
                     nationality: "", passportIssueCountry: "", passportExpiryDate: "", passportIssueDate: "",
                   })}
               >

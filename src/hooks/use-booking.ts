@@ -17,7 +17,8 @@ import type { AncillaryOptionsRequest, CheckoutRequest, MultiCityCheckoutRequest
  */
 export function useAncillaryOptionsQuery(request: AncillaryOptionsRequest | null, enabled: boolean) {
   return useQuery({
-    queryKey: ["ancillary-options", request?.offerId, request?.travelers.length],
+    // The travelers themselves (names, types), not just their count: the quote depends on them.
+    queryKey: ["ancillary-options", request?.offerId, JSON.stringify(request?.travelers ?? [])],
     queryFn: () => bookingApi.getAncillaryOptions(request as AncillaryOptionsRequest),
     enabled: enabled && request !== null,
     staleTime: Infinity,

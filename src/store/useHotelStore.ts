@@ -40,6 +40,8 @@ interface HotelState {
     // --- Panier ---
     cartItems: CartItem[];
     paymentPlan: PaymentPlan;
+    /** Page de l'hôtel (liste des chambres) consultée en dernier : "Choisir une autre chambre" y ramène après un échec. */
+    lastHotelDetailPath: string | null;
 
     // Actions
     setSearchResults: (offers: HarmonizedHotelOffer[]) => void;
@@ -58,6 +60,7 @@ interface HotelState {
     updateCartQuantity: (roomCode: string, quantity: number) => void;
     clearCart: () => void;
     setPaymentPlan: (plan: PaymentPlan) => void;
+    setLastHotelDetailPath: (path: string | null) => void;
 
     // --- Sélecteurs dérivés (prix réel vs prix affiché) ---
     /** Total réel (prix unitaire × quantité, toutes lignes confondues), toujours calculé quelle que soit le mode. */
@@ -83,6 +86,7 @@ export const useHotelStore = create<HotelState>()(
             // --- Panier ---
             cartItems: [],
             paymentPlan: "PAY_NOW",
+            lastHotelDetailPath: null,
 
             // Actions
             setSearchResults: (searchResults) => set({ searchResults, error: null }),
@@ -156,6 +160,7 @@ export const useHotelStore = create<HotelState>()(
                 }),
 
             clearCart: () => set({ cartItems: [] }),
+            setLastHotelDetailPath: (lastHotelDetailPath) => set({ lastHotelDetailPath }),
 
             setPaymentPlan: (paymentPlan) => set({ paymentPlan }),
 

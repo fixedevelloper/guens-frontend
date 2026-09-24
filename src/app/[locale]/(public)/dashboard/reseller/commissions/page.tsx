@@ -214,7 +214,7 @@ export default function ResellerCommissionsPage() {
           >
             <option value="ALL">Toutes les commissions</option>
             <option value="AVAILABLE">Disponible / Créditée</option>
-            <option value="PENDING">En attente (Départ à venir)</option>
+            <option value="PENDING">En attente (émission du billet)</option>
             <option value="PAID">Déjà retirée</option>
             <option value="CANCELLED">Annulée</option>
           </select>

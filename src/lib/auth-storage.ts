@@ -24,6 +24,7 @@ export interface StoredProfile {
   partnerId?: string; // présent uniquement pour les comptes partenaires
   resellerStatus?: ResellerStatus | string; // 👈 Ajouter cette propriété
   resellerId?: string; // 👈 (Optionnel mais recommandé si présent dans le JWT/Session)
+  phone?: string; // pré-remplit les coordonnées du checkout
 }
 
 export function getStoredProfile(): StoredProfile | null {

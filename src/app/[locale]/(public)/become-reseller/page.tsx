@@ -2,7 +2,7 @@
 
 import { useState, ChangeEvent, FormEvent, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { Link } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import {
   Building2,
   CheckCircle2,
@@ -26,6 +26,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useCreateResellerMutation } from "@/hooks/use-rellers-queries";
 import { useAuth } from "@/context/auth-context";
@@ -52,7 +53,16 @@ export default function BecomeResellerPage() {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<"momo" | "om" | "card">("om");
   const [paymentPhone, setPaymentPhone] = useState("");
-const { user } = useAuth();
+const { user, isAuthenticated, isHydrated } = useAuth();
+const router = useRouter();
+
+// La demande est rattachée au compte connecté côté serveur (ResellerController) : sans compte, rien
+// ne pourrait être promu revendeur à l'approbation.
+useEffect(() => {
+  if (isHydrated && !isAuthenticated) {
+    router.replace("/login");
+  }
+}, [isHydrated, isAuthenticated, router]);
 
 const [formData, setFormData] = useState<ResellerFormData>({
   companyName: "",
@@ -116,6 +126,14 @@ useEffect(() => {
       console.error("Erreur lors de la création du revendeur :", err);
     }
   };
+
+  if (!isHydrated || !isAuthenticated) {
+    return (
+      <div className="mx-auto max-w-4xl px-4 py-8">
+        <Skeleton className="h-96 w-full rounded-2xl" />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 space-y-8">

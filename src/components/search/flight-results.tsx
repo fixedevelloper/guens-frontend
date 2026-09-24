@@ -384,10 +384,24 @@ export const FlightOfferCard = memo(function FlightOfferCard({
 
             {/* Assurance & Bouton Détails */}
             <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/40 pt-3.5 text-xs text-muted-foreground sm:pt-4">
-            <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 sm:text-[11px]">
-              <ShieldCheck className="size-3.5 shrink-0" />
-              {t("refundableTicket")}
-            </span>
+            {/* Remboursabilité réelle du tarif, seulement quand la compagnie la donne - jamais supposée. */}
+            {detail?.refundable === true && (
+                <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 sm:text-[11px]">
+                  <ShieldCheck className="size-3.5 shrink-0" />
+                  {t("refundableFare")}
+                </span>
+            )}
+            {detail?.refundable === false && (
+                <span className="flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-1 text-[10px] font-semibold text-amber-700 dark:text-amber-400 sm:text-[11px]">
+                  <ShieldCheck className="size-3.5 shrink-0" />
+                  {t("nonRefundableFare")}
+                </span>
+            )}
+            {detail?.carrierType === "LCC" && (
+                <span className="flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-[10px] font-semibold text-muted-foreground sm:text-[11px]">
+                  {t("lccBadge")}
+                </span>
+            )}
 
               {detail?.holdAvailable === true && (
                   <span className="flex items-center gap-1.5 rounded-full bg-sky-500/10 px-2.5 py-1 text-[10px] font-semibold text-sky-600 dark:text-sky-400 sm:text-[11px]">

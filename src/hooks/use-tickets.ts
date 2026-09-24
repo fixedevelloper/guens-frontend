@@ -8,12 +8,14 @@ import { getTicketsForBooking, sendTicketByEmail } from "@/lib/api/tickets";
  * before they exist. Poll briefly until they show up instead of leaving the user stuck on "no
  * tickets yet" until they manually reload.
  */
-export function useTicketsQuery(bookingId: string | null, enabled: boolean) {
+/** emptyPollMs : fréquence de re-vérification tant qu'aucun billet n'existe - courte juste après la
+ *  confirmation (PDF en cours de génération), plus longue quand le fournisseur émet en différé. */
+export function useTicketsQuery(bookingId: string | null, enabled: boolean, emptyPollMs = 2000) {
   return useQuery({
     queryKey: ["tickets", bookingId],
     queryFn: () => getTicketsForBooking(bookingId as string),
     enabled: enabled && bookingId !== null,
-    refetchInterval: (query) => (query.state.data && query.state.data.length > 0 ? false : 2000),
+    refetchInterval: (query) => (query.state.data && query.state.data.length > 0 ? false : emptyPollMs),
   });
 }
 

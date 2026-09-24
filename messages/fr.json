@@ -139,7 +139,9 @@
     "searchFailedTitle": "Échec de la recherche",
     "searchFailedMessage": "Cette recherche a pris trop de temps ou n'a pas pu aboutir. Veuillez réessayer.",
     "retrySearch": "Réessayer",
-    "refundableTicket": "Billet modifiable ou remboursable",
+    "refundableFare": "Billet remboursable",
+    "nonRefundableFare": "Billet non remboursable",
+    "lccBadge": "Low-cost : bagages et options payants",
     "showDetailsAction": "Détails",
     "hideDetailsAction": "Masquer",
     "offerNumber": "Offre {index}",
@@ -233,7 +235,8 @@
     "totalStay": "Total séjour",
     "night": "nuit",
     "nights": "nuits",
-    "addToCart": "Ajouter"
+    "addToCart": "Ajouter",
+    "fixedQuantityNote": "Prix par chambre · ce tarif se réserve pour {count} chambres"
   },
   "Checkout": {
     "title": "Finaliser la réservation",
@@ -246,6 +249,24 @@
     "travelersSection": "Voyageurs",
     "traveler": "Voyageur {index}",
     "fullName": "Nom complet",
+    "firstName": "Prénom(s)",
+    "lastName": "Nom(s) de famille",
+    "fareBreakdownTitle": "Détail du prix",
+    "fareBreakdownAdult": "Adulte",
+    "fareBreakdownChild": "Enfant",
+    "fareBreakdownInfant": "Bébé",
+    "fareBreakdownPerPassenger": "par passager : {base} de tarif + {tax} de taxes",
+    "fareBreakdownServiceFee": "Frais de service",
+    "fareConditionsTitle": "Conditions tarifaires (annulation, modification)",
+    "fareConditionsLoading": "Chargement des conditions…",
+    "fareConditionsUnavailable": "La compagnie ne communique pas de conditions détaillées pour ce tarif.",
+    "fareConditionsCancellation": "Annulation",
+    "fareConditionsReschedule": "Modification",
+    "fareConditionsPerAdult": "par adulte",
+    "gender": "Sexe (comme sur le passeport)",
+    "genderPlaceholder": "Choisir",
+    "genderMale": "Masculin",
+    "genderFemale": "Féminin",
     "dateOfBirth": "Date de naissance",
     "passportNumber": "Numéro de passeport",
     "nationality": "Nationalité",
@@ -299,6 +320,12 @@
     }
   },
   "AncillaryOptions": {
+    "identitiesTitle": "Voyageurs",
+    "identitiesHint": "Noms tels qu'ils figurent sur les passeports : la compagnie en a besoin pour proposer bagages, repas et sièges.",
+    "fixedMixNote": "{count, plural, =1 {1 passager} other {# passagers}}, comme dans votre recherche : le tarif est calculé pour eux. Noms tels qu'ils figurent sur les passeports.",
+    "travelerN": "voyageur {index}",
+    "showOptions": "Voir les options",
+    "editTravelers": "Modifier les voyageurs",
     "title": "Options supplémentaires",
     "subtitle": "Ajoutez si besoin : bagages supplémentaires, choix du siège, assurance voyage, repas spéciaux.",
     "baggageSection": "Bagages supplémentaires",
@@ -434,7 +461,8 @@
     "stepperInterrupted": {
       "FAILED": "Cette réservation n'a pas pu être finalisée.",
       "CANCELLED": "Cette réservation a été annulée.",
-      "PRICE_CHANGED": "Cette réservation est en attente de votre réponse suite à un changement de tarif."
+      "PRICE_CHANGED": "Cette réservation est en attente de votre réponse suite à un changement de tarif.",
+      "CANCEL_REQUESTED": "Votre demande d'annulation est en cours de traitement par la compagnie."
     },
     "totalPrice": "Prix total",
     "extrasTitle": "Options supplémentaires",
@@ -452,6 +480,7 @@
       "CONFIRMED": "Confirmé",
       "PRICE_CHANGED": "Prix modifié",
       "FAILED": "Échoué",
+      "CANCEL_REQUESTED": "Annulation demandée",
       "CANCELLED": "Annulé"
     },
     "statusDescription": {
@@ -461,8 +490,10 @@
       "PAID": "Paiement reçu, transmission au fournisseur en cours.",
       "CONFIRMING": "Le fournisseur émet vos billets, cela prend quelques instants.",
       "CONFIRMED": "Réservation confirmée et billets émis.",
+      "CONFIRMED_AWAITING_TICKETS": "Réservation confirmée. Le billet électronique est en cours d'émission par la compagnie.",
       "PRICE_CHANGED": "Le prix a changé chez le fournisseur avant l'émission du billet.",
       "FAILED": "Le fournisseur n'a pas pu confirmer cette réservation.",
+      "CANCEL_REQUESTED": "Votre demande d'annulation a été transmise à la compagnie, qui la traite manuellement. La réservation reste valable tant que l'annulation n'est pas confirmée ; vous serez informé dès qu'elle l'est.",
       "CANCELLED": "Cette réservation a été annulée."
     },
     "priceChangedNotice": "Le prix de ce billet a changé chez notre fournisseur juste avant l'émission. Montant déjà réglé : {paid}. Nouveau prix total : {revised}. Un email vous a été envoyé avec les modalités pour régler le complément de {supplement} ou demander un remboursement intégral.",
@@ -474,6 +505,7 @@
     "failureReason": "Motif : {reason}",
     "retryAction": "Réessayer",
     "searchAgainAction": "Recommencer la recherche",
+    "chooseAnotherRoomAction": "Choisir une autre chambre",
     "paymentCapturedNotice": "Votre paiement a bien été débité. Notre support va vous contacter pour régulariser cette réservation - inutile de repayer ou de refaire une recherche.",
     "paymentRefundedNotice": "Votre paiement a été remboursé suite à cet échec. Vous pouvez refaire une recherche en toute sécurité."
   },
@@ -485,7 +517,9 @@
     "empty": "Aucun billet n'a encore été émis pour cette réservation.",
     "view": "Voir le billet",
     "hide": "Masquer",
-    "print": "Imprimer le billet"
+    "print": "Imprimer le billet",
+    "awaitingIssuanceTitle": "Billet en cours d'émission",
+    "awaitingIssuanceDesc": "Votre réservation est confirmée et payée. La compagnie est en train d'émettre votre billet électronique : il apparaîtra ici et vous sera envoyé par email dès sa réception. Aucune action n'est nécessaire de votre part."
   },
   "Dashboard": {
     "clientEyebrow": "Espace client",
@@ -516,6 +550,19 @@
     "commissionSubtitle": "Détail du wallet de commissions accumulées sur les réservations.",
     "walletBalance": "Solde du wallet",
     "walletEntryCount": "Nombre d'entrées",
+    "transactionHistory": "Historique des commissions",
+    "transactionSubtitle": "Chaque commission perçue, de la plus récente à la plus ancienne.",
+    "searchPlaceholder": "Rechercher une réservation…",
+    "type": "Type",
+    "reference": "Réservation",
+    "offer": "Offre",
+    "date": "Date",
+    "amount": "Montant",
+    "noTransactionsFound": "Aucune commission trouvée.",
+    "commissionTypeBOOKING_FEE": "Frais de réservation",
+    "commissionTypeRESERVATION_FEE": "Frais de blocage",
+    "commissionTypeAll": "Tous les types",
+    "paginationLabel": "Page {current} sur {total}",
     "recentBookingsTitle": "Réservations récentes",
     "viewAll": "Voir tout",
     "resultsCount": "{count, plural, =0 {Aucun résultat} =1 {1 résultat} other {# résultats}}",

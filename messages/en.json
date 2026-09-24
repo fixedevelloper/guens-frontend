@@ -139,7 +139,9 @@
     "searchFailedTitle": "Search failed",
     "searchFailedMessage": "This search took too long or couldn't be completed. Please try again.",
     "retrySearch": "Try again",
-    "refundableTicket": "Changeable or refundable ticket",
+    "refundableFare": "Refundable ticket",
+    "nonRefundableFare": "Non-refundable ticket",
+    "lccBadge": "Low-cost: paid baggage and extras",
     "showDetailsAction": "Details",
     "hideDetailsAction": "Hide",
     "offerNumber": "Offer {index}",
@@ -234,7 +236,8 @@
     "totalStay": "Total stay",
     "night": "night",
     "nights": "nights",
-    "addToCart": "Add"
+    "addToCart": "Add",
+    "fixedQuantityNote": "Price per room · this rate books {count} rooms"
   },
   "Checkout": {
     "title": "Complete your booking",
@@ -247,6 +250,24 @@
     "travelersSection": "Travelers",
     "traveler": "Traveler {index}",
     "fullName": "Full name",
+    "firstName": "First name(s)",
+    "lastName": "Last name(s)",
+    "fareBreakdownTitle": "Price breakdown",
+    "fareBreakdownAdult": "Adult",
+    "fareBreakdownChild": "Child",
+    "fareBreakdownInfant": "Infant",
+    "fareBreakdownPerPassenger": "per passenger: {base} fare + {tax} taxes",
+    "fareBreakdownServiceFee": "Service fee",
+    "fareConditionsTitle": "Fare conditions (cancellation, changes)",
+    "fareConditionsLoading": "Loading conditions…",
+    "fareConditionsUnavailable": "The airline doesn't provide detailed conditions for this fare.",
+    "fareConditionsCancellation": "Cancellation",
+    "fareConditionsReschedule": "Change",
+    "fareConditionsPerAdult": "per adult",
+    "gender": "Gender (as on passport)",
+    "genderPlaceholder": "Select",
+    "genderMale": "Male",
+    "genderFemale": "Female",
     "dateOfBirth": "Date of birth",
     "passportNumber": "Passport number",
     "nationality": "Nationality",
@@ -300,6 +321,12 @@
     }
   },
   "AncillaryOptions": {
+    "identitiesTitle": "Travelers",
+    "identitiesHint": "Names as they appear on the passports: the airline needs them to offer baggage, meals and seats.",
+    "fixedMixNote": "{count, plural, =1 {1 passenger} other {# passengers}}, as in your search: the fare is priced for them. Names as they appear on the passports.",
+    "travelerN": "traveler {index}",
+    "showOptions": "Show options",
+    "editTravelers": "Edit travelers",
     "title": "Additional options",
     "subtitle": "Add extra baggage, seat selection, travel insurance, or special meals if needed.",
     "baggageSection": "Extra baggage",
@@ -435,7 +462,8 @@
     "stepperInterrupted": {
       "FAILED": "This booking couldn't be completed.",
       "CANCELLED": "This booking was cancelled.",
-      "PRICE_CHANGED": "This booking is on hold pending your response to a fare change."
+      "PRICE_CHANGED": "This booking is on hold pending your response to a fare change.",
+      "CANCEL_REQUESTED": "Your cancellation request is being processed by the airline."
     },
     "totalPrice": "Total price",
     "extrasTitle": "Additional options",
@@ -453,6 +481,7 @@
       "CONFIRMED": "Confirmed",
       "PRICE_CHANGED": "Price changed",
       "FAILED": "Failed",
+      "CANCEL_REQUESTED": "Cancellation requested",
       "CANCELLED": "Cancelled"
     },
     "statusDescription": {
@@ -462,8 +491,10 @@
       "PAID": "Payment received, forwarding to the provider.",
       "CONFIRMING": "The provider is issuing your tickets, this takes a moment.",
       "CONFIRMED": "Booking confirmed and tickets issued.",
+      "CONFIRMED_AWAITING_TICKETS": "Booking confirmed. The airline is issuing the e-ticket.",
       "PRICE_CHANGED": "The price changed with our provider right before ticket issuance.",
       "FAILED": "The provider could not confirm this booking.",
+      "CANCEL_REQUESTED": "Your cancellation request was sent to the airline, which processes it manually. The booking stands until the cancellation is confirmed; you'll be told as soon as it is.",
       "CANCELLED": "This booking has been cancelled."
     },
     "priceChangedNotice": "This ticket's price changed with our provider right before issuance. Amount already paid: {paid}. New total price: {revised}. We've emailed you the details to pay the {supplement} supplement or request a full refund.",
@@ -475,6 +506,7 @@
     "failureReason": "Reason: {reason}",
     "retryAction": "Retry",
     "searchAgainAction": "Search again",
+    "chooseAnotherRoomAction": "Choose another room",
     "paymentCapturedNotice": "Your payment was successfully charged. Our support team will contact you to sort out this booking - no need to pay again or search again.",
     "paymentRefundedNotice": "Your payment was refunded following this failure. You can safely search again."
   },
@@ -486,7 +518,9 @@
     "empty": "No ticket has been issued for this booking yet.",
     "view": "View ticket",
     "hide": "Hide",
-    "print": "Print ticket"
+    "print": "Print ticket",
+    "awaitingIssuanceTitle": "Ticket being issued",
+    "awaitingIssuanceDesc": "Your booking is confirmed and paid. The airline is issuing your e-ticket: it will appear here and be emailed to you as soon as it arrives. No action is needed on your side."
   },
   "Dashboard": {
     "clientEyebrow": "Customer area",
@@ -517,6 +551,19 @@
     "commissionSubtitle": "Breakdown of the commission earned on bookings.",
     "walletBalance": "Wallet balance",
     "walletEntryCount": "Entry count",
+    "transactionHistory": "Commission history",
+    "transactionSubtitle": "Every commission earned, newest first.",
+    "searchPlaceholder": "Search a booking…",
+    "type": "Type",
+    "reference": "Booking",
+    "offer": "Offer",
+    "date": "Date",
+    "amount": "Amount",
+    "noTransactionsFound": "No commission found.",
+    "commissionTypeBOOKING_FEE": "Booking fee",
+    "commissionTypeRESERVATION_FEE": "Hold fee",
+    "commissionTypeAll": "All types",
+    "paginationLabel": "Page {current} of {total}",
     "recentBookingsTitle": "Recent bookings",
     "viewAll": "View all",
     "resultsCount": "{count, plural, =0 {No results} =1 {1 result} other {# results}}",

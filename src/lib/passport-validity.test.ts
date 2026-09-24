@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { z } from "zod";
 
-import { checkPassportValidity, createPassportExpirySchema } from "./passport-validity";
+import { checkPassportDocument, checkPassportValidity, createPassportExpirySchema } from "./passport-validity";
 
 describe("checkPassportValidity", () => {
   it("is valid when the passport clears the 6-month margin comfortably", () => {
@@ -99,5 +100,51 @@ describe("createPassportExpirySchema", () => {
     const schema = createPassportExpirySchema("2026-09-22", 3);
     expect(schema.safeParse("2026-12-22").success).toBe(true);
     expect(schema.safeParse("2026-11-01").success).toBe(false);
+  });
+});
+
+describe("checkPassportDocument", () => {
+  const schema = z
+    .object({
+      passportNumber: z.string().optional(),
+      passportIssueCountry: z.string().optional(),
+      passportIssueDate: z.string().optional(),
+      passportExpiryDate: z.string().optional(),
+      dateOfBirth: z.string().optional(),
+    })
+    .superRefine(checkPassportDocument);
+  const complete = {
+    passportNumber: "AB1234567",
+    passportIssueCountry: "CM",
+    passportIssueDate: "2020-03-01",
+    passportExpiryDate: "2030-03-01",
+    dateOfBirth: "1990-06-15",
+  };
+  const issuesOn = (values: Record<string, string | undefined>) => {
+    const result = schema.safeParse(values);
+    return result.success ? [] : result.error.issues.map((issue) => issue.path.join("."));
+  };
+
+  it("accepts a complete passport, and a traveler without one", () => {
+    expect(issuesOn(complete)).toEqual([]);
+    expect(issuesOn({ dateOfBirth: "1990-06-15" })).toEqual([]);
+  });
+
+  it("requires the whole document once a number is entered", () => {
+    expect(issuesOn({ passportNumber: "AB1234567", dateOfBirth: "1990-06-15" })).toEqual([
+      "passportIssueCountry",
+      "passportExpiryDate",
+      "passportIssueDate",
+    ]);
+  });
+
+  it("rejects a number with punctuation or too long", () => {
+    expect(issuesOn({ ...complete, passportNumber: "AB-123 456" })).toEqual(["passportNumber"]);
+    expect(issuesOn({ ...complete, passportNumber: "A".repeat(21) })).toEqual(["passportNumber"]);
+  });
+
+  it("rejects an issue date before birth or in the future", () => {
+    expect(issuesOn({ ...complete, passportIssueDate: "1989-01-01" })).toEqual(["passportIssueDate"]);
+    expect(issuesOn({ ...complete, passportIssueDate: "2999-01-01" })).toEqual(["passportIssueDate"]);
   });
 });

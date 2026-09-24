@@ -62,6 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             role: response.role,
             partnerId: response.partnerId,
             resellerId: response.resellerId ?? undefined,
+            phone: response.phone ?? undefined,
           };
           saveProfile(fresh);
           setUser(fresh);
@@ -95,6 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             role: response.role,
             partnerId: response.partnerId,
             resellerId: response.resellerId ?? undefined,
+            phone: response.phone ?? undefined,
           };
           // TEMPORARY diagnostic (prod login bug investigation) - remove once root-caused.
           console.warn("[AuthProvider] login resolved", { response, profile });
@@ -111,6 +113,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             role: response.role,
             partnerId: response.partnerId,
             resellerId: response.resellerId ?? undefined,
+            phone: response.phone ?? undefined,
           };
           saveProfile(profile);
           setUser(profile);
@@ -130,6 +133,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             role: response.role,
             partnerId: response.partnerId,
             resellerId: response.resellerId ?? undefined,
+            phone: response.phone ?? undefined,
           };
           saveProfile(profile);
           setUser(profile);

@@ -55,7 +55,7 @@ export function HotelRoomList({ offerId, roomOffers = [], nights = 1, isReseller
             <div className="grid gap-4.5">
                 {roomOffers.map((room) => (
                     <RoomCard
-                        key={room.productId || room.roomCode}
+                        key={room.roomOfferId || room.productId || room.roomCode}
                         offerId={offerId}
                         room={room}
                         nights={nights}
@@ -81,7 +81,12 @@ function RoomCard({
     const t = useTranslations("HotelDetail");
     const locale = useLocale();
 
-    const roomCode = room.productId || room.roomCode;
+    // roomOfferId first: Travelopro rooms can all share the hotel's productId.
+    const roomCode = room.roomOfferId || room.productId || room.roomCode;
+    // Only a room with its own roomOfferId can be booked as itself (see checkoutUrlForHotel).
+    const bookable = Boolean(room.roomOfferId);
+    // Tarif valable pour un nombre de chambres imposé (celui de la recherche) : pas de +/-.
+    const fixedQuantity = room.requiredQuantity ?? null;
 
     const hotelDetail = useHotelStore((state) => state.hotelDetail);
     const selectedOffer = useHotelStore((state) => state.selectedOffer);
@@ -114,20 +119,22 @@ function RoomCard({
         addToCart({
             roomCode,
             roomType: room.roomType,
-            offerId,
+            // Must match the checkout's offerId so the summary card finds this line.
+            offerId: room.roomOfferId ?? offerId,
             hotelName: hotelDetail?.name ?? selectedOffer?.hotelName ?? "",
             unitPrice: room.netPrice,
             currency: room.currency,
             nights,
-        });
+        }, fixedQuantity ?? 1);
     }
 
     function handleIncrement() {
+        if (fixedQuantity) return;
         updateCartQuantity(roomCode, quantity + 1);
     }
 
     function handleDecrement() {
-        if (quantity <= 1) {
+        if (quantity <= 1 || fixedQuantity) {
             removeFromCart(roomCode);
         } else {
             updateCartQuantity(roomCode, quantity - 1);
@@ -206,12 +213,18 @@ function RoomCard({
                         <div className="text-[10px] text-muted-foreground font-bold tracking-wider uppercase">
                             {nights} night{nights > 1 ? "s" : ""} · Total séjour
                         </div>
+                        {fixedQuantity && fixedQuantity > 1 && (
+                            <div className="text-[10px] text-muted-foreground">
+                                {t("fixedQuantityNote", { count: fixedQuantity })}
+                            </div>
+                        )}
                     </div>
 
                     {quantity === 0 ? (
                         <Button
                             size="sm"
                             onClick={handleAdd}
+                            disabled={!bookable}
                             className="rounded-xl font-bold text-xs gap-1.5 py-4.5 px-5 group active:scale-97"
                         >
                             <ShoppingCart className="size-3.5" />
@@ -234,6 +247,7 @@ function RoomCard({
                                     size="icon"
                                     variant="ghost"
                                     onClick={handleIncrement}
+                                    disabled={Boolean(fixedQuantity)}
                                     className="size-8 rounded-lg"
                                     aria-label={t("increase") ?? "Augmenter"}
                                 >
@@ -241,7 +255,7 @@ function RoomCard({
                                 </Button>
                             </div>
 
-                            {selectedOffer ? (
+                            {selectedOffer && bookable ? (
                                 <Button
                                     asChild
                                     size="sm"
@@ -250,8 +264,8 @@ function RoomCard({
                                     <Link
                                         href={
                                             isReseller
-                                                ? resellerCheckoutUrlForHotel(selectedOffer, offerId, room.netPrice, room.currency, quantity)
-                                                : checkoutUrlForHotel(selectedOffer, offerId, room.netPrice, room.currency, quantity)
+                                                ? resellerCheckoutUrlForHotel(selectedOffer, offerId, room, quantity)
+                                                : checkoutUrlForHotel(selectedOffer, offerId, room, quantity)
                                         }
                                     >
                                         {t("bookNow") ?? "Réserver"}

@@ -21,9 +21,11 @@ import {
 } from "@/components/ui/select";
 import { CountrySelect } from "@/components/checkout/country-select";
 import { PassportValidityAlert } from "@/components/checkout/passport-validity-alert";
+import { useAuth } from "@/context/auth-context";
 import type { CheckoutRequest, PassengerType } from "@/lib/api/types";
-import { createPassportExpirySchema } from "@/lib/passport-validity";
+import { checkPassportDocument, createPassportExpirySchema } from "@/lib/passport-validity";
 import { cn } from "@/lib/utils";
+import type { TravelerIdentity } from "@/lib/traveler-identities";
 
 // Vols uniquement : Travelopro (et les GDS en général) exigent date de naissance et nationalité
 // pour chaque passager - confirmé par des tests réels ("PassengerNationality details is required
@@ -38,7 +40,13 @@ import { cn } from "@/lib/utils";
 // cette version faible manquait ici - et la plupart des destinations exigent en réalité 6 mois de
 // marge, pas juste "pas encore expiré ce jour-là".
 const travelerSchema = (isFlight: boolean, travelDate?: string) => z.object({
-  fullName: z.string().trim().min(1, "Le nom du voyageur est requis"),
+  firstName: z.string().trim().min(1, "Le prénom est requis"),
+  lastName: z.string().trim().min(1, "Le nom est requis"),
+  // Genre tel que sur le passeport : exigé par les compagnies (TravelTerminus en dérive le titre
+  // MR/MS/MASTER/MISS). Non choisi = undefined, jamais "" (que l'API refuserait).
+  gender: isFlight
+    ? z.enum(["MALE", "FEMALE"], { error: "Le sexe est requis" })
+    : z.enum(["MALE", "FEMALE"]).optional(),
   dateOfBirth: isFlight
     ? z.string().trim().min(1, "La date de naissance est requise")
     : z.string().optional(),
@@ -57,6 +65,9 @@ const travelerSchema = (isFlight: boolean, travelDate?: string) => z.object({
   // it - a real booking failed this way ("passengers.0.document.issuing_date_required") after
   // payment had already been captured, which is a much worse place to catch this than here.
   passportIssueDate: z.string().optional(),
+}).superRefine((traveler, ctx) => {
+  // Vol : un passeport saisi doit être complet et cohérent (voir checkPassportDocument).
+  if (isFlight) checkPassportDocument(traveler, ctx);
 });
 
 const buildSchema = (isFlight: boolean, travelDate?: string) => z.object({
@@ -64,7 +75,10 @@ const buildSchema = (isFlight: boolean, travelDate?: string) => z.object({
     .min(1, "L'email de contact est requis")
     .email("Format d'email invalide"),
   contactFullName: z.string().trim().min(1, "Le nom du contact est requis"),
-  contactPhone: z.string().optional(),
+  // Vol : les compagnies exigent un mobile de contact avec son indicatif (TravelTerminus le refuse sinon).
+  contactPhone: isFlight
+    ? z.string().trim().min(6, "Le mobile de contact est requis pour un vol (avec l'indicatif, ex. +237)")
+    : z.string().optional(),
   travelers: z.array(travelerSchema(isFlight, travelDate)).min(1, "Au moins un voyageur est requis"),
   paymentPlan: z.enum(["PAY_NOW", "PAY_LATER"]),
 });
@@ -76,6 +90,8 @@ interface CheckoutFormProps {
   /** Nombre de voyageurs à préremplir dans le formulaire (défaut 1) - vient du sélecteur de
    *  l'étape Options pour un vol, absent pour les autres types d'offre. */
   travelerCount?: number;
+  /** Noms et types déjà saisis à l'étape des options (vols) - préremplissent les voyageurs. */
+  initialTravelers?: TravelerIdentity[];
   /** Code du siège réel choisi (ex. "1A") pour chaque voyageur, même index que travelerCount -
    *  peut avoir des trous (voyageur sans siège choisi). */
   seatLabelsByTraveler?: (string | undefined)[];
@@ -91,6 +107,7 @@ interface CheckoutFormProps {
 
 export function CheckoutForm({
                                 travelerCount = 1,
+                                initialTravelers,
                                 seatLabelsByTraveler,
                                 onSubmit,
                                 isSubmitting,
@@ -107,10 +124,12 @@ export function CheckoutForm({
       contactFullName: "",
       contactPhone: "",
       travelers: Array.from({ length: Math.max(1, travelerCount) }, (_, i) => ({
-        fullName: "",
+        firstName: initialTravelers?.[i]?.firstName ?? "",
+        lastName: initialTravelers?.[i]?.lastName ?? "",
+        gender: undefined,
         dateOfBirth: "",
         passportNumber: "",
-        type: "ADULT" as const,
+        type: initialTravelers?.[i]?.type ?? ("ADULT" as const),
         seatNumber: seatLabelsByTraveler?.[i] ?? "",
         nationality: "",
         passportIssueCountry: "",
@@ -120,6 +139,18 @@ export function CheckoutForm({
       paymentPlan: "PAY_NOW",
     },
   });
+
+  // Pré-remplit les coordonnées d'un client connecté, sans écraser ce qu'il aurait déjà saisi.
+  const { user } = useAuth();
+  useEffect(() => {
+    if (!user) return;
+    const prefill = { contactEmail: user.email, contactFullName: user.fullName, contactPhone: user.phone } as const;
+    for (const [field, value] of Object.entries(prefill) as [keyof typeof prefill, string | undefined][]) {
+      if (value && !form.getValues(field)) {
+        form.setValue(field, value);
+      }
+    }
+  }, [user, form]);
 
   const { fields, append, remove } = useFieldArray({ control: form.control, name: "travelers" });
   const paymentPlan = form.watch("paymentPlan");
@@ -135,7 +166,9 @@ export function CheckoutForm({
       contactFullName: values.contactFullName,
       contactPhone: values.contactPhone || undefined,
       travelers: values.travelers.map((traveler) => ({
-        fullName: traveler.fullName,
+        firstName: traveler.firstName,
+        lastName: traveler.lastName,
+        gender: traveler.gender,
         dateOfBirth: traveler.dateOfBirth || undefined,
         passportNumber: traveler.passportNumber || undefined,
         type: traveler.type,
@@ -271,17 +304,58 @@ export function CheckoutForm({
                     <div className="grid gap-3.5 sm:gap-4 grid-cols-1 sm:grid-cols-2">
                       <FormField
                           control={form.control}
-                          name={`travelers.${index}.fullName`}
+                          name={`travelers.${index}.firstName`}
                           render={({ field }) => (
-                              <FormItem className="sm:col-span-2">
-                                <FormLabel className="text-xs font-bold text-muted-foreground/90">{t("fullName")}</FormLabel>
+                              <FormItem>
+                                <FormLabel className="text-xs font-bold text-muted-foreground/90">{t("firstName")}</FormLabel>
                                 <FormControl>
                                   <Input
-                                      placeholder="Nom complet (tel que sur le passeport)"
+                                      placeholder="Prénom(s) (tels que sur le passeport)"
+                                      autoComplete="given-name"
                                       className="h-11 sm:h-10 rounded-xl border-border/80 bg-background focus-visible:ring-primary/20 text-sm"
                                       {...field}
                                   />
                                 </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                          )}
+                      />
+                      <FormField
+                          control={form.control}
+                          name={`travelers.${index}.lastName`}
+                          render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs font-bold text-muted-foreground/90">{t("lastName")}</FormLabel>
+                                <FormControl>
+                                  <Input
+                                      placeholder="Nom(s) de famille (tels que sur le passeport)"
+                                      autoComplete="family-name"
+                                      className="h-11 sm:h-10 rounded-xl border-border/80 bg-background focus-visible:ring-primary/20 text-sm"
+                                      {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                          )}
+                      />
+
+                      <FormField
+                          control={form.control}
+                          name={`travelers.${index}.gender`}
+                          render={({ field }) => (
+                              <FormItem className="col-span-1">
+                                <FormLabel className="text-xs font-bold text-muted-foreground/90">{t("gender")}</FormLabel>
+                                <Select value={field.value ?? ""} onValueChange={field.onChange}>
+                                  <FormControl>
+                                    <SelectTrigger className="h-11 sm:h-10 rounded-xl border-border/80 bg-background focus:ring-primary/20 text-sm">
+                                      <SelectValue placeholder={t("genderPlaceholder")} />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent className="rounded-xl">
+                                    <SelectItem value="MALE">{t("genderMale")}</SelectItem>
+                                    <SelectItem value="FEMALE">{t("genderFemale")}</SelectItem>
+                                  </SelectContent>
+                                </Select>
                                 <FormMessage />
                               </FormItem>
                           )}
@@ -440,7 +514,7 @@ export function CheckoutForm({
                   size="sm"
                   className="w-full sm:w-auto justify-center h-11 sm:h-9 mt-1 gap-1.5 rounded-xl sm:rounded-full border-dashed border-border/80 hover:border-primary/40 hover:bg-primary/5 text-xs px-4"
                   onClick={() => append({
-                    fullName: "", dateOfBirth: "", passportNumber: "", type: "ADULT",
+                    firstName: "", lastName: "", gender: undefined, dateOfBirth: "", passportNumber: "", type: "ADULT",
                     nationality: "", passportIssueCountry: "", passportExpiryDate: "", passportIssueDate: "",
                   })}
               >

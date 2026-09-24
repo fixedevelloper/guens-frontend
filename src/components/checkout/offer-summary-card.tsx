@@ -14,6 +14,7 @@ import { useVehicleStore } from "@/store/use-vehicle-store";
 import { usePropertyStore } from "@/store/use-property-store";
 import type { OfferSummary } from "@/lib/offer-summary";
 import type { PaymentPlanValue } from "@/components/checkout/checkout-form";
+import { FlightFareBreakdownLines, FlightFareConditions } from "@/components/checkout/flight-fare-conditions";
 
 export function OfferSummaryCard({
                                    offer,
@@ -104,7 +105,25 @@ export function OfferSummaryCard({
                         {tResults("holdAvailableBadge")}
                       </span>
                   )}
+                  {/* Conditions du tarif, affichées avant confirmation (certification TC-08/09/10). */}
+                  {offer.detail?.refundable === true && (
+                      <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
+                        {tResults("refundableFare")}
+                      </span>
+                  )}
+                  {offer.detail?.refundable === false && (
+                      <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-400">
+                        {tResults("nonRefundableFare")}
+                      </span>
+                  )}
+                  {offer.detail?.carrierType === "LCC" && (
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
+                        {tResults("lccBadge")}
+                      </span>
+                  )}
                 </div>
+
+                <FlightFareConditions offerId={offer.offerId} />
 
                 <div className="relative pl-6 space-y-4 before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-[2px] before:bg-gradient-to-b before:from-primary/60 before:to-primary/20">
                   <div className="relative">
@@ -349,6 +368,14 @@ export function OfferSummaryCard({
                   sera à régler ultérieurement.
             </span>
               </div>
+          )}
+
+          {!isPayLater && offer.offerType === "FLIGHT" && offer.detail?.fareBreakdown && (
+              <FlightFareBreakdownLines
+                  breakdown={offer.detail.fareBreakdown}
+                  displayedAmount={realAmount}
+                  displayedCurrency={realCurrency}
+              />
           )}
 
           {!isPayLater && extrasTotal > 0 && (

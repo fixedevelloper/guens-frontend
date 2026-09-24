@@ -8,7 +8,7 @@ import type {
   MultiCityFlightSearchParams,
   MultiCityItinerary, PropertySearchParams,
   RoomOffer,
-  SeatMapResponse, VehicleSearchParams,
+  SeatMapResponse, VehicleSearchParams, FlightFareRules,
 } from "./types";
 
 // Must stay above the backend's own provider fan-out budget
@@ -63,6 +63,12 @@ export async function loadMoreHotels(searchId: string, pageNumber: number) {
     params: { searchId, pageNumber },
   });
   return data;
+}
+
+/** Cancellation/change conditions of a searched flight; null when the provider has none (204). */
+export async function getFlightFareRules(offerId: string): Promise<FlightFareRules | null> {
+  const response = await apiClient.get<FlightFareRules>("/api/search/flights/fare-rules", { params: { offerId } });
+  return response.status === 204 || !response.data ? null : response.data;
 }
 
 export async function getFlightSeatMap(offerId: string) {

@@ -3,7 +3,8 @@ import axios from "axios";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 import {
-  flightSearchStreamUrl, getFlightSeatMap, searchFlights, searchHotels, searchMultiCityFlights, getHotelDeatils,
+  flightSearchStreamUrl, getFlightFareRules,
+  getFlightSeatMap, searchFlights, searchHotels, searchMultiCityFlights, getHotelDeatils,
   getHotelRooms, searchVehicles, searchProperties, loadMoreHotels
 } from "@/lib/api/search";
 import type {
@@ -187,6 +188,16 @@ export function useHotelSearchWithLoadMore(params: HotelSearchParams | null) {
     isLoadingMore: loadMoreMutation.isPending,
     hasMore,
   };
+}
+
+export function useFlightFareRules(offerId: string | null) {
+  return useQuery({
+    queryKey: ["flight-fare-rules", offerId],
+    queryFn: () => getFlightFareRules(offerId as string),
+    enabled: offerId !== null,
+    staleTime: Infinity,
+    retry: false,
+  });
 }
 
 export function useFlightSeatMap(offerId: string | null) {

@@ -4,7 +4,7 @@
 import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Minus, Plus, ArrowLeft, PackagePlus } from "lucide-react";
+import { ArrowLeft, PackagePlus } from "lucide-react";
 import { toast } from "sonner";
 
 import { useRouter } from "@/i18n/navigation";
@@ -12,8 +12,9 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent } from "@/components/ui/card";
 import { AncillaryOptionsStep } from "@/components/checkout/ancillary-options-step";
+import { TravelerIdentitiesCard } from "@/components/checkout/traveler-identities-card";
+import { pricedPassengerTypes, resizeIdentities, type TravelerIdentity } from "@/lib/traveler-identities";
 import { CheckoutForm } from "@/components/checkout/checkout-form";
 import { OfferSummaryCard } from "@/components/checkout/offer-summary-card";
 import { useAncillaryOptionsQuery, useCheckoutMultiCityMutation, useCheckoutMutation } from "@/hooks/use-booking";
@@ -43,7 +44,6 @@ export default function CheckoutPage() {
 
 function CheckoutPageContent() {
   const t = useTranslations("Checkout");
-  const tSeat = useTranslations("SeatSelection");
   const tExtras = useTranslations("AncillaryOptions");
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -55,28 +55,38 @@ function CheckoutPageContent() {
 
   const needsSeatSelection = offer?.offerType === "FLIGHT";
   const totalSteps = needsSeatSelection ? 2 : 1;
-  const [seatCount, setSeatCount] = useState(1);
+  // Étape 1 : qui voyage (noms tels que sur le passeport, types) avant les options - certaines
+  // compagnies n'accordent bagages/repas/sièges qu'à des passagers nommés. Quand le tarif couvre
+  // exactement les passagers de la recherche (Travel Terminus), leur nombre et leurs types sont figés.
+  const pricedTypes = useMemo(
+      () => (offer?.offerType === "FLIGHT" ? pricedPassengerTypes(offer.detail) : null), [offer]);
+  const [identities, setIdentities] = useState<TravelerIdentity[]>(
+      () => resizeIdentities([], pricedTypes?.length ?? 1, pricedTypes));
+  const [identitiesConfirmed, setIdentitiesConfirmed] = useState(false);
+  const seatCount = identities.length;
 
   // Étape "options supplémentaires" (voyageurs, bagages/repas/sièges/assurance) - vols uniquement,
   // avant le formulaire de coordonnées. Le choix des sièges vit désormais ici (section dédiée de
   // AncillaryOptionsStep, alimentée par les vraies données du fournisseur) : l'ancien plan de
   // cabine séparé montrait un plan simulé, sans rapport avec les sièges réels/tarifés récupérés
-  // ici, et n'avait donc plus lieu d'être. Les voyageurs n'ayant pas encore de nom à ce stade, la
-  // quote est demandée avec des placeholders (ADULT x seatCount) - seul le nombre de voyageurs
-  // compte pour le pricing, les vrais noms n'arrivent qu'au moment du Book.
+  // ici, et n'avait donc plus lieu d'être. La quote est demandée avec les vrais noms et types des
+  // voyageurs, saisis juste avant (TravelerIdentitiesCard) : certaines compagnies ne tarifent les
+  // options que pour des passagers nommés, dans l'ordre T1, T2... repris ensuite par le formulaire.
   const [extrasStepDone, setExtrasStepDone] = useState(false);
   const [selectedExtraIds, setSelectedExtraIds] = useState<string[]>([]);
   const ancillaryOptionsRequest = useMemo(() => {
-    if (!offer || offer.offerType !== "FLIGHT") return null;
-    return {
-      offerId: offer.offerId,
-      offerType: offer.offerType,
-      travelers: Array.from({ length: seatCount }, (_, i) => ({
-        fullName: `Voyageur ${i + 1}`,
-        type: "ADULT" as const,
-      })),
-    };
-  }, [offer, seatCount]);
+      if (!offer || offer.offerType !== "FLIGHT" || !identitiesConfirmed) return null;
+      return {
+          offerId: offer.offerId,
+          offerType: offer.offerType,
+          travelers: identities.map((identity) => ({
+              fullName: `${identity.firstName.trim()} ${identity.lastName.trim()}`,
+              firstName: identity.firstName.trim(),
+              lastName: identity.lastName.trim(),
+              type: identity.type,
+          })),
+      };
+  }, [offer, identities, identitiesConfirmed]);
   const ancillaryOptionsQuery = useAncillaryOptionsQuery(
       ancillaryOptionsRequest,
       needsSeatSelection && !extrasStepDone
@@ -111,21 +121,6 @@ function CheckoutPageContent() {
       : offer?.offerType === "MULTI_CITY_FLIGHT"
           ? offer.legs[offer.legs.length - 1]?.arrivalTime
           : undefined;
-
-  function changeSeatCount(next: number) {
-    const clamped = Math.max(1, Math.min(MAX_SEATS, next));
-    setSeatCount(clamped);
-    // Drops any extra picked for a traveler slot that no longer exists (e.g. a seat selected for
-    // traveler 3, then the count reduced back to 2).
-    if (ancillaryOptionsQuery.data) {
-      const byId = new Map(ancillaryOptionsQuery.data.map((option) => [option.id, option]));
-      const validPaxRefs = new Set(Array.from({ length: clamped }, (_, i) => `T${i + 1}`));
-      setSelectedExtraIds((ids) => ids.filter((id) => {
-        const option = byId.get(id);
-        return !option?.paxRef || validPaxRefs.has(option.paxRef);
-      }));
-    }
-  }
 
   /** Distributes selected extra ids onto the matching traveler by the option's paxRef ("T1" ->
    *  index 0, ...); a booking-level option (no paxRef, e.g. INSURANCE) is attached to the first
@@ -232,57 +227,36 @@ function CheckoutPageContent() {
               <p className="text-xs sm:text-sm text-muted-foreground mt-1">{tExtras("subtitle")}</p>
             </div>
 
-            {/* Sélecteur du nombre de voyageurs - détermine à la fois combien de voyageurs le
-                formulaire final affichera et pour combien de passagers les options sont tarifées. */}
-            <Card className="border-border/60 shadow-2xs rounded-2xl">
-              <CardContent className="p-3.5 sm:p-4 flex items-center justify-between gap-3">
-                <div className="space-y-0.5">
-                  <span className="text-sm font-bold block">{tSeat("travelerCount") ?? "Nombre de passagers"}</span>
-                  <span className="text-xs text-muted-foreground block">Maximum {MAX_SEATS} passagers</span>
-                </div>
-                <div className="flex items-center gap-2 bg-slate-100/80 dark:bg-zinc-900/80 p-1 rounded-xl">
-                  <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="size-8 rounded-lg hover:bg-background shadow-2xs active:scale-95 transition-all"
-                      onClick={() => changeSeatCount(seatCount - 1)}
-                      disabled={seatCount <= 1}
-                      aria-label={tSeat("travelerCount")}
-                  >
-                    <Minus className="size-4" />
-                  </Button>
-                  <span className="w-6 text-center text-sm font-bold text-foreground">{seatCount}</span>
-                  <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="size-8 rounded-lg hover:bg-background shadow-2xs active:scale-95 transition-all"
-                      onClick={() => changeSeatCount(seatCount + 1)}
-                      disabled={seatCount >= MAX_SEATS}
-                      aria-label={tSeat("travelerCount")}
-                  >
-                    <Plus className="size-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="rounded-2xl border border-border/60 bg-background p-4 sm:p-6 shadow-2xs">
-              <AncillaryOptionsStep
-                  options={ancillaryOptionsQuery.data}
-                  isLoading={ancillaryOptionsQuery.isLoading}
-                  isError={ancillaryOptionsQuery.isError}
-                  travelerCount={seatCount}
-                  selectedIds={selectedExtraIds}
-                  onChange={setSelectedExtraIds}
-                  onContinue={() => setExtrasStepDone(true)}
-                  onSkip={() => {
+            <TravelerIdentitiesCard
+                identities={identities}
+                onChange={setIdentities}
+                fixedMix={pricedTypes !== null}
+                maxTravelers={MAX_SEATS}
+                confirmed={identitiesConfirmed}
+                onConfirm={() => setIdentitiesConfirmed(true)}
+                onEdit={() => {
+                    setIdentitiesConfirmed(false);
                     setSelectedExtraIds([]);
-                    setExtrasStepDone(true);
-                  }}
-              />
-            </div>
+                }}
+            />
+
+            {identitiesConfirmed && (
+                <div className="rounded-2xl border border-border/60 bg-background p-4 sm:p-6 shadow-2xs">
+                  <AncillaryOptionsStep
+                      options={ancillaryOptionsQuery.data}
+                      isLoading={ancillaryOptionsQuery.isLoading}
+                      isError={ancillaryOptionsQuery.isError}
+                      travelerCount={seatCount}
+                      selectedIds={selectedExtraIds}
+                      onChange={setSelectedExtraIds}
+                      onContinue={() => setExtrasStepDone(true)}
+                      onSkip={() => {
+                        setSelectedExtraIds([]);
+                        setExtrasStepDone(true);
+                      }}
+                  />
+                </div>
+            )}
           </div>
         </div>
     );
@@ -342,6 +316,7 @@ function CheckoutPageContent() {
                 onSubmit={handleSubmit}
                 isSubmitting={isSubmitting}
                 travelerCount={needsSeatSelection ? seatCount : undefined}
+                initialTravelers={needsSeatSelection ? identities : undefined}
                 seatLabelsByTraveler={seatLabelsByTraveler}
                 onPaymentPlanChange={setPaymentPlan}
                 isFlight={isFlightCheckout}

@@ -41,6 +41,10 @@ const STATUS_CONFIG: Record<
   FAILED: {
     variant: "destructive",
   },
+  CANCEL_REQUESTED: {
+    variant: "outline",
+    className: "bg-amber-500/10 text-amber-700 border-amber-500/20 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800/40 font-bold",
+  },
   CANCELLED: {
     variant: "secondary",
     className: "bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-900/40",

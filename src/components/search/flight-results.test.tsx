@@ -137,3 +137,30 @@ describe("FlightOfferCard - return leg display", () => {
     expect(screen.getByText(/710/)).toBeInTheDocument();
   });
 });
+
+describe("FlightOfferCard - fare conditions", () => {
+  const withDetail = (patch: Partial<NonNullable<HarmonizedFlightOffer["quotes"][number]["detail"]>>): HarmonizedFlightOffer => ({
+    ...baseOffer,
+    quotes: [{ ...baseOffer.quotes[0], detail: { ...baseOffer.quotes[0].detail!, ...patch } }],
+  });
+
+  it("never claims a non-refundable fare is refundable", () => {
+    renderCard(withDetail({ refundable: false }));
+    expect(screen.getByText("Billet non remboursable")).toBeInTheDocument();
+    expect(screen.queryByText("Billet remboursable")).not.toBeInTheDocument();
+  });
+
+  it("says refundable only when the airline does, and nothing when it doesn't say", () => {
+    const { unmount } = renderCard(withDetail({ refundable: true }));
+    expect(screen.getByText("Billet remboursable")).toBeInTheDocument();
+    unmount();
+
+    renderCard(withDetail({ refundable: null }));
+    expect(screen.queryByText(/remboursable/)).not.toBeInTheDocument();
+  });
+
+  it("flags a low-cost carrier's paid extras", () => {
+    renderCard(withDetail({ carrierType: "LCC" }));
+    expect(screen.getByText("Low-cost : bagages et options payants")).toBeInTheDocument();
+  });
+});

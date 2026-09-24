@@ -209,7 +209,7 @@ export default function ResellerWalletPage() {
             {isLoading ? <Skeleton className="h-9 w-36" /> : formatCurrency(pendingBalance, currency)}
           </div>
           <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
-            Sera libéré après le décollage/séjour
+            Sera libéré dès l'émission du billet (ou la confirmation, hors vols)
           </p>
         </div>
 

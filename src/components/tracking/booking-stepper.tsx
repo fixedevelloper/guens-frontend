@@ -5,6 +5,8 @@ import type { BookingStatus } from "@/lib/api/types";
 
 interface BookingStepperProps {
   status: BookingStatus;
+  /** CONFIRMED flight still waiting for its e-ticket numbers - the "tickets" step stays current. */
+  awaitingTickets?: boolean;
 }
 
 const STEPS = [
@@ -14,7 +16,8 @@ const STEPS = [
   { id: 4, icon: Ticket, labelKey: "stepperTickets" },
 ] as const;
 
-// Which step is "current" for each non-terminal status - CONFIRMED means every step is done.
+// Which step is "current" for each non-terminal status - CONFIRMED means the tickets step is under
+// way; it's only done (every step completed) once the tickets have actually arrived.
 const STEP_FOR_STATUS: Partial<Record<BookingStatus, number>> = {
   PENDING_HOLD: 1,
   PENDING_PAYMENT: 2,
@@ -24,15 +27,19 @@ const STEP_FOR_STATUS: Partial<Record<BookingStatus, number>> = {
   CONFIRMED: 4,
 };
 
-const TERMINAL_STATUSES: BookingStatus[] = ["FAILED", "CANCELLED", "PRICE_CHANGED"];
+// CANCEL_REQUESTED isn't final (it becomes CANCELLED once the provider confirms), but the booking
+// flow is interrupted all the same - shown like the terminal statuses.
+const TERMINAL_STATUSES: BookingStatus[] = ["FAILED", "CANCELLED", "PRICE_CHANGED", "CANCEL_REQUESTED"];
 
-export function BookingStepper({ status }: BookingStepperProps) {
+export function BookingStepper({ status, awaitingTickets = false }: BookingStepperProps) {
   const t = useTranslations("Tracking");
   const isTerminal = TERMINAL_STATUSES.includes(status);
   // Terminal statuses have no reliable "which step were we on" data (no per-step history is
   // persisted), so the stepper deliberately renders an interrupted state instead of guessing a
   // step number - see BookingStepper's plan notes.
-  const currentStep = isTerminal ? 0 : STEP_FOR_STATUS[status] ?? 1;
+  const currentStep = isTerminal ? 0
+      : status === "CONFIRMED" && !awaitingTickets ? STEPS.length + 1
+      : STEP_FOR_STATUS[status] ?? 1;
 
   return (
       <div className="space-y-3">
@@ -72,12 +79,12 @@ export function BookingStepper({ status }: BookingStepperProps) {
             <div
                 className={cn(
                     "flex items-center gap-2.5 rounded-xl border p-3 text-xs font-semibold",
-                    status === "PRICE_CHANGED"
+                    status === "PRICE_CHANGED" || status === "CANCEL_REQUESTED"
                         ? "border-orange-500/20 bg-orange-500/[0.04] text-orange-600 dark:text-orange-400"
                         : "border-destructive/20 bg-destructive/[0.04] text-destructive",
                 )}
             >
-              {status === "PRICE_CHANGED" ? (
+              {status === "PRICE_CHANGED" || status === "CANCEL_REQUESTED" ? (
                   <AlertTriangle className="size-4 shrink-0" />
               ) : (
                   <XCircle className="size-4 shrink-0" />

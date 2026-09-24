@@ -24,6 +24,9 @@ export type BookingStatus =
    *  automated action happens on this booking. */
   | "PRICE_CHANGED"
   | "FAILED"
+  /** Cancellation sent to a provider that processes it by hand (Travel Terminus) - becomes
+   *  CANCELLED once it confirms. Not cancelled nor refunded until then. */
+  | "CANCEL_REQUESTED"
   | "CANCELLED";
 
 export type PaymentStatus = "PENDING" | "PENDING_AUTHORIZATION" | "SUCCEEDED" | "FAILED";
@@ -218,6 +221,54 @@ export interface FlightOfferDetail {
   returnTotalDuration: string | null;
   returnTotalLayoverDuration: string | null;
   returnSegments: FlightSegmentDetail[];
+  /** Whether the fare is refundable, when the provider says - null otherwise. */
+  refundable?: boolean | null;
+  /** "LCC" (low-cost: paid baggage/extras) or "GDS", when the provider says. */
+  carrierType?: string | null;
+  /** The provider's base fare/taxes split, before our service fee. */
+  fareBreakdown?: FlightFareBreakdown | null;
+}
+
+/** Provider fare split for the searched passenger mix - amounts null when not given. */
+export interface FlightFareBreakdown {
+  currency: string;
+  adults: number;
+  adultBaseFare: number | null;
+  adultTax: number | null;
+  children: number;
+  childBaseFare: number | null;
+  childTax: number | null;
+  infants: number;
+  infantBaseFare: number | null;
+  infantTax: number | null;
+  /** Base fare + taxes for every passenger. */
+  total: number | null;
+}
+
+export interface FlightFarePenalty {
+  adultCharges: number | null;
+  childCharges: number | null;
+  infantCharges: number | null;
+  currency: string | null;
+  refundable: boolean | null;
+  durationFrom: number | null;
+  durationTo: number | null;
+  remarks: string | null;
+}
+
+/** Cancellation/change conditions per leg; the *Html fields are provider markup, to sanitize before display. */
+export interface FlightFareRules {
+  legs: {
+    departure: string | null;
+    arrival: string | null;
+    fareBasisCode: string | null;
+    cancellation: FlightFarePenalty[];
+    reschedule: FlightFarePenalty[];
+    fareRuleHtml: string | null;
+    cancellationHtml: string | null;
+    rescheduleHtml: string | null;
+    remarksHtml: string | null;
+  }[];
 }
 
 export interface FlightProviderQuote extends ProviderQuote {
@@ -322,12 +373,19 @@ export interface AncillaryOptionResponse {
 export interface AncillaryOptionsRequest {
   offerId: string;
   offerType: OfferType;
-  travelers: { fullName: string; type: PassengerType }[];
+  /** Names as on the passport: some providers only price extras for named passengers. */
+  travelers: { fullName: string; type: PassengerType; firstName?: string; lastName?: string }[];
 }
 
 // ---------- Booking ----------
 export interface TravelerRequest {
-  fullName: string;
+  /** Legacy single field - the checkout forms send firstName/lastName instead (the backend rebuilds it). */
+  fullName?: string;
+  /** First (given) name(s) and last (family) name(s) as on the passport, sent as-is to providers. */
+  firstName?: string;
+  lastName?: string;
+  /** As on the passport - required for flights (airlines derive the title from it). */
+  gender?: "MALE" | "FEMALE";
   dateOfBirth?: string;
   passportNumber?: string;
   type: PassengerType;
@@ -444,6 +502,9 @@ export interface BookingResponse {
 }
 export interface BookingTravelerResponse {
   fullName: string;
+  /** Null for a traveler booked with a full name only. */
+  firstName: string | null;
+  lastName: string | null;
   type: PassengerType;
   seatNumber: string | null;
   /** True when the provider flagged this traveler as needing a passport image uploaded before
@@ -662,6 +723,7 @@ export interface AuthResponse {
   partnerId?: string; // présent uniquement pour les comptes partenaires,
   userId: string;
   resellerId?: string | null; // présent uniquement pour les comptes revendeurs approuvés
+  phone?: string | null;
 }
 
 // ---------- Admin ----------
@@ -678,9 +740,23 @@ export interface AdminUserResponse {
   createdAt: string;
 }
 
+export type CommissionType = "BOOKING_FEE" | "RESERVATION_FEE";
+
+export interface CommissionWalletEntryResponse {
+  id: string;
+  bookingId: string;
+  commissionType: CommissionType;
+  offerType: OfferType;
+  providerType: ProviderType;
+  amount: Money;
+  createdAt: string;
+}
+
 export interface CommissionWalletBalanceResponse {
   balances: Money[];
   entryCount: number;
+  /** Every wallet credit, newest first. */
+  entries: CommissionWalletEntryResponse[];
 }
 
 // Actionnaire : part fixe (en %) de chaque commission gagnée, indépendante de tout compte
@@ -1082,6 +1158,10 @@ export interface RoomOffer {
   cancellationPolicy: string;
   roomImages: string[];
   facilities: string[];
+  /** The id checkout books this exact room with; absent when the room has no price (not bookable). */
+  roomOfferId?: string | null;
+  /** Set when this room's rate only books exactly that many rooms (e.g. the rooms searched). */
+  requiredQuantity?: number | null;
 }
 export interface ResellerFormData {
   companyName: string;
